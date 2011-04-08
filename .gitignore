@@ -1,2 +1,4 @@
 /src/bin/
 /src/gen/
+test/bin/
+test/gen/
