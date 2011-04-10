@@ -7,6 +7,7 @@ import com.novell.ldap.LDAPException;
 import com.novell.ldap.LDAPSearchResults;
 import android.app.Activity;
 import android.os.Bundle;
+import android.widget.TextView;
 
 public class ViewLDAPContacts extends Activity {
   /** Called when the activity is first created. */
@@ -23,11 +24,14 @@ public class ViewLDAPContacts extends Activity {
     String searchBase = "";
     String searchFilter = "(sn=Lorentzen)";
     LDAPConnection lc = new LDAPConnection();
+    TextView loggingTextView = (TextView) findViewById(R.id.editText1);
     try {
       // connect to the server
       lc.connect(ldapHost, ldapPort);
+      loggingTextView.append("\nConnected to LDAP Server");
       // bind to the server
       lc.bind(ldapVersion, loginDN, password.getBytes("UTF8"));
+      loggingTextView.append("\nBind to LDAP Server");
       LDAPSearchResults searchResults = lc.search(searchBase, // container to
                                                               // search
           searchScope, // search scope
@@ -52,7 +56,9 @@ public class ViewLDAPContacts extends Activity {
 //      }
       // disconnect with the server
       lc.disconnect();
+      loggingTextView.append("\nDisonnected from LDAP Server");
     } catch (LDAPException e) {
+      loggingTextView.setText("ERROR: "+e.getLocalizedMessage());
       e.printStackTrace();
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();

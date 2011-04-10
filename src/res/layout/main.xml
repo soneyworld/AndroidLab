@@ -7,4 +7,5 @@
 <TextView  
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" android:text="@string/hello"/>
+<EditText android:text="Logging:" android:id="@+id/editText1" android:layout_width="match_parent" android:editable="false" android:layout_gravity="top" android:layout_height="match_parent"></EditText>
 </LinearLayout>
