@@ -17,13 +17,11 @@ public class ViewLDAPContacts extends Activity {
     int ldapPort = LDAPConnection.DEFAULT_PORT;
     int searchScope = LDAPConnection.SCOPE_ONE;
     int ldapVersion = LDAPConnection.LDAP_V3;
-    boolean attributeOnly = true;
-    String attrs[] = { LDAPConnection.NO_ATTRS };
-    String ldapHost = "soney";
-    String loginDN = "";
+    String ldapHost = "ldap.tu-bs.de";
+    String loginDN = "o=TU Braunschweig, c=DE";
     String password = "";
     String searchBase = "";
-    String searchFilter = "(objectclass=*)";
+    String searchFilter = "(sn=Lorentzen)";
     LDAPConnection lc = new LDAPConnection();
     try {
       // connect to the server
@@ -34,21 +32,24 @@ public class ViewLDAPContacts extends Activity {
                                                               // search
           searchScope, // search scope
           searchFilter, // search filter
-          attrs, // "1.1" returns entry name only
-          attributeOnly); // no attributes are returned
+          null, // "1.1" returns entry name only
+          false); // no attributes are returned
       // print out all the objects
-      while (searchResults.hasMore()) {
-        LDAPEntry nextEntry = null;
-        try {
-          nextEntry = searchResults.next();
-          System.out.println("\n" + nextEntry.getDN());
-        } catch (LDAPException e) {
-          e.printStackTrace();
-          // Exception is thrown, go for next entry
-          break;
-        }
-
-      }
+//      while (searchResults.hasMore()) {
+//        LDAPEntry nextEntry = null;
+//        try {
+//          nextEntry = searchResults.next();
+//          System.out.println("\n" + nextEntry.getDN());
+//        } catch (LDAPException e) {
+//          e.printStackTrace();
+//          if (e.getResultCode() == LDAPException.LDAP_TIMEOUT
+//              || e.getResultCode() == LDAPException.CONNECT_ERROR)
+//            break;
+//          else
+//            continue;
+//        }
+//
+//      }
       // disconnect with the server
       lc.disconnect();
     } catch (LDAPException e) {
