@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+          "http://www.w3.org/TR/html4/loose.dtd">
+
+
+<html>
+  <head>
+    <title>UnboundID LDAP SDK for Java</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" href="../unboundid.css" type="text/css">
+    <link rel="shortcut icon" href="../images/favicon.ico">
+  </head>
+
+  <body>
+    <div id="wrapper">
+      <div id="headercontainer">
+        <a href="http://www.unboundid.com/" title="UnboundID LDAP SDK for Java" id="logo">
+          <img src="../images/+___.gif" width="274" height="99" alt="UnboundID" style="float: left;">
+        </a>
+        <div id="headertitle">
+          <br>
+          <h1>UnboundID LDAP SDK for Java</h1>
+        </div>
+      </div>
+
+      <div id="content">
+        <table cellpadding="0" cellspacing="0" border="0">
+          <tr valign="top">
+            <td style="padding: 10px 30px 20px 40px;">
+              <table border="0" width="100%">
+                <tr>
+                  <td align="right" valign="middle">
+                    <a href="http://www.unboundid.com/products/ldapsdk/" style="font-size: 85%">LDAP SDK Home Page</a>
+                    <br>
+                    <a href="../index.html" style="font-size: 85%">Product Information</a>
+                    <br>
+                    <a href="index.html" style="font-size: 85%">Getting Started with the LDAP SDK</a>
+                  </td>
+                </tr>
+              </table>
+
+              <h2>ASN.1 BER Processing</h2>
+
+              <p>
+               LDAP communication is encoded using the basic encoding rules (BER) subset of the
+               ASN.1 (abstract syntax notation one).  This is a binary encoding mechanism that is
+               compact and efficient to process.  The LDAP SDK uses ASN.1 extensively to encode and
+               decode requests and responses.  For most purposes, it should not be necessary for
+               clients using the LDAP SDK to perform any ASN.1 processing.  However, it may be
+               necessary to perform custom encoding/decoding if you wish to add support for
+               additional controls and/or extended operations.  Further, some SDK components use
+               ASN.1 octet string elements in cases where a value can be treated as either a string
+               or a byte array.
+              </p>
+
+              <p>
+                Generic ASN.1 elements (instances of the <tt>ASN1Element</tt> class) have type
+                (which is a single byte) and a value (which is a byte array).  It also provides
+                methods for encoding elements to and decoding from byte arrays, for writing encoded
+                elements to an output stream, and for reading them from an input stream.
+              </p>
+
+              <p>
+                All other types of ASN.1 elements are subclasses of the generic
+                <tt>ASN1Element</tt>.  They include:
+              </p>
+
+              <ul>
+                <li>
+                  <tt>ASN1OctetString</tt> -- Used to hold generic data.  It may be possible to
+                  interpret the value as a string.
+                  <br><br>
+                </li>
+
+                <li>
+                  <tt>ASN1Null</tt> -- Used for elements which have zero-length values (generally
+                  as a placeholder).
+                  <br><br>
+                </li>
+
+                <li>
+                  <tt>ASN1Boolean</tt> -- Used to hold Boolean values of "true" or "false".
+                  <br><br>
+                </li>
+
+                <li>
+                  <tt>ASN1Integer</tt> -- Used to hold 32-bit integer values.
+                  <br><br>
+                </li>
+
+                <li>
+                  <tt>ASN1Long</tt> -- Used to hold 64-bit integer values.
+                  <br><br>
+                </li>
+
+                <li>
+                  <tt>ASN1Enumerated</tt> -- Used to hold integer values in which each value has a
+                  particular meaning in the associated context.
+                  <br><br>
+                </li>
+
+                <li>
+                  <tt>ASNSequence</tt> -- Used to hold a collection of other ASN.1 elements in
+                  which the order of the elements should be considered significant.
+                  <br><br>
+                </li>
+
+                <li>
+                  <tt>ASN1Set</tt> -- Used to hold a collection of other ASN.1 elements in which
+                  the order of the elements is not considered significant.
+                  <br><br>
+                </li>
+              </ul>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <div id="footer">
+        Copyright &copy; 2010 &ndash; UnboundID Corp. &ndash; All rights reserved.
+      </div>
+    </div>
+  </body>
+</html>
+

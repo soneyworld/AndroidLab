@@ -1,0 +1,510 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright 2007-2010 UnboundID Corp.<a name="line.2"></a>
+<FONT color="green">003</FONT>     * All Rights Reserved.<a name="line.3"></a>
+<FONT color="green">004</FONT>     */<a name="line.4"></a>
+<FONT color="green">005</FONT>    /*<a name="line.5"></a>
+<FONT color="green">006</FONT>     * Copyright (C) 2008-2010 UnboundID Corp.<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     * This program is free software; you can redistribute it and/or modify<a name="line.8"></a>
+<FONT color="green">009</FONT>     * it under the terms of the GNU General Public License (GPLv2 only)<a name="line.9"></a>
+<FONT color="green">010</FONT>     * or the terms of the GNU Lesser General Public License (LGPLv2.1 only)<a name="line.10"></a>
+<FONT color="green">011</FONT>     * as published by the Free Software Foundation.<a name="line.11"></a>
+<FONT color="green">012</FONT>     *<a name="line.12"></a>
+<FONT color="green">013</FONT>     * This program is distributed in the hope that it will be useful,<a name="line.13"></a>
+<FONT color="green">014</FONT>     * but WITHOUT ANY WARRANTY; without even the implied warranty of<a name="line.14"></a>
+<FONT color="green">015</FONT>     * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the<a name="line.15"></a>
+<FONT color="green">016</FONT>     * GNU General Public License for more details.<a name="line.16"></a>
+<FONT color="green">017</FONT>     *<a name="line.17"></a>
+<FONT color="green">018</FONT>     * You should have received a copy of the GNU General Public License<a name="line.18"></a>
+<FONT color="green">019</FONT>     * along with this program; if not, see &lt;http://www.gnu.org/licenses&gt;.<a name="line.19"></a>
+<FONT color="green">020</FONT>     */<a name="line.20"></a>
+<FONT color="green">021</FONT>    package com.unboundid.ldap.sdk;<a name="line.21"></a>
+<FONT color="green">022</FONT>    <a name="line.22"></a>
+<FONT color="green">023</FONT>    <a name="line.23"></a>
+<FONT color="green">024</FONT>    <a name="line.24"></a>
+<FONT color="green">025</FONT>    import java.util.logging.Level;<a name="line.25"></a>
+<FONT color="green">026</FONT>    import javax.security.auth.callback.Callback;<a name="line.26"></a>
+<FONT color="green">027</FONT>    import javax.security.auth.callback.CallbackHandler;<a name="line.27"></a>
+<FONT color="green">028</FONT>    import javax.security.auth.callback.NameCallback;<a name="line.28"></a>
+<FONT color="green">029</FONT>    import javax.security.auth.callback.PasswordCallback;<a name="line.29"></a>
+<FONT color="green">030</FONT>    import javax.security.sasl.Sasl;<a name="line.30"></a>
+<FONT color="green">031</FONT>    import javax.security.sasl.SaslClient;<a name="line.31"></a>
+<FONT color="green">032</FONT>    <a name="line.32"></a>
+<FONT color="green">033</FONT>    import com.unboundid.asn1.ASN1OctetString;<a name="line.33"></a>
+<FONT color="green">034</FONT>    import com.unboundid.util.DebugType;<a name="line.34"></a>
+<FONT color="green">035</FONT>    import com.unboundid.util.InternalUseOnly;<a name="line.35"></a>
+<FONT color="green">036</FONT>    import com.unboundid.util.NotMutable;<a name="line.36"></a>
+<FONT color="green">037</FONT>    import com.unboundid.util.ThreadSafety;<a name="line.37"></a>
+<FONT color="green">038</FONT>    import com.unboundid.util.ThreadSafetyLevel;<a name="line.38"></a>
+<FONT color="green">039</FONT>    <a name="line.39"></a>
+<FONT color="green">040</FONT>    import static com.unboundid.ldap.sdk.LDAPMessages.*;<a name="line.40"></a>
+<FONT color="green">041</FONT>    import static com.unboundid.util.Debug.*;<a name="line.41"></a>
+<FONT color="green">042</FONT>    import static com.unboundid.util.StaticUtils.*;<a name="line.42"></a>
+<FONT color="green">043</FONT>    import static com.unboundid.util.Validator.*;<a name="line.43"></a>
+<FONT color="green">044</FONT>    <a name="line.44"></a>
+<FONT color="green">045</FONT>    <a name="line.45"></a>
+<FONT color="green">046</FONT>    <a name="line.46"></a>
+<FONT color="green">047</FONT>    /**<a name="line.47"></a>
+<FONT color="green">048</FONT>     * This class provides a SASL CRAM-MD5 bind request implementation as described<a name="line.48"></a>
+<FONT color="green">049</FONT>     * in draft-ietf-sasl-crammd5.  The CRAM-MD5 mechanism can be used to<a name="line.49"></a>
+<FONT color="green">050</FONT>     * authenticate over an insecure channel without exposing the credentials<a name="line.50"></a>
+<FONT color="green">051</FONT>     * (although it requires that the server have access to the clear-text<a name="line.51"></a>
+<FONT color="green">052</FONT>     * password).    It is similar to DIGEST-MD5, but does not provide as many<a name="line.52"></a>
+<FONT color="green">053</FONT>     * options, and provides slightly weaker protection because the client does not<a name="line.53"></a>
+<FONT color="green">054</FONT>     * contribute any of the random data used during bind processing.<a name="line.54"></a>
+<FONT color="green">055</FONT>     * &lt;BR&gt;&lt;BR&gt;<a name="line.55"></a>
+<FONT color="green">056</FONT>     * Elements included in a CRAM-MD5 bind request include:<a name="line.56"></a>
+<FONT color="green">057</FONT>     * &lt;UL&gt;<a name="line.57"></a>
+<FONT color="green">058</FONT>     *   &lt;LI&gt;Authentication ID -- A string which identifies the user that is<a name="line.58"></a>
+<FONT color="green">059</FONT>     *       attempting to authenticate.  It should be an "authzId" value as<a name="line.59"></a>
+<FONT color="green">060</FONT>     *       described in section 5.2.1.8 of<a name="line.60"></a>
+<FONT color="green">061</FONT>     *       &lt;A HREF="http://www.ietf.org/rfc/rfc4513.txt"&gt;RFC 4513&lt;/A&gt;.  That is,<a name="line.61"></a>
+<FONT color="green">062</FONT>     *       it should be either "dn:" followed by the distinguished name of the<a name="line.62"></a>
+<FONT color="green">063</FONT>     *       target user, or "u:" followed by the username.  If the "u:" form is<a name="line.63"></a>
+<FONT color="green">064</FONT>     *       used, then the mechanism used to resolve the provided username to an<a name="line.64"></a>
+<FONT color="green">065</FONT>     *       entry may vary from server to server.&lt;/LI&gt;<a name="line.65"></a>
+<FONT color="green">066</FONT>     *   &lt;LI&gt;Password -- The clear-text password for the target user.&lt;/LI&gt;<a name="line.66"></a>
+<FONT color="green">067</FONT>     * &lt;/UL&gt;<a name="line.67"></a>
+<FONT color="green">068</FONT>     * &lt;H2&gt;Example&lt;/H2&gt;<a name="line.68"></a>
+<FONT color="green">069</FONT>     * The following example demonstrates the process for performing a CRAM-MD5<a name="line.69"></a>
+<FONT color="green">070</FONT>     * bind against a directory server with a username of "john.doe" and a password<a name="line.70"></a>
+<FONT color="green">071</FONT>     * of "password":<a name="line.71"></a>
+<FONT color="green">072</FONT>     * &lt;PRE&gt;<a name="line.72"></a>
+<FONT color="green">073</FONT>     *   CRAMMD5BindRequest bindRequest =<a name="line.73"></a>
+<FONT color="green">074</FONT>     *        new CRAMMD5BindRequest("u:john.doe", "password");<a name="line.74"></a>
+<FONT color="green">075</FONT>     *   try<a name="line.75"></a>
+<FONT color="green">076</FONT>     *   {<a name="line.76"></a>
+<FONT color="green">077</FONT>     *     BindResult bindResult = connection.bind(bindRequest);<a name="line.77"></a>
+<FONT color="green">078</FONT>     *     // If we get here, then the bind was successful.<a name="line.78"></a>
+<FONT color="green">079</FONT>     *   }<a name="line.79"></a>
+<FONT color="green">080</FONT>     *   catch (LDAPException le)<a name="line.80"></a>
+<FONT color="green">081</FONT>     *   {<a name="line.81"></a>
+<FONT color="green">082</FONT>     *     // The bind failed for some reason.<a name="line.82"></a>
+<FONT color="green">083</FONT>     *   }<a name="line.83"></a>
+<FONT color="green">084</FONT>     * &lt;/PRE&gt;<a name="line.84"></a>
+<FONT color="green">085</FONT>     */<a name="line.85"></a>
+<FONT color="green">086</FONT>    @NotMutable()<a name="line.86"></a>
+<FONT color="green">087</FONT>    @ThreadSafety(level=ThreadSafetyLevel.NOT_THREADSAFE)<a name="line.87"></a>
+<FONT color="green">088</FONT>    public final class CRAMMD5BindRequest<a name="line.88"></a>
+<FONT color="green">089</FONT>           extends SASLBindRequest<a name="line.89"></a>
+<FONT color="green">090</FONT>           implements CallbackHandler<a name="line.90"></a>
+<FONT color="green">091</FONT>    {<a name="line.91"></a>
+<FONT color="green">092</FONT>      /**<a name="line.92"></a>
+<FONT color="green">093</FONT>       * The name for the CRAM-MD5 SASL mechanism.<a name="line.93"></a>
+<FONT color="green">094</FONT>       */<a name="line.94"></a>
+<FONT color="green">095</FONT>      public static final String CRAMMD5_MECHANISM_NAME = "CRAM-MD5";<a name="line.95"></a>
+<FONT color="green">096</FONT>    <a name="line.96"></a>
+<FONT color="green">097</FONT>    <a name="line.97"></a>
+<FONT color="green">098</FONT>    <a name="line.98"></a>
+<FONT color="green">099</FONT>      /**<a name="line.99"></a>
+<FONT color="green">100</FONT>       * The serial version UID for this serializable class.<a name="line.100"></a>
+<FONT color="green">101</FONT>       */<a name="line.101"></a>
+<FONT color="green">102</FONT>      private static final long serialVersionUID = -4556570436768136483L;<a name="line.102"></a>
+<FONT color="green">103</FONT>    <a name="line.103"></a>
+<FONT color="green">104</FONT>    <a name="line.104"></a>
+<FONT color="green">105</FONT>    <a name="line.105"></a>
+<FONT color="green">106</FONT>      // The password for this bind request.<a name="line.106"></a>
+<FONT color="green">107</FONT>      private final ASN1OctetString password;<a name="line.107"></a>
+<FONT color="green">108</FONT>    <a name="line.108"></a>
+<FONT color="green">109</FONT>      // The message ID from the last LDAP message sent from this request.<a name="line.109"></a>
+<FONT color="green">110</FONT>      private int messageID = -1;<a name="line.110"></a>
+<FONT color="green">111</FONT>    <a name="line.111"></a>
+<FONT color="green">112</FONT>      // The authentication ID string for this bind request.<a name="line.112"></a>
+<FONT color="green">113</FONT>      private final String authenticationID;<a name="line.113"></a>
+<FONT color="green">114</FONT>    <a name="line.114"></a>
+<FONT color="green">115</FONT>    <a name="line.115"></a>
+<FONT color="green">116</FONT>    <a name="line.116"></a>
+<FONT color="green">117</FONT>      /**<a name="line.117"></a>
+<FONT color="green">118</FONT>       * Creates a new SASL CRAM-MD5 bind request with the provided authentication<a name="line.118"></a>
+<FONT color="green">119</FONT>       * ID and password.  It will not include any controls.<a name="line.119"></a>
+<FONT color="green">120</FONT>       *<a name="line.120"></a>
+<FONT color="green">121</FONT>       * @param  authenticationID  The authentication ID for this bind request.  It<a name="line.121"></a>
+<FONT color="green">122</FONT>       *                           must not be {@code null}.<a name="line.122"></a>
+<FONT color="green">123</FONT>       * @param  password          The password for this bind request.  It must not<a name="line.123"></a>
+<FONT color="green">124</FONT>       *                           be {@code null}.<a name="line.124"></a>
+<FONT color="green">125</FONT>       */<a name="line.125"></a>
+<FONT color="green">126</FONT>      public CRAMMD5BindRequest(final String authenticationID,<a name="line.126"></a>
+<FONT color="green">127</FONT>                                final String password)<a name="line.127"></a>
+<FONT color="green">128</FONT>      {<a name="line.128"></a>
+<FONT color="green">129</FONT>        this(authenticationID, new ASN1OctetString(password), NO_CONTROLS);<a name="line.129"></a>
+<FONT color="green">130</FONT>    <a name="line.130"></a>
+<FONT color="green">131</FONT>        ensureNotNull(password);<a name="line.131"></a>
+<FONT color="green">132</FONT>      }<a name="line.132"></a>
+<FONT color="green">133</FONT>    <a name="line.133"></a>
+<FONT color="green">134</FONT>    <a name="line.134"></a>
+<FONT color="green">135</FONT>    <a name="line.135"></a>
+<FONT color="green">136</FONT>      /**<a name="line.136"></a>
+<FONT color="green">137</FONT>       * Creates a new SASL CRAM-MD5 bind request with the provided authentication<a name="line.137"></a>
+<FONT color="green">138</FONT>       * ID and password.  It will not include any controls.<a name="line.138"></a>
+<FONT color="green">139</FONT>       *<a name="line.139"></a>
+<FONT color="green">140</FONT>       * @param  authenticationID  The authentication ID for this bind request.  It<a name="line.140"></a>
+<FONT color="green">141</FONT>       *                           must not be {@code null}.<a name="line.141"></a>
+<FONT color="green">142</FONT>       * @param  password          The password for this bind request.  It must not<a name="line.142"></a>
+<FONT color="green">143</FONT>       *                           be {@code null}.<a name="line.143"></a>
+<FONT color="green">144</FONT>       */<a name="line.144"></a>
+<FONT color="green">145</FONT>      public CRAMMD5BindRequest(final String authenticationID,<a name="line.145"></a>
+<FONT color="green">146</FONT>                                final byte[] password)<a name="line.146"></a>
+<FONT color="green">147</FONT>      {<a name="line.147"></a>
+<FONT color="green">148</FONT>        this(authenticationID, new ASN1OctetString(password), NO_CONTROLS);<a name="line.148"></a>
+<FONT color="green">149</FONT>    <a name="line.149"></a>
+<FONT color="green">150</FONT>        ensureNotNull(password);<a name="line.150"></a>
+<FONT color="green">151</FONT>      }<a name="line.151"></a>
+<FONT color="green">152</FONT>    <a name="line.152"></a>
+<FONT color="green">153</FONT>    <a name="line.153"></a>
+<FONT color="green">154</FONT>    <a name="line.154"></a>
+<FONT color="green">155</FONT>      /**<a name="line.155"></a>
+<FONT color="green">156</FONT>       * Creates a new SASL CRAM-MD5 bind request with the provided authentication<a name="line.156"></a>
+<FONT color="green">157</FONT>       * ID and password.  It will not include any controls.<a name="line.157"></a>
+<FONT color="green">158</FONT>       *<a name="line.158"></a>
+<FONT color="green">159</FONT>       * @param  authenticationID  The authentication ID for this bind request.  It<a name="line.159"></a>
+<FONT color="green">160</FONT>       *                           must not be {@code null}.<a name="line.160"></a>
+<FONT color="green">161</FONT>       * @param  password          The password for this bind request.  It must not<a name="line.161"></a>
+<FONT color="green">162</FONT>       *                           be {@code null}.<a name="line.162"></a>
+<FONT color="green">163</FONT>       */<a name="line.163"></a>
+<FONT color="green">164</FONT>      public CRAMMD5BindRequest(final String authenticationID,<a name="line.164"></a>
+<FONT color="green">165</FONT>                                final ASN1OctetString password)<a name="line.165"></a>
+<FONT color="green">166</FONT>      {<a name="line.166"></a>
+<FONT color="green">167</FONT>        this(authenticationID, password, NO_CONTROLS);<a name="line.167"></a>
+<FONT color="green">168</FONT>      }<a name="line.168"></a>
+<FONT color="green">169</FONT>    <a name="line.169"></a>
+<FONT color="green">170</FONT>    <a name="line.170"></a>
+<FONT color="green">171</FONT>    <a name="line.171"></a>
+<FONT color="green">172</FONT>      /**<a name="line.172"></a>
+<FONT color="green">173</FONT>       * Creates a new SASL CRAM-MD5 bind request with the provided authentication<a name="line.173"></a>
+<FONT color="green">174</FONT>       * ID, password, and set of controls.<a name="line.174"></a>
+<FONT color="green">175</FONT>       *<a name="line.175"></a>
+<FONT color="green">176</FONT>       * @param  authenticationID  The authentication ID for this bind request.  It<a name="line.176"></a>
+<FONT color="green">177</FONT>       *                           must not be {@code null}.<a name="line.177"></a>
+<FONT color="green">178</FONT>       * @param  password          The password for this bind request.  It must not<a name="line.178"></a>
+<FONT color="green">179</FONT>       *                           be {@code null}.<a name="line.179"></a>
+<FONT color="green">180</FONT>       * @param  controls          The set of controls to include in the request.<a name="line.180"></a>
+<FONT color="green">181</FONT>       */<a name="line.181"></a>
+<FONT color="green">182</FONT>      public CRAMMD5BindRequest(final String authenticationID,<a name="line.182"></a>
+<FONT color="green">183</FONT>                                final String password, final Control... controls)<a name="line.183"></a>
+<FONT color="green">184</FONT>      {<a name="line.184"></a>
+<FONT color="green">185</FONT>        this(authenticationID, new ASN1OctetString(password), controls);<a name="line.185"></a>
+<FONT color="green">186</FONT>    <a name="line.186"></a>
+<FONT color="green">187</FONT>        ensureNotNull(password);<a name="line.187"></a>
+<FONT color="green">188</FONT>      }<a name="line.188"></a>
+<FONT color="green">189</FONT>    <a name="line.189"></a>
+<FONT color="green">190</FONT>    <a name="line.190"></a>
+<FONT color="green">191</FONT>    <a name="line.191"></a>
+<FONT color="green">192</FONT>      /**<a name="line.192"></a>
+<FONT color="green">193</FONT>       * Creates a new SASL CRAM-MD5 bind request with the provided authentication<a name="line.193"></a>
+<FONT color="green">194</FONT>       * ID, password, and set of controls.<a name="line.194"></a>
+<FONT color="green">195</FONT>       *<a name="line.195"></a>
+<FONT color="green">196</FONT>       * @param  authenticationID  The authentication ID for this bind request.  It<a name="line.196"></a>
+<FONT color="green">197</FONT>       *                           must not be {@code null}.<a name="line.197"></a>
+<FONT color="green">198</FONT>       * @param  password          The password for this bind request.  It must not<a name="line.198"></a>
+<FONT color="green">199</FONT>       *                           be {@code null}.<a name="line.199"></a>
+<FONT color="green">200</FONT>       * @param  controls          The set of controls to include in the request.<a name="line.200"></a>
+<FONT color="green">201</FONT>       */<a name="line.201"></a>
+<FONT color="green">202</FONT>      public CRAMMD5BindRequest(final String authenticationID,<a name="line.202"></a>
+<FONT color="green">203</FONT>                                final byte[] password, final Control... controls)<a name="line.203"></a>
+<FONT color="green">204</FONT>      {<a name="line.204"></a>
+<FONT color="green">205</FONT>        this(authenticationID, new ASN1OctetString(password), controls);<a name="line.205"></a>
+<FONT color="green">206</FONT>    <a name="line.206"></a>
+<FONT color="green">207</FONT>        ensureNotNull(password);<a name="line.207"></a>
+<FONT color="green">208</FONT>      }<a name="line.208"></a>
+<FONT color="green">209</FONT>    <a name="line.209"></a>
+<FONT color="green">210</FONT>    <a name="line.210"></a>
+<FONT color="green">211</FONT>    <a name="line.211"></a>
+<FONT color="green">212</FONT>      /**<a name="line.212"></a>
+<FONT color="green">213</FONT>       * Creates a new SASL CRAM-MD5 bind request with the provided authentication<a name="line.213"></a>
+<FONT color="green">214</FONT>       * ID, password, and set of controls.<a name="line.214"></a>
+<FONT color="green">215</FONT>       *<a name="line.215"></a>
+<FONT color="green">216</FONT>       * @param  authenticationID  The authentication ID for this bind request.  It<a name="line.216"></a>
+<FONT color="green">217</FONT>       *                           must not be {@code null}.<a name="line.217"></a>
+<FONT color="green">218</FONT>       * @param  password          The password for this bind request.  It must not<a name="line.218"></a>
+<FONT color="green">219</FONT>       *                           be {@code null}.<a name="line.219"></a>
+<FONT color="green">220</FONT>       * @param  controls          The set of controls to include in the request.<a name="line.220"></a>
+<FONT color="green">221</FONT>       */<a name="line.221"></a>
+<FONT color="green">222</FONT>      public CRAMMD5BindRequest(final String authenticationID,<a name="line.222"></a>
+<FONT color="green">223</FONT>                                final ASN1OctetString password,<a name="line.223"></a>
+<FONT color="green">224</FONT>                                final Control... controls)<a name="line.224"></a>
+<FONT color="green">225</FONT>      {<a name="line.225"></a>
+<FONT color="green">226</FONT>        super(controls);<a name="line.226"></a>
+<FONT color="green">227</FONT>    <a name="line.227"></a>
+<FONT color="green">228</FONT>        ensureNotNull(authenticationID, password);<a name="line.228"></a>
+<FONT color="green">229</FONT>    <a name="line.229"></a>
+<FONT color="green">230</FONT>        this.authenticationID = authenticationID;<a name="line.230"></a>
+<FONT color="green">231</FONT>        this.password         = password;<a name="line.231"></a>
+<FONT color="green">232</FONT>      }<a name="line.232"></a>
+<FONT color="green">233</FONT>    <a name="line.233"></a>
+<FONT color="green">234</FONT>    <a name="line.234"></a>
+<FONT color="green">235</FONT>    <a name="line.235"></a>
+<FONT color="green">236</FONT>      /**<a name="line.236"></a>
+<FONT color="green">237</FONT>       * {@inheritDoc}<a name="line.237"></a>
+<FONT color="green">238</FONT>       */<a name="line.238"></a>
+<FONT color="green">239</FONT>      @Override()<a name="line.239"></a>
+<FONT color="green">240</FONT>      public String getSASLMechanismName()<a name="line.240"></a>
+<FONT color="green">241</FONT>      {<a name="line.241"></a>
+<FONT color="green">242</FONT>        return CRAMMD5_MECHANISM_NAME;<a name="line.242"></a>
+<FONT color="green">243</FONT>      }<a name="line.243"></a>
+<FONT color="green">244</FONT>    <a name="line.244"></a>
+<FONT color="green">245</FONT>    <a name="line.245"></a>
+<FONT color="green">246</FONT>    <a name="line.246"></a>
+<FONT color="green">247</FONT>      /**<a name="line.247"></a>
+<FONT color="green">248</FONT>       * Retrieves the authentication ID for this bind request.<a name="line.248"></a>
+<FONT color="green">249</FONT>       *<a name="line.249"></a>
+<FONT color="green">250</FONT>       * @return  The authentication ID for this bind request.<a name="line.250"></a>
+<FONT color="green">251</FONT>       */<a name="line.251"></a>
+<FONT color="green">252</FONT>      public String getAuthenticationID()<a name="line.252"></a>
+<FONT color="green">253</FONT>      {<a name="line.253"></a>
+<FONT color="green">254</FONT>        return authenticationID;<a name="line.254"></a>
+<FONT color="green">255</FONT>      }<a name="line.255"></a>
+<FONT color="green">256</FONT>    <a name="line.256"></a>
+<FONT color="green">257</FONT>    <a name="line.257"></a>
+<FONT color="green">258</FONT>    <a name="line.258"></a>
+<FONT color="green">259</FONT>      /**<a name="line.259"></a>
+<FONT color="green">260</FONT>       * Retrieves the string representation of the password for this bind request.<a name="line.260"></a>
+<FONT color="green">261</FONT>       *<a name="line.261"></a>
+<FONT color="green">262</FONT>       * @return  The string representation of the password for this bind request.<a name="line.262"></a>
+<FONT color="green">263</FONT>       */<a name="line.263"></a>
+<FONT color="green">264</FONT>      public String getPasswordString()<a name="line.264"></a>
+<FONT color="green">265</FONT>      {<a name="line.265"></a>
+<FONT color="green">266</FONT>        return password.stringValue();<a name="line.266"></a>
+<FONT color="green">267</FONT>      }<a name="line.267"></a>
+<FONT color="green">268</FONT>    <a name="line.268"></a>
+<FONT color="green">269</FONT>    <a name="line.269"></a>
+<FONT color="green">270</FONT>    <a name="line.270"></a>
+<FONT color="green">271</FONT>      /**<a name="line.271"></a>
+<FONT color="green">272</FONT>       * Retrieves the bytes that comprise the the password for this bind request.<a name="line.272"></a>
+<FONT color="green">273</FONT>       *<a name="line.273"></a>
+<FONT color="green">274</FONT>       * @return  The bytes that comprise the password for this bind request.<a name="line.274"></a>
+<FONT color="green">275</FONT>       */<a name="line.275"></a>
+<FONT color="green">276</FONT>      public byte[] getPasswordBytes()<a name="line.276"></a>
+<FONT color="green">277</FONT>      {<a name="line.277"></a>
+<FONT color="green">278</FONT>        return password.getValue();<a name="line.278"></a>
+<FONT color="green">279</FONT>      }<a name="line.279"></a>
+<FONT color="green">280</FONT>    <a name="line.280"></a>
+<FONT color="green">281</FONT>    <a name="line.281"></a>
+<FONT color="green">282</FONT>    <a name="line.282"></a>
+<FONT color="green">283</FONT>      /**<a name="line.283"></a>
+<FONT color="green">284</FONT>       * Sends this bind request to the target server over the provided connection<a name="line.284"></a>
+<FONT color="green">285</FONT>       * and returns the corresponding response.<a name="line.285"></a>
+<FONT color="green">286</FONT>       *<a name="line.286"></a>
+<FONT color="green">287</FONT>       * @param  connection  The connection to use to send this bind request to the<a name="line.287"></a>
+<FONT color="green">288</FONT>       *                     server and read the associated response.<a name="line.288"></a>
+<FONT color="green">289</FONT>       * @param  depth       The current referral depth for this request.  It should<a name="line.289"></a>
+<FONT color="green">290</FONT>       *                     always be one for the initial request, and should only<a name="line.290"></a>
+<FONT color="green">291</FONT>       *                     be incremented when following referrals.<a name="line.291"></a>
+<FONT color="green">292</FONT>       *<a name="line.292"></a>
+<FONT color="green">293</FONT>       * @return  The bind response read from the server.<a name="line.293"></a>
+<FONT color="green">294</FONT>       *<a name="line.294"></a>
+<FONT color="green">295</FONT>       * @throws  LDAPException  If a problem occurs while sending the request or<a name="line.295"></a>
+<FONT color="green">296</FONT>       *                         reading the response.<a name="line.296"></a>
+<FONT color="green">297</FONT>       */<a name="line.297"></a>
+<FONT color="green">298</FONT>      @Override()<a name="line.298"></a>
+<FONT color="green">299</FONT>      protected BindResult process(final LDAPConnection connection, final int depth)<a name="line.299"></a>
+<FONT color="green">300</FONT>                throws LDAPException<a name="line.300"></a>
+<FONT color="green">301</FONT>      {<a name="line.301"></a>
+<FONT color="green">302</FONT>        final SaslClient saslClient;<a name="line.302"></a>
+<FONT color="green">303</FONT>        final String[] mechanisms = { CRAMMD5_MECHANISM_NAME };<a name="line.303"></a>
+<FONT color="green">304</FONT>    <a name="line.304"></a>
+<FONT color="green">305</FONT>        try<a name="line.305"></a>
+<FONT color="green">306</FONT>        {<a name="line.306"></a>
+<FONT color="green">307</FONT>          saslClient = Sasl.createSaslClient(mechanisms, null, "ldap",<a name="line.307"></a>
+<FONT color="green">308</FONT>                                             connection.getConnectedAddress(), null,<a name="line.308"></a>
+<FONT color="green">309</FONT>                                             this);<a name="line.309"></a>
+<FONT color="green">310</FONT>        }<a name="line.310"></a>
+<FONT color="green">311</FONT>        catch (Exception e)<a name="line.311"></a>
+<FONT color="green">312</FONT>        {<a name="line.312"></a>
+<FONT color="green">313</FONT>          debugException(e);<a name="line.313"></a>
+<FONT color="green">314</FONT>          throw new LDAPException(ResultCode.LOCAL_ERROR,<a name="line.314"></a>
+<FONT color="green">315</FONT>               ERR_CRAMMD5_CANNOT_CREATE_SASL_CLIENT.get(getExceptionMessage(e)),<a name="line.315"></a>
+<FONT color="green">316</FONT>               e);<a name="line.316"></a>
+<FONT color="green">317</FONT>        }<a name="line.317"></a>
+<FONT color="green">318</FONT>    <a name="line.318"></a>
+<FONT color="green">319</FONT>        final SASLHelper helper = new SASLHelper(this, connection,<a name="line.319"></a>
+<FONT color="green">320</FONT>             CRAMMD5_MECHANISM_NAME, saslClient, getControls(),<a name="line.320"></a>
+<FONT color="green">321</FONT>             getResponseTimeoutMillis(connection));<a name="line.321"></a>
+<FONT color="green">322</FONT>    <a name="line.322"></a>
+<FONT color="green">323</FONT>        try<a name="line.323"></a>
+<FONT color="green">324</FONT>        {<a name="line.324"></a>
+<FONT color="green">325</FONT>          return helper.processSASLBind();<a name="line.325"></a>
+<FONT color="green">326</FONT>        }<a name="line.326"></a>
+<FONT color="green">327</FONT>        finally<a name="line.327"></a>
+<FONT color="green">328</FONT>        {<a name="line.328"></a>
+<FONT color="green">329</FONT>          messageID = helper.getMessageID();<a name="line.329"></a>
+<FONT color="green">330</FONT>        }<a name="line.330"></a>
+<FONT color="green">331</FONT>      }<a name="line.331"></a>
+<FONT color="green">332</FONT>    <a name="line.332"></a>
+<FONT color="green">333</FONT>    <a name="line.333"></a>
+<FONT color="green">334</FONT>    <a name="line.334"></a>
+<FONT color="green">335</FONT>      /**<a name="line.335"></a>
+<FONT color="green">336</FONT>       * {@inheritDoc}<a name="line.336"></a>
+<FONT color="green">337</FONT>       */<a name="line.337"></a>
+<FONT color="green">338</FONT>      @Override()<a name="line.338"></a>
+<FONT color="green">339</FONT>      public CRAMMD5BindRequest getRebindRequest(final String host, final int port)<a name="line.339"></a>
+<FONT color="green">340</FONT>      {<a name="line.340"></a>
+<FONT color="green">341</FONT>        return new CRAMMD5BindRequest(authenticationID, password, getControls());<a name="line.341"></a>
+<FONT color="green">342</FONT>      }<a name="line.342"></a>
+<FONT color="green">343</FONT>    <a name="line.343"></a>
+<FONT color="green">344</FONT>    <a name="line.344"></a>
+<FONT color="green">345</FONT>    <a name="line.345"></a>
+<FONT color="green">346</FONT>      /**<a name="line.346"></a>
+<FONT color="green">347</FONT>       * Handles any necessary callbacks required for SASL authentication.<a name="line.347"></a>
+<FONT color="green">348</FONT>       *<a name="line.348"></a>
+<FONT color="green">349</FONT>       * @param  callbacks  The set of callbacks to be handled.<a name="line.349"></a>
+<FONT color="green">350</FONT>       */<a name="line.350"></a>
+<FONT color="green">351</FONT>      @InternalUseOnly()<a name="line.351"></a>
+<FONT color="green">352</FONT>      public void handle(final Callback[] callbacks)<a name="line.352"></a>
+<FONT color="green">353</FONT>      {<a name="line.353"></a>
+<FONT color="green">354</FONT>        for (final Callback callback : callbacks)<a name="line.354"></a>
+<FONT color="green">355</FONT>        {<a name="line.355"></a>
+<FONT color="green">356</FONT>          if (callback instanceof NameCallback)<a name="line.356"></a>
+<FONT color="green">357</FONT>          {<a name="line.357"></a>
+<FONT color="green">358</FONT>            ((NameCallback) callback).setName(authenticationID);<a name="line.358"></a>
+<FONT color="green">359</FONT>          }<a name="line.359"></a>
+<FONT color="green">360</FONT>          else if (callback instanceof PasswordCallback)<a name="line.360"></a>
+<FONT color="green">361</FONT>          {<a name="line.361"></a>
+<FONT color="green">362</FONT>            ((PasswordCallback) callback).setPassword(<a name="line.362"></a>
+<FONT color="green">363</FONT>                 password.stringValue().toCharArray());<a name="line.363"></a>
+<FONT color="green">364</FONT>          }<a name="line.364"></a>
+<FONT color="green">365</FONT>          else<a name="line.365"></a>
+<FONT color="green">366</FONT>          {<a name="line.366"></a>
+<FONT color="green">367</FONT>            // This is an unexpected callback.<a name="line.367"></a>
+<FONT color="green">368</FONT>            if (debugEnabled(DebugType.LDAP))<a name="line.368"></a>
+<FONT color="green">369</FONT>            {<a name="line.369"></a>
+<FONT color="green">370</FONT>              debug(Level.WARNING, DebugType.LDAP,<a name="line.370"></a>
+<FONT color="green">371</FONT>                    "Unexpected CRAM-MD5 SASL callback of type " +<a name="line.371"></a>
+<FONT color="green">372</FONT>                    callback.getClass().getName());<a name="line.372"></a>
+<FONT color="green">373</FONT>            }<a name="line.373"></a>
+<FONT color="green">374</FONT>          }<a name="line.374"></a>
+<FONT color="green">375</FONT>        }<a name="line.375"></a>
+<FONT color="green">376</FONT>      }<a name="line.376"></a>
+<FONT color="green">377</FONT>    <a name="line.377"></a>
+<FONT color="green">378</FONT>    <a name="line.378"></a>
+<FONT color="green">379</FONT>    <a name="line.379"></a>
+<FONT color="green">380</FONT>      /**<a name="line.380"></a>
+<FONT color="green">381</FONT>       * {@inheritDoc}<a name="line.381"></a>
+<FONT color="green">382</FONT>       */<a name="line.382"></a>
+<FONT color="green">383</FONT>      @Override()<a name="line.383"></a>
+<FONT color="green">384</FONT>      public int getLastMessageID()<a name="line.384"></a>
+<FONT color="green">385</FONT>      {<a name="line.385"></a>
+<FONT color="green">386</FONT>        return messageID;<a name="line.386"></a>
+<FONT color="green">387</FONT>      }<a name="line.387"></a>
+<FONT color="green">388</FONT>    <a name="line.388"></a>
+<FONT color="green">389</FONT>    <a name="line.389"></a>
+<FONT color="green">390</FONT>    <a name="line.390"></a>
+<FONT color="green">391</FONT>      /**<a name="line.391"></a>
+<FONT color="green">392</FONT>       * {@inheritDoc}<a name="line.392"></a>
+<FONT color="green">393</FONT>       */<a name="line.393"></a>
+<FONT color="green">394</FONT>      @Override()<a name="line.394"></a>
+<FONT color="green">395</FONT>      public CRAMMD5BindRequest duplicate()<a name="line.395"></a>
+<FONT color="green">396</FONT>      {<a name="line.396"></a>
+<FONT color="green">397</FONT>        return duplicate(getControls());<a name="line.397"></a>
+<FONT color="green">398</FONT>      }<a name="line.398"></a>
+<FONT color="green">399</FONT>    <a name="line.399"></a>
+<FONT color="green">400</FONT>    <a name="line.400"></a>
+<FONT color="green">401</FONT>    <a name="line.401"></a>
+<FONT color="green">402</FONT>      /**<a name="line.402"></a>
+<FONT color="green">403</FONT>       * {@inheritDoc}<a name="line.403"></a>
+<FONT color="green">404</FONT>       */<a name="line.404"></a>
+<FONT color="green">405</FONT>      @Override()<a name="line.405"></a>
+<FONT color="green">406</FONT>      public CRAMMD5BindRequest duplicate(final Control[] controls)<a name="line.406"></a>
+<FONT color="green">407</FONT>      {<a name="line.407"></a>
+<FONT color="green">408</FONT>        final CRAMMD5BindRequest bindRequest =<a name="line.408"></a>
+<FONT color="green">409</FONT>             new CRAMMD5BindRequest(authenticationID, password, controls);<a name="line.409"></a>
+<FONT color="green">410</FONT>        bindRequest.setResponseTimeoutMillis(getResponseTimeoutMillis(null));<a name="line.410"></a>
+<FONT color="green">411</FONT>        return bindRequest;<a name="line.411"></a>
+<FONT color="green">412</FONT>      }<a name="line.412"></a>
+<FONT color="green">413</FONT>    <a name="line.413"></a>
+<FONT color="green">414</FONT>    <a name="line.414"></a>
+<FONT color="green">415</FONT>    <a name="line.415"></a>
+<FONT color="green">416</FONT>      /**<a name="line.416"></a>
+<FONT color="green">417</FONT>       * {@inheritDoc}<a name="line.417"></a>
+<FONT color="green">418</FONT>       */<a name="line.418"></a>
+<FONT color="green">419</FONT>      @Override()<a name="line.419"></a>
+<FONT color="green">420</FONT>      public void toString(final StringBuilder buffer)<a name="line.420"></a>
+<FONT color="green">421</FONT>      {<a name="line.421"></a>
+<FONT color="green">422</FONT>        buffer.append("CRAMMD5BindRequest(authenticationID='");<a name="line.422"></a>
+<FONT color="green">423</FONT>        buffer.append(authenticationID);<a name="line.423"></a>
+<FONT color="green">424</FONT>        buffer.append('\'');<a name="line.424"></a>
+<FONT color="green">425</FONT>    <a name="line.425"></a>
+<FONT color="green">426</FONT>        final Control[] controls = getControls();<a name="line.426"></a>
+<FONT color="green">427</FONT>        if (controls.length &gt; 0)<a name="line.427"></a>
+<FONT color="green">428</FONT>        {<a name="line.428"></a>
+<FONT color="green">429</FONT>          buffer.append(", controls={");<a name="line.429"></a>
+<FONT color="green">430</FONT>          for (int i=0; i &lt; controls.length; i++)<a name="line.430"></a>
+<FONT color="green">431</FONT>          {<a name="line.431"></a>
+<FONT color="green">432</FONT>            if (i &gt; 0)<a name="line.432"></a>
+<FONT color="green">433</FONT>            {<a name="line.433"></a>
+<FONT color="green">434</FONT>              buffer.append(", ");<a name="line.434"></a>
+<FONT color="green">435</FONT>            }<a name="line.435"></a>
+<FONT color="green">436</FONT>    <a name="line.436"></a>
+<FONT color="green">437</FONT>            buffer.append(controls[i]);<a name="line.437"></a>
+<FONT color="green">438</FONT>          }<a name="line.438"></a>
+<FONT color="green">439</FONT>          buffer.append('}');<a name="line.439"></a>
+<FONT color="green">440</FONT>        }<a name="line.440"></a>
+<FONT color="green">441</FONT>    <a name="line.441"></a>
+<FONT color="green">442</FONT>        buffer.append(')');<a name="line.442"></a>
+<FONT color="green">443</FONT>      }<a name="line.443"></a>
+<FONT color="green">444</FONT>    }<a name="line.444"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

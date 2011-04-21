@@ -1,0 +1,2268 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright 2007-2010 UnboundID Corp.<a name="line.2"></a>
+<FONT color="green">003</FONT>     * All Rights Reserved.<a name="line.3"></a>
+<FONT color="green">004</FONT>     */<a name="line.4"></a>
+<FONT color="green">005</FONT>    /*<a name="line.5"></a>
+<FONT color="green">006</FONT>     * Copyright (C) 2008-2010 UnboundID Corp.<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     * This program is free software; you can redistribute it and/or modify<a name="line.8"></a>
+<FONT color="green">009</FONT>     * it under the terms of the GNU General Public License (GPLv2 only)<a name="line.9"></a>
+<FONT color="green">010</FONT>     * or the terms of the GNU Lesser General Public License (LGPLv2.1 only)<a name="line.10"></a>
+<FONT color="green">011</FONT>     * as published by the Free Software Foundation.<a name="line.11"></a>
+<FONT color="green">012</FONT>     *<a name="line.12"></a>
+<FONT color="green">013</FONT>     * This program is distributed in the hope that it will be useful,<a name="line.13"></a>
+<FONT color="green">014</FONT>     * but WITHOUT ANY WARRANTY; without even the implied warranty of<a name="line.14"></a>
+<FONT color="green">015</FONT>     * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the<a name="line.15"></a>
+<FONT color="green">016</FONT>     * GNU General Public License for more details.<a name="line.16"></a>
+<FONT color="green">017</FONT>     *<a name="line.17"></a>
+<FONT color="green">018</FONT>     * You should have received a copy of the GNU General Public License<a name="line.18"></a>
+<FONT color="green">019</FONT>     * along with this program; if not, see &lt;http://www.gnu.org/licenses&gt;.<a name="line.19"></a>
+<FONT color="green">020</FONT>     */<a name="line.20"></a>
+<FONT color="green">021</FONT>    package com.unboundid.ldap.sdk;<a name="line.21"></a>
+<FONT color="green">022</FONT>    <a name="line.22"></a>
+<FONT color="green">023</FONT>    <a name="line.23"></a>
+<FONT color="green">024</FONT>    <a name="line.24"></a>
+<FONT color="green">025</FONT>    import java.math.BigInteger;<a name="line.25"></a>
+<FONT color="green">026</FONT>    import java.util.ArrayList;<a name="line.26"></a>
+<FONT color="green">027</FONT>    import java.util.Arrays;<a name="line.27"></a>
+<FONT color="green">028</FONT>    import java.util.Collection;<a name="line.28"></a>
+<FONT color="green">029</FONT>    import java.util.Collections;<a name="line.29"></a>
+<FONT color="green">030</FONT>    import java.util.Date;<a name="line.30"></a>
+<FONT color="green">031</FONT>    import java.util.HashSet;<a name="line.31"></a>
+<FONT color="green">032</FONT>    import java.util.Iterator;<a name="line.32"></a>
+<FONT color="green">033</FONT>    import java.util.LinkedHashMap;<a name="line.33"></a>
+<FONT color="green">034</FONT>    import java.util.List;<a name="line.34"></a>
+<FONT color="green">035</FONT>    import java.util.Map;<a name="line.35"></a>
+<FONT color="green">036</FONT>    import java.util.Set;<a name="line.36"></a>
+<FONT color="green">037</FONT>    <a name="line.37"></a>
+<FONT color="green">038</FONT>    import com.unboundid.asn1.ASN1OctetString;<a name="line.38"></a>
+<FONT color="green">039</FONT>    import com.unboundid.ldap.matchingrules.MatchingRule;<a name="line.39"></a>
+<FONT color="green">040</FONT>    import com.unboundid.ldif.LDIFException;<a name="line.40"></a>
+<FONT color="green">041</FONT>    import com.unboundid.ldif.LDIFReader;<a name="line.41"></a>
+<FONT color="green">042</FONT>    import com.unboundid.ldif.LDIFRecord;<a name="line.42"></a>
+<FONT color="green">043</FONT>    import com.unboundid.ldif.LDIFWriter;<a name="line.43"></a>
+<FONT color="green">044</FONT>    import com.unboundid.util.ByteStringBuffer;<a name="line.44"></a>
+<FONT color="green">045</FONT>    import com.unboundid.util.Mutable;<a name="line.45"></a>
+<FONT color="green">046</FONT>    import com.unboundid.util.NotExtensible;<a name="line.46"></a>
+<FONT color="green">047</FONT>    import com.unboundid.util.ThreadSafety;<a name="line.47"></a>
+<FONT color="green">048</FONT>    import com.unboundid.util.ThreadSafetyLevel;<a name="line.48"></a>
+<FONT color="green">049</FONT>    <a name="line.49"></a>
+<FONT color="green">050</FONT>    import static com.unboundid.ldap.sdk.LDAPMessages.*;<a name="line.50"></a>
+<FONT color="green">051</FONT>    import static com.unboundid.util.Debug.*;<a name="line.51"></a>
+<FONT color="green">052</FONT>    import static com.unboundid.util.StaticUtils.*;<a name="line.52"></a>
+<FONT color="green">053</FONT>    import static com.unboundid.util.Validator.*;<a name="line.53"></a>
+<FONT color="green">054</FONT>    <a name="line.54"></a>
+<FONT color="green">055</FONT>    <a name="line.55"></a>
+<FONT color="green">056</FONT>    <a name="line.56"></a>
+<FONT color="green">057</FONT>    /**<a name="line.57"></a>
+<FONT color="green">058</FONT>     * This class provides a data structure for holding information about an LDAP<a name="line.58"></a>
+<FONT color="green">059</FONT>     * entry.  An entry contains a distinguished name (DN) and a set of attributes.<a name="line.59"></a>
+<FONT color="green">060</FONT>     * An entry can be created from these components, and it can also be created<a name="line.60"></a>
+<FONT color="green">061</FONT>     * from its LDIF representation as described in<a name="line.61"></a>
+<FONT color="green">062</FONT>     * &lt;A HREF="http://www.ietf.org/rfc/rfc2849.txt"&gt;RFC 2849&lt;/A&gt;.  For example:<a name="line.62"></a>
+<FONT color="green">063</FONT>     * &lt;BR&gt;&lt;BR&gt;<a name="line.63"></a>
+<FONT color="green">064</FONT>     * &lt;PRE&gt;<a name="line.64"></a>
+<FONT color="green">065</FONT>     *   Entry entry = new Entry(<a name="line.65"></a>
+<FONT color="green">066</FONT>     *     "dn: dc=example,dc=com",<a name="line.66"></a>
+<FONT color="green">067</FONT>     *     "objectClass: top",<a name="line.67"></a>
+<FONT color="green">068</FONT>     *     "objectClass: domain",<a name="line.68"></a>
+<FONT color="green">069</FONT>     *     "dc: example");<a name="line.69"></a>
+<FONT color="green">070</FONT>     * &lt;/PRE&gt;<a name="line.70"></a>
+<FONT color="green">071</FONT>     * &lt;BR&gt;&lt;BR&gt;<a name="line.71"></a>
+<FONT color="green">072</FONT>     * This class also provides methods for retrieving the LDIF representation of<a name="line.72"></a>
+<FONT color="green">073</FONT>     * an entry, either as a single string or as an array of strings that make up<a name="line.73"></a>
+<FONT color="green">074</FONT>     * the LDIF lines.<a name="line.74"></a>
+<FONT color="green">075</FONT>     * &lt;BR&gt;&lt;BR&gt;<a name="line.75"></a>
+<FONT color="green">076</FONT>     * The {@link Entry#diff} method may be used to obtain the set of differences<a name="line.76"></a>
+<FONT color="green">077</FONT>     * between two entries, and to retrieve a list of {@link Modification} objects<a name="line.77"></a>
+<FONT color="green">078</FONT>     * that can be used to modify one entry so that it contains the same set of<a name="line.78"></a>
+<FONT color="green">079</FONT>     * data as another.  The {@link Entry#applyModifications} method may be used to<a name="line.79"></a>
+<FONT color="green">080</FONT>     * apply a set of modifications to an entry.<a name="line.80"></a>
+<FONT color="green">081</FONT>     * &lt;BR&gt;&lt;BR&gt;<a name="line.81"></a>
+<FONT color="green">082</FONT>     * Entry objects are mutable, and the DN, set of attributes, and individual<a name="line.82"></a>
+<FONT color="green">083</FONT>     * attribute values can be altered.<a name="line.83"></a>
+<FONT color="green">084</FONT>     */<a name="line.84"></a>
+<FONT color="green">085</FONT>    @Mutable()<a name="line.85"></a>
+<FONT color="green">086</FONT>    @NotExtensible()<a name="line.86"></a>
+<FONT color="green">087</FONT>    @ThreadSafety(level=ThreadSafetyLevel.NOT_THREADSAFE)<a name="line.87"></a>
+<FONT color="green">088</FONT>    public class Entry<a name="line.88"></a>
+<FONT color="green">089</FONT>           implements LDIFRecord<a name="line.89"></a>
+<FONT color="green">090</FONT>    {<a name="line.90"></a>
+<FONT color="green">091</FONT>      /**<a name="line.91"></a>
+<FONT color="green">092</FONT>       * The serial version UID for this serializable class.<a name="line.92"></a>
+<FONT color="green">093</FONT>       */<a name="line.93"></a>
+<FONT color="green">094</FONT>      private static final long serialVersionUID = -4438809025903729197L;<a name="line.94"></a>
+<FONT color="green">095</FONT>    <a name="line.95"></a>
+<FONT color="green">096</FONT>    <a name="line.96"></a>
+<FONT color="green">097</FONT>    <a name="line.97"></a>
+<FONT color="green">098</FONT>      // The parsed DN for this entry.<a name="line.98"></a>
+<FONT color="green">099</FONT>      private volatile DN parsedDN;<a name="line.99"></a>
+<FONT color="green">100</FONT>    <a name="line.100"></a>
+<FONT color="green">101</FONT>      // The set of attributes for this entry.<a name="line.101"></a>
+<FONT color="green">102</FONT>      private final LinkedHashMap&lt;String,Attribute&gt; attributes;<a name="line.102"></a>
+<FONT color="green">103</FONT>    <a name="line.103"></a>
+<FONT color="green">104</FONT>      // The DN for this entry.<a name="line.104"></a>
+<FONT color="green">105</FONT>      private String dn;<a name="line.105"></a>
+<FONT color="green">106</FONT>    <a name="line.106"></a>
+<FONT color="green">107</FONT>    <a name="line.107"></a>
+<FONT color="green">108</FONT>    <a name="line.108"></a>
+<FONT color="green">109</FONT>      /**<a name="line.109"></a>
+<FONT color="green">110</FONT>       * Creates a new entry with the provided DN and no attributes.<a name="line.110"></a>
+<FONT color="green">111</FONT>       *<a name="line.111"></a>
+<FONT color="green">112</FONT>       * @param  dn  The DN for this entry.  It must not be {@code null}.<a name="line.112"></a>
+<FONT color="green">113</FONT>       */<a name="line.113"></a>
+<FONT color="green">114</FONT>      public Entry(final String dn)<a name="line.114"></a>
+<FONT color="green">115</FONT>      {<a name="line.115"></a>
+<FONT color="green">116</FONT>        ensureNotNull(dn);<a name="line.116"></a>
+<FONT color="green">117</FONT>    <a name="line.117"></a>
+<FONT color="green">118</FONT>        this.dn = dn;<a name="line.118"></a>
+<FONT color="green">119</FONT>    <a name="line.119"></a>
+<FONT color="green">120</FONT>        attributes = new LinkedHashMap&lt;String,Attribute&gt;();<a name="line.120"></a>
+<FONT color="green">121</FONT>      }<a name="line.121"></a>
+<FONT color="green">122</FONT>    <a name="line.122"></a>
+<FONT color="green">123</FONT>    <a name="line.123"></a>
+<FONT color="green">124</FONT>    <a name="line.124"></a>
+<FONT color="green">125</FONT>      /**<a name="line.125"></a>
+<FONT color="green">126</FONT>       * Creates a new entry with the provided DN and no attributes.<a name="line.126"></a>
+<FONT color="green">127</FONT>       *<a name="line.127"></a>
+<FONT color="green">128</FONT>       * @param  dn  The DN for this entry.  It must not be {@code null}.<a name="line.128"></a>
+<FONT color="green">129</FONT>       */<a name="line.129"></a>
+<FONT color="green">130</FONT>      public Entry(final DN dn)<a name="line.130"></a>
+<FONT color="green">131</FONT>      {<a name="line.131"></a>
+<FONT color="green">132</FONT>        ensureNotNull(dn);<a name="line.132"></a>
+<FONT color="green">133</FONT>    <a name="line.133"></a>
+<FONT color="green">134</FONT>        parsedDN = dn;<a name="line.134"></a>
+<FONT color="green">135</FONT>        this.dn  = parsedDN.toString();<a name="line.135"></a>
+<FONT color="green">136</FONT>    <a name="line.136"></a>
+<FONT color="green">137</FONT>        attributes = new LinkedHashMap&lt;String,Attribute&gt;();<a name="line.137"></a>
+<FONT color="green">138</FONT>      }<a name="line.138"></a>
+<FONT color="green">139</FONT>    <a name="line.139"></a>
+<FONT color="green">140</FONT>    <a name="line.140"></a>
+<FONT color="green">141</FONT>    <a name="line.141"></a>
+<FONT color="green">142</FONT>      /**<a name="line.142"></a>
+<FONT color="green">143</FONT>       * Creates a new entry with the provided DN and set of attributes.<a name="line.143"></a>
+<FONT color="green">144</FONT>       *<a name="line.144"></a>
+<FONT color="green">145</FONT>       * @param  dn          The DN for this entry.  It must not be {@code null}.<a name="line.145"></a>
+<FONT color="green">146</FONT>       * @param  attributes  The set of attributes for this entry.  It must not be<a name="line.146"></a>
+<FONT color="green">147</FONT>       *                     {@code null}.<a name="line.147"></a>
+<FONT color="green">148</FONT>       */<a name="line.148"></a>
+<FONT color="green">149</FONT>      public Entry(final String dn, final Attribute... attributes)<a name="line.149"></a>
+<FONT color="green">150</FONT>      {<a name="line.150"></a>
+<FONT color="green">151</FONT>        ensureNotNull(dn, attributes);<a name="line.151"></a>
+<FONT color="green">152</FONT>    <a name="line.152"></a>
+<FONT color="green">153</FONT>        this.dn = dn;<a name="line.153"></a>
+<FONT color="green">154</FONT>    <a name="line.154"></a>
+<FONT color="green">155</FONT>        this.attributes = new LinkedHashMap&lt;String,Attribute&gt;(attributes.length);<a name="line.155"></a>
+<FONT color="green">156</FONT>        for (final Attribute a : attributes)<a name="line.156"></a>
+<FONT color="green">157</FONT>        {<a name="line.157"></a>
+<FONT color="green">158</FONT>          final String name = toLowerCase(a.getName());<a name="line.158"></a>
+<FONT color="green">159</FONT>          final Attribute attr = this.attributes.get(name);<a name="line.159"></a>
+<FONT color="green">160</FONT>          if (attr == null)<a name="line.160"></a>
+<FONT color="green">161</FONT>          {<a name="line.161"></a>
+<FONT color="green">162</FONT>            this.attributes.put(name, a);<a name="line.162"></a>
+<FONT color="green">163</FONT>          }<a name="line.163"></a>
+<FONT color="green">164</FONT>          else<a name="line.164"></a>
+<FONT color="green">165</FONT>          {<a name="line.165"></a>
+<FONT color="green">166</FONT>            this.attributes.put(name, Attribute.mergeAttributes(attr, a));<a name="line.166"></a>
+<FONT color="green">167</FONT>          }<a name="line.167"></a>
+<FONT color="green">168</FONT>        }<a name="line.168"></a>
+<FONT color="green">169</FONT>      }<a name="line.169"></a>
+<FONT color="green">170</FONT>    <a name="line.170"></a>
+<FONT color="green">171</FONT>    <a name="line.171"></a>
+<FONT color="green">172</FONT>    <a name="line.172"></a>
+<FONT color="green">173</FONT>      /**<a name="line.173"></a>
+<FONT color="green">174</FONT>       * Creates a new entry with the provided DN and set of attributes.<a name="line.174"></a>
+<FONT color="green">175</FONT>       *<a name="line.175"></a>
+<FONT color="green">176</FONT>       * @param  dn          The DN for this entry.  It must not be {@code null}.<a name="line.176"></a>
+<FONT color="green">177</FONT>       * @param  attributes  The set of attributes for this entry.  It must not be<a name="line.177"></a>
+<FONT color="green">178</FONT>       *                     {@code null}.<a name="line.178"></a>
+<FONT color="green">179</FONT>       */<a name="line.179"></a>
+<FONT color="green">180</FONT>      public Entry(final DN dn, final Attribute... attributes)<a name="line.180"></a>
+<FONT color="green">181</FONT>      {<a name="line.181"></a>
+<FONT color="green">182</FONT>        ensureNotNull(dn, attributes);<a name="line.182"></a>
+<FONT color="green">183</FONT>    <a name="line.183"></a>
+<FONT color="green">184</FONT>        parsedDN = dn;<a name="line.184"></a>
+<FONT color="green">185</FONT>        this.dn  = parsedDN.toString();<a name="line.185"></a>
+<FONT color="green">186</FONT>    <a name="line.186"></a>
+<FONT color="green">187</FONT>        this.attributes = new LinkedHashMap&lt;String,Attribute&gt;(attributes.length);<a name="line.187"></a>
+<FONT color="green">188</FONT>        for (final Attribute a : attributes)<a name="line.188"></a>
+<FONT color="green">189</FONT>        {<a name="line.189"></a>
+<FONT color="green">190</FONT>          final String name = toLowerCase(a.getName());<a name="line.190"></a>
+<FONT color="green">191</FONT>          final Attribute attr = this.attributes.get(name);<a name="line.191"></a>
+<FONT color="green">192</FONT>          if (attr == null)<a name="line.192"></a>
+<FONT color="green">193</FONT>          {<a name="line.193"></a>
+<FONT color="green">194</FONT>            this.attributes.put(name, a);<a name="line.194"></a>
+<FONT color="green">195</FONT>          }<a name="line.195"></a>
+<FONT color="green">196</FONT>          else<a name="line.196"></a>
+<FONT color="green">197</FONT>          {<a name="line.197"></a>
+<FONT color="green">198</FONT>            this.attributes.put(name, Attribute.mergeAttributes(attr, a));<a name="line.198"></a>
+<FONT color="green">199</FONT>          }<a name="line.199"></a>
+<FONT color="green">200</FONT>        }<a name="line.200"></a>
+<FONT color="green">201</FONT>      }<a name="line.201"></a>
+<FONT color="green">202</FONT>    <a name="line.202"></a>
+<FONT color="green">203</FONT>    <a name="line.203"></a>
+<FONT color="green">204</FONT>    <a name="line.204"></a>
+<FONT color="green">205</FONT>      /**<a name="line.205"></a>
+<FONT color="green">206</FONT>       * Creates a new entry with the provided DN and set of attributes.<a name="line.206"></a>
+<FONT color="green">207</FONT>       *<a name="line.207"></a>
+<FONT color="green">208</FONT>       * @param  dn          The DN for this entry.  It must not be {@code null}.<a name="line.208"></a>
+<FONT color="green">209</FONT>       * @param  attributes  The set of attributes for this entry.  It must not be<a name="line.209"></a>
+<FONT color="green">210</FONT>       *                     {@code null}.<a name="line.210"></a>
+<FONT color="green">211</FONT>       */<a name="line.211"></a>
+<FONT color="green">212</FONT>      public Entry(final String dn, final Collection&lt;Attribute&gt; attributes)<a name="line.212"></a>
+<FONT color="green">213</FONT>      {<a name="line.213"></a>
+<FONT color="green">214</FONT>        ensureNotNull(dn, attributes);<a name="line.214"></a>
+<FONT color="green">215</FONT>    <a name="line.215"></a>
+<FONT color="green">216</FONT>        this.dn = dn;<a name="line.216"></a>
+<FONT color="green">217</FONT>    <a name="line.217"></a>
+<FONT color="green">218</FONT>        this.attributes = new LinkedHashMap&lt;String,Attribute&gt;(attributes.size());<a name="line.218"></a>
+<FONT color="green">219</FONT>        for (final Attribute a : attributes)<a name="line.219"></a>
+<FONT color="green">220</FONT>        {<a name="line.220"></a>
+<FONT color="green">221</FONT>          final String name = toLowerCase(a.getName());<a name="line.221"></a>
+<FONT color="green">222</FONT>          final Attribute attr = this.attributes.get(name);<a name="line.222"></a>
+<FONT color="green">223</FONT>          if (attr == null)<a name="line.223"></a>
+<FONT color="green">224</FONT>          {<a name="line.224"></a>
+<FONT color="green">225</FONT>            this.attributes.put(name, a);<a name="line.225"></a>
+<FONT color="green">226</FONT>          }<a name="line.226"></a>
+<FONT color="green">227</FONT>          else<a name="line.227"></a>
+<FONT color="green">228</FONT>          {<a name="line.228"></a>
+<FONT color="green">229</FONT>            this.attributes.put(name, Attribute.mergeAttributes(attr, a));<a name="line.229"></a>
+<FONT color="green">230</FONT>          }<a name="line.230"></a>
+<FONT color="green">231</FONT>        }<a name="line.231"></a>
+<FONT color="green">232</FONT>      }<a name="line.232"></a>
+<FONT color="green">233</FONT>    <a name="line.233"></a>
+<FONT color="green">234</FONT>    <a name="line.234"></a>
+<FONT color="green">235</FONT>    <a name="line.235"></a>
+<FONT color="green">236</FONT>      /**<a name="line.236"></a>
+<FONT color="green">237</FONT>       * Creates a new entry with the provided DN and set of attributes.<a name="line.237"></a>
+<FONT color="green">238</FONT>       *<a name="line.238"></a>
+<FONT color="green">239</FONT>       * @param  dn          The DN for this entry.  It must not be {@code null}.<a name="line.239"></a>
+<FONT color="green">240</FONT>       * @param  attributes  The set of attributes for this entry.  It must not be<a name="line.240"></a>
+<FONT color="green">241</FONT>       *                     {@code null}.<a name="line.241"></a>
+<FONT color="green">242</FONT>       */<a name="line.242"></a>
+<FONT color="green">243</FONT>      public Entry(final DN dn, final Collection&lt;Attribute&gt; attributes)<a name="line.243"></a>
+<FONT color="green">244</FONT>      {<a name="line.244"></a>
+<FONT color="green">245</FONT>        ensureNotNull(dn, attributes);<a name="line.245"></a>
+<FONT color="green">246</FONT>    <a name="line.246"></a>
+<FONT color="green">247</FONT>        parsedDN = dn;<a name="line.247"></a>
+<FONT color="green">248</FONT>        this.dn  = parsedDN.toString();<a name="line.248"></a>
+<FONT color="green">249</FONT>    <a name="line.249"></a>
+<FONT color="green">250</FONT>        this.attributes = new LinkedHashMap&lt;String,Attribute&gt;(attributes.size());<a name="line.250"></a>
+<FONT color="green">251</FONT>        for (final Attribute a : attributes)<a name="line.251"></a>
+<FONT color="green">252</FONT>        {<a name="line.252"></a>
+<FONT color="green">253</FONT>          final String name = toLowerCase(a.getName());<a name="line.253"></a>
+<FONT color="green">254</FONT>          final Attribute attr = this.attributes.get(name);<a name="line.254"></a>
+<FONT color="green">255</FONT>          if (attr == null)<a name="line.255"></a>
+<FONT color="green">256</FONT>          {<a name="line.256"></a>
+<FONT color="green">257</FONT>            this.attributes.put(name, a);<a name="line.257"></a>
+<FONT color="green">258</FONT>          }<a name="line.258"></a>
+<FONT color="green">259</FONT>          else<a name="line.259"></a>
+<FONT color="green">260</FONT>          {<a name="line.260"></a>
+<FONT color="green">261</FONT>            this.attributes.put(name, Attribute.mergeAttributes(attr, a));<a name="line.261"></a>
+<FONT color="green">262</FONT>          }<a name="line.262"></a>
+<FONT color="green">263</FONT>        }<a name="line.263"></a>
+<FONT color="green">264</FONT>      }<a name="line.264"></a>
+<FONT color="green">265</FONT>    <a name="line.265"></a>
+<FONT color="green">266</FONT>    <a name="line.266"></a>
+<FONT color="green">267</FONT>    <a name="line.267"></a>
+<FONT color="green">268</FONT>      /**<a name="line.268"></a>
+<FONT color="green">269</FONT>       * Creates a new entry from the provided LDIF representation.<a name="line.269"></a>
+<FONT color="green">270</FONT>       *<a name="line.270"></a>
+<FONT color="green">271</FONT>       * @param  entryLines  The set of lines that comprise an LDIF representation<a name="line.271"></a>
+<FONT color="green">272</FONT>       *                     of the entry.  It must not be {@code null} or empty.<a name="line.272"></a>
+<FONT color="green">273</FONT>       *<a name="line.273"></a>
+<FONT color="green">274</FONT>       * @throws  LDIFException  If the provided lines cannot be decoded as an entry<a name="line.274"></a>
+<FONT color="green">275</FONT>       *                         in LDIF format.<a name="line.275"></a>
+<FONT color="green">276</FONT>       */<a name="line.276"></a>
+<FONT color="green">277</FONT>      public Entry(final String... entryLines)<a name="line.277"></a>
+<FONT color="green">278</FONT>             throws LDIFException<a name="line.278"></a>
+<FONT color="green">279</FONT>      {<a name="line.279"></a>
+<FONT color="green">280</FONT>        final Entry e = LDIFReader.decodeEntry(entryLines);<a name="line.280"></a>
+<FONT color="green">281</FONT>    <a name="line.281"></a>
+<FONT color="green">282</FONT>        dn         = e.dn;<a name="line.282"></a>
+<FONT color="green">283</FONT>        parsedDN   = e.parsedDN;<a name="line.283"></a>
+<FONT color="green">284</FONT>        attributes = e.attributes;<a name="line.284"></a>
+<FONT color="green">285</FONT>      }<a name="line.285"></a>
+<FONT color="green">286</FONT>    <a name="line.286"></a>
+<FONT color="green">287</FONT>    <a name="line.287"></a>
+<FONT color="green">288</FONT>    <a name="line.288"></a>
+<FONT color="green">289</FONT>      /**<a name="line.289"></a>
+<FONT color="green">290</FONT>       * Retrieves the DN for this entry.<a name="line.290"></a>
+<FONT color="green">291</FONT>       *<a name="line.291"></a>
+<FONT color="green">292</FONT>       * @return  The DN for this entry.<a name="line.292"></a>
+<FONT color="green">293</FONT>       */<a name="line.293"></a>
+<FONT color="green">294</FONT>      public final String getDN()<a name="line.294"></a>
+<FONT color="green">295</FONT>      {<a name="line.295"></a>
+<FONT color="green">296</FONT>        return dn;<a name="line.296"></a>
+<FONT color="green">297</FONT>      }<a name="line.297"></a>
+<FONT color="green">298</FONT>    <a name="line.298"></a>
+<FONT color="green">299</FONT>    <a name="line.299"></a>
+<FONT color="green">300</FONT>    <a name="line.300"></a>
+<FONT color="green">301</FONT>      /**<a name="line.301"></a>
+<FONT color="green">302</FONT>       * Specifies the DN for this entry.<a name="line.302"></a>
+<FONT color="green">303</FONT>       *<a name="line.303"></a>
+<FONT color="green">304</FONT>       * @param  dn  The DN for this entry.  It must not be {@code null}.<a name="line.304"></a>
+<FONT color="green">305</FONT>       */<a name="line.305"></a>
+<FONT color="green">306</FONT>      public void setDN(final String dn)<a name="line.306"></a>
+<FONT color="green">307</FONT>      {<a name="line.307"></a>
+<FONT color="green">308</FONT>        ensureNotNull(dn);<a name="line.308"></a>
+<FONT color="green">309</FONT>    <a name="line.309"></a>
+<FONT color="green">310</FONT>        this.dn = dn;<a name="line.310"></a>
+<FONT color="green">311</FONT>        parsedDN = null;<a name="line.311"></a>
+<FONT color="green">312</FONT>      }<a name="line.312"></a>
+<FONT color="green">313</FONT>    <a name="line.313"></a>
+<FONT color="green">314</FONT>    <a name="line.314"></a>
+<FONT color="green">315</FONT>    <a name="line.315"></a>
+<FONT color="green">316</FONT>      /**<a name="line.316"></a>
+<FONT color="green">317</FONT>       * Specifies the DN for this entry.<a name="line.317"></a>
+<FONT color="green">318</FONT>       *<a name="line.318"></a>
+<FONT color="green">319</FONT>       * @param  dn  The DN for this entry.  It must not be {@code null}.<a name="line.319"></a>
+<FONT color="green">320</FONT>       */<a name="line.320"></a>
+<FONT color="green">321</FONT>      public void setDN(final DN dn)<a name="line.321"></a>
+<FONT color="green">322</FONT>      {<a name="line.322"></a>
+<FONT color="green">323</FONT>        ensureNotNull(dn);<a name="line.323"></a>
+<FONT color="green">324</FONT>    <a name="line.324"></a>
+<FONT color="green">325</FONT>        parsedDN = dn;<a name="line.325"></a>
+<FONT color="green">326</FONT>        this.dn  = parsedDN.toString();<a name="line.326"></a>
+<FONT color="green">327</FONT>      }<a name="line.327"></a>
+<FONT color="green">328</FONT>    <a name="line.328"></a>
+<FONT color="green">329</FONT>    <a name="line.329"></a>
+<FONT color="green">330</FONT>    <a name="line.330"></a>
+<FONT color="green">331</FONT>      /**<a name="line.331"></a>
+<FONT color="green">332</FONT>       * Retrieves the parsed DN for this entry.<a name="line.332"></a>
+<FONT color="green">333</FONT>       *<a name="line.333"></a>
+<FONT color="green">334</FONT>       * @return  The parsed DN for this entry.<a name="line.334"></a>
+<FONT color="green">335</FONT>       *<a name="line.335"></a>
+<FONT color="green">336</FONT>       * @throws  LDAPException  If the DN string cannot be parsed as a valid DN.<a name="line.336"></a>
+<FONT color="green">337</FONT>       */<a name="line.337"></a>
+<FONT color="green">338</FONT>      public final DN getParsedDN()<a name="line.338"></a>
+<FONT color="green">339</FONT>             throws LDAPException<a name="line.339"></a>
+<FONT color="green">340</FONT>      {<a name="line.340"></a>
+<FONT color="green">341</FONT>        if (parsedDN == null)<a name="line.341"></a>
+<FONT color="green">342</FONT>        {<a name="line.342"></a>
+<FONT color="green">343</FONT>          parsedDN = new DN(dn);<a name="line.343"></a>
+<FONT color="green">344</FONT>        }<a name="line.344"></a>
+<FONT color="green">345</FONT>    <a name="line.345"></a>
+<FONT color="green">346</FONT>        return parsedDN;<a name="line.346"></a>
+<FONT color="green">347</FONT>      }<a name="line.347"></a>
+<FONT color="green">348</FONT>    <a name="line.348"></a>
+<FONT color="green">349</FONT>    <a name="line.349"></a>
+<FONT color="green">350</FONT>    <a name="line.350"></a>
+<FONT color="green">351</FONT>      /**<a name="line.351"></a>
+<FONT color="green">352</FONT>       * Retrieves the RDN for this entry.<a name="line.352"></a>
+<FONT color="green">353</FONT>       *<a name="line.353"></a>
+<FONT color="green">354</FONT>       * @return  The RDN for this entry, or {@code null} if the DN is the null DN.<a name="line.354"></a>
+<FONT color="green">355</FONT>       *<a name="line.355"></a>
+<FONT color="green">356</FONT>       * @throws  LDAPException  If the DN string cannot be parsed as a valid DN.<a name="line.356"></a>
+<FONT color="green">357</FONT>       */<a name="line.357"></a>
+<FONT color="green">358</FONT>      public final RDN getRDN()<a name="line.358"></a>
+<FONT color="green">359</FONT>             throws LDAPException<a name="line.359"></a>
+<FONT color="green">360</FONT>      {<a name="line.360"></a>
+<FONT color="green">361</FONT>        return getParsedDN().getRDN();<a name="line.361"></a>
+<FONT color="green">362</FONT>      }<a name="line.362"></a>
+<FONT color="green">363</FONT>    <a name="line.363"></a>
+<FONT color="green">364</FONT>    <a name="line.364"></a>
+<FONT color="green">365</FONT>    <a name="line.365"></a>
+<FONT color="green">366</FONT>      /**<a name="line.366"></a>
+<FONT color="green">367</FONT>       * Retrieves the parent DN for this entry.<a name="line.367"></a>
+<FONT color="green">368</FONT>       *<a name="line.368"></a>
+<FONT color="green">369</FONT>       * @return  The parent DN for this entry, or {@code null} if there is no<a name="line.369"></a>
+<FONT color="green">370</FONT>       *          parent.<a name="line.370"></a>
+<FONT color="green">371</FONT>       *<a name="line.371"></a>
+<FONT color="green">372</FONT>       * @throws  LDAPException  If the DN string cannot be parsed as a valid DN.<a name="line.372"></a>
+<FONT color="green">373</FONT>       */<a name="line.373"></a>
+<FONT color="green">374</FONT>      public final DN getParentDN()<a name="line.374"></a>
+<FONT color="green">375</FONT>             throws LDAPException<a name="line.375"></a>
+<FONT color="green">376</FONT>      {<a name="line.376"></a>
+<FONT color="green">377</FONT>        if (parsedDN == null)<a name="line.377"></a>
+<FONT color="green">378</FONT>        {<a name="line.378"></a>
+<FONT color="green">379</FONT>          parsedDN = new DN(dn);<a name="line.379"></a>
+<FONT color="green">380</FONT>        }<a name="line.380"></a>
+<FONT color="green">381</FONT>    <a name="line.381"></a>
+<FONT color="green">382</FONT>        return parsedDN.getParent();<a name="line.382"></a>
+<FONT color="green">383</FONT>      }<a name="line.383"></a>
+<FONT color="green">384</FONT>    <a name="line.384"></a>
+<FONT color="green">385</FONT>    <a name="line.385"></a>
+<FONT color="green">386</FONT>    <a name="line.386"></a>
+<FONT color="green">387</FONT>      /**<a name="line.387"></a>
+<FONT color="green">388</FONT>       * Retrieves the parent DN for this entry as a string.<a name="line.388"></a>
+<FONT color="green">389</FONT>       *<a name="line.389"></a>
+<FONT color="green">390</FONT>       * @return  The parent DN for this entry as a string, or {@code null} if there<a name="line.390"></a>
+<FONT color="green">391</FONT>       *          is no parent.<a name="line.391"></a>
+<FONT color="green">392</FONT>       *<a name="line.392"></a>
+<FONT color="green">393</FONT>       * @throws  LDAPException  If the DN string cannot be parsed as a valid DN.<a name="line.393"></a>
+<FONT color="green">394</FONT>       */<a name="line.394"></a>
+<FONT color="green">395</FONT>      public final String getParentDNString()<a name="line.395"></a>
+<FONT color="green">396</FONT>             throws LDAPException<a name="line.396"></a>
+<FONT color="green">397</FONT>      {<a name="line.397"></a>
+<FONT color="green">398</FONT>        if (parsedDN == null)<a name="line.398"></a>
+<FONT color="green">399</FONT>        {<a name="line.399"></a>
+<FONT color="green">400</FONT>          parsedDN = new DN(dn);<a name="line.400"></a>
+<FONT color="green">401</FONT>        }<a name="line.401"></a>
+<FONT color="green">402</FONT>    <a name="line.402"></a>
+<FONT color="green">403</FONT>        final DN parentDN = parsedDN.getParent();<a name="line.403"></a>
+<FONT color="green">404</FONT>        if (parentDN == null)<a name="line.404"></a>
+<FONT color="green">405</FONT>        {<a name="line.405"></a>
+<FONT color="green">406</FONT>          return null;<a name="line.406"></a>
+<FONT color="green">407</FONT>        }<a name="line.407"></a>
+<FONT color="green">408</FONT>        else<a name="line.408"></a>
+<FONT color="green">409</FONT>        {<a name="line.409"></a>
+<FONT color="green">410</FONT>          return parentDN.toString();<a name="line.410"></a>
+<FONT color="green">411</FONT>        }<a name="line.411"></a>
+<FONT color="green">412</FONT>      }<a name="line.412"></a>
+<FONT color="green">413</FONT>    <a name="line.413"></a>
+<FONT color="green">414</FONT>    <a name="line.414"></a>
+<FONT color="green">415</FONT>    <a name="line.415"></a>
+<FONT color="green">416</FONT>      /**<a name="line.416"></a>
+<FONT color="green">417</FONT>       * Indicates whether this entry contains the specified attribute.<a name="line.417"></a>
+<FONT color="green">418</FONT>       *<a name="line.418"></a>
+<FONT color="green">419</FONT>       * @param  attributeName  The name of the attribute for which to make the<a name="line.419"></a>
+<FONT color="green">420</FONT>       *                        determination.  It must not be {@code null}.<a name="line.420"></a>
+<FONT color="green">421</FONT>       *<a name="line.421"></a>
+<FONT color="green">422</FONT>       * @return  {@code true} if this entry contains the specified attribute, or<a name="line.422"></a>
+<FONT color="green">423</FONT>       *          {@code false} if not.<a name="line.423"></a>
+<FONT color="green">424</FONT>       */<a name="line.424"></a>
+<FONT color="green">425</FONT>      public final boolean hasAttribute(final String attributeName)<a name="line.425"></a>
+<FONT color="green">426</FONT>      {<a name="line.426"></a>
+<FONT color="green">427</FONT>        ensureNotNull(attributeName);<a name="line.427"></a>
+<FONT color="green">428</FONT>    <a name="line.428"></a>
+<FONT color="green">429</FONT>        return attributes.containsKey(toLowerCase(attributeName));<a name="line.429"></a>
+<FONT color="green">430</FONT>      }<a name="line.430"></a>
+<FONT color="green">431</FONT>    <a name="line.431"></a>
+<FONT color="green">432</FONT>    <a name="line.432"></a>
+<FONT color="green">433</FONT>    <a name="line.433"></a>
+<FONT color="green">434</FONT>      /**<a name="line.434"></a>
+<FONT color="green">435</FONT>       * Indicates whether this entry contains the specified attribute.  It will<a name="line.435"></a>
+<FONT color="green">436</FONT>       * only return {@code true} if this entry contains an attribute with the same<a name="line.436"></a>
+<FONT color="green">437</FONT>       * name and exact set of values.<a name="line.437"></a>
+<FONT color="green">438</FONT>       *<a name="line.438"></a>
+<FONT color="green">439</FONT>       * @param  attribute  The attribute for which to make the determination.  It<a name="line.439"></a>
+<FONT color="green">440</FONT>       *                    must not be {@code null}.<a name="line.440"></a>
+<FONT color="green">441</FONT>       *<a name="line.441"></a>
+<FONT color="green">442</FONT>       * @return  {@code true} if this entry contains the specified attribute, or<a name="line.442"></a>
+<FONT color="green">443</FONT>       *          {@code false} if not.<a name="line.443"></a>
+<FONT color="green">444</FONT>       */<a name="line.444"></a>
+<FONT color="green">445</FONT>      public final boolean hasAttribute(final Attribute attribute)<a name="line.445"></a>
+<FONT color="green">446</FONT>      {<a name="line.446"></a>
+<FONT color="green">447</FONT>        ensureNotNull(attribute);<a name="line.447"></a>
+<FONT color="green">448</FONT>    <a name="line.448"></a>
+<FONT color="green">449</FONT>        final String lowerName = toLowerCase(attribute.getName());<a name="line.449"></a>
+<FONT color="green">450</FONT>        final Attribute attr = attributes.get(lowerName);<a name="line.450"></a>
+<FONT color="green">451</FONT>        return ((attr != null) &amp;&amp; attr.equals(attribute));<a name="line.451"></a>
+<FONT color="green">452</FONT>      }<a name="line.452"></a>
+<FONT color="green">453</FONT>    <a name="line.453"></a>
+<FONT color="green">454</FONT>    <a name="line.454"></a>
+<FONT color="green">455</FONT>    <a name="line.455"></a>
+<FONT color="green">456</FONT>      /**<a name="line.456"></a>
+<FONT color="green">457</FONT>       * Indicates whether this entry contains an attribute with the given name and<a name="line.457"></a>
+<FONT color="green">458</FONT>       * value.<a name="line.458"></a>
+<FONT color="green">459</FONT>       *<a name="line.459"></a>
+<FONT color="green">460</FONT>       * @param  attributeName   The name of the attribute for which to make the<a name="line.460"></a>
+<FONT color="green">461</FONT>       *                         determination.  It must not be {@code null}.<a name="line.461"></a>
+<FONT color="green">462</FONT>       * @param  attributeValue  The value for which to make the determination.  It<a name="line.462"></a>
+<FONT color="green">463</FONT>       *                         must not be {@code null}.<a name="line.463"></a>
+<FONT color="green">464</FONT>       *<a name="line.464"></a>
+<FONT color="green">465</FONT>       * @return  {@code true} if this entry contains an attribute with the<a name="line.465"></a>
+<FONT color="green">466</FONT>       *          specified name and value, or {@code false} if not.<a name="line.466"></a>
+<FONT color="green">467</FONT>       */<a name="line.467"></a>
+<FONT color="green">468</FONT>      public final boolean hasAttributeValue(final String attributeName,<a name="line.468"></a>
+<FONT color="green">469</FONT>                                             final String attributeValue)<a name="line.469"></a>
+<FONT color="green">470</FONT>      {<a name="line.470"></a>
+<FONT color="green">471</FONT>        ensureNotNull(attributeName, attributeValue);<a name="line.471"></a>
+<FONT color="green">472</FONT>    <a name="line.472"></a>
+<FONT color="green">473</FONT>        final Attribute attr = attributes.get(toLowerCase(attributeName));<a name="line.473"></a>
+<FONT color="green">474</FONT>        return ((attr != null) &amp;&amp; attr.hasValue(attributeValue));<a name="line.474"></a>
+<FONT color="green">475</FONT>      }<a name="line.475"></a>
+<FONT color="green">476</FONT>    <a name="line.476"></a>
+<FONT color="green">477</FONT>    <a name="line.477"></a>
+<FONT color="green">478</FONT>    <a name="line.478"></a>
+<FONT color="green">479</FONT>      /**<a name="line.479"></a>
+<FONT color="green">480</FONT>       * Indicates whether this entry contains an attribute with the given name and<a name="line.480"></a>
+<FONT color="green">481</FONT>       * value.<a name="line.481"></a>
+<FONT color="green">482</FONT>       *<a name="line.482"></a>
+<FONT color="green">483</FONT>       * @param  attributeName   The name of the attribute for which to make the<a name="line.483"></a>
+<FONT color="green">484</FONT>       *                         determination.  It must not be {@code null}.<a name="line.484"></a>
+<FONT color="green">485</FONT>       * @param  attributeValue  The value for which to make the determination.  It<a name="line.485"></a>
+<FONT color="green">486</FONT>       *                         must not be {@code null}.<a name="line.486"></a>
+<FONT color="green">487</FONT>       * @param  matchingRule    The matching rule to use to make the determination.<a name="line.487"></a>
+<FONT color="green">488</FONT>       *                         It must not be {@code null}.<a name="line.488"></a>
+<FONT color="green">489</FONT>       *<a name="line.489"></a>
+<FONT color="green">490</FONT>       * @return  {@code true} if this entry contains an attribute with the<a name="line.490"></a>
+<FONT color="green">491</FONT>       *          specified name and value, or {@code false} if not.<a name="line.491"></a>
+<FONT color="green">492</FONT>       */<a name="line.492"></a>
+<FONT color="green">493</FONT>      public final boolean hasAttributeValue(final String attributeName,<a name="line.493"></a>
+<FONT color="green">494</FONT>                                             final String attributeValue,<a name="line.494"></a>
+<FONT color="green">495</FONT>                                             final MatchingRule matchingRule)<a name="line.495"></a>
+<FONT color="green">496</FONT>      {<a name="line.496"></a>
+<FONT color="green">497</FONT>        ensureNotNull(attributeName, attributeValue);<a name="line.497"></a>
+<FONT color="green">498</FONT>    <a name="line.498"></a>
+<FONT color="green">499</FONT>        final Attribute attr = attributes.get(toLowerCase(attributeName));<a name="line.499"></a>
+<FONT color="green">500</FONT>        return ((attr != null) &amp;&amp; attr.hasValue(attributeValue, matchingRule));<a name="line.500"></a>
+<FONT color="green">501</FONT>      }<a name="line.501"></a>
+<FONT color="green">502</FONT>    <a name="line.502"></a>
+<FONT color="green">503</FONT>    <a name="line.503"></a>
+<FONT color="green">504</FONT>    <a name="line.504"></a>
+<FONT color="green">505</FONT>      /**<a name="line.505"></a>
+<FONT color="green">506</FONT>       * Indicates whether this entry contains an attribute with the given name and<a name="line.506"></a>
+<FONT color="green">507</FONT>       * value.<a name="line.507"></a>
+<FONT color="green">508</FONT>       *<a name="line.508"></a>
+<FONT color="green">509</FONT>       * @param  attributeName   The name of the attribute for which to make the<a name="line.509"></a>
+<FONT color="green">510</FONT>       *                         determination.  It must not be {@code null}.<a name="line.510"></a>
+<FONT color="green">511</FONT>       * @param  attributeValue  The value for which to make the determination.  It<a name="line.511"></a>
+<FONT color="green">512</FONT>       *                         must not be {@code null}.<a name="line.512"></a>
+<FONT color="green">513</FONT>       *<a name="line.513"></a>
+<FONT color="green">514</FONT>       * @return  {@code true} if this entry contains an attribute with the<a name="line.514"></a>
+<FONT color="green">515</FONT>       *          specified name and value, or {@code false} if not.<a name="line.515"></a>
+<FONT color="green">516</FONT>       */<a name="line.516"></a>
+<FONT color="green">517</FONT>      public final boolean hasAttributeValue(final String attributeName,<a name="line.517"></a>
+<FONT color="green">518</FONT>                                             final byte[] attributeValue)<a name="line.518"></a>
+<FONT color="green">519</FONT>      {<a name="line.519"></a>
+<FONT color="green">520</FONT>        ensureNotNull(attributeName, attributeValue);<a name="line.520"></a>
+<FONT color="green">521</FONT>    <a name="line.521"></a>
+<FONT color="green">522</FONT>        final Attribute attr = attributes.get(toLowerCase(attributeName));<a name="line.522"></a>
+<FONT color="green">523</FONT>        return ((attr != null) &amp;&amp; attr.hasValue(attributeValue));<a name="line.523"></a>
+<FONT color="green">524</FONT>      }<a name="line.524"></a>
+<FONT color="green">525</FONT>    <a name="line.525"></a>
+<FONT color="green">526</FONT>    <a name="line.526"></a>
+<FONT color="green">527</FONT>    <a name="line.527"></a>
+<FONT color="green">528</FONT>      /**<a name="line.528"></a>
+<FONT color="green">529</FONT>       * Indicates whether this entry contains an attribute with the given name and<a name="line.529"></a>
+<FONT color="green">530</FONT>       * value.<a name="line.530"></a>
+<FONT color="green">531</FONT>       *<a name="line.531"></a>
+<FONT color="green">532</FONT>       * @param  attributeName   The name of the attribute for which to make the<a name="line.532"></a>
+<FONT color="green">533</FONT>       *                         determination.  It must not be {@code null}.<a name="line.533"></a>
+<FONT color="green">534</FONT>       * @param  attributeValue  The value for which to make the determination.  It<a name="line.534"></a>
+<FONT color="green">535</FONT>       *                         must not be {@code null}.<a name="line.535"></a>
+<FONT color="green">536</FONT>       * @param  matchingRule    The matching rule to use to make the determination.<a name="line.536"></a>
+<FONT color="green">537</FONT>       *                         It must not be {@code null}.<a name="line.537"></a>
+<FONT color="green">538</FONT>       *<a name="line.538"></a>
+<FONT color="green">539</FONT>       * @return  {@code true} if this entry contains an attribute with the<a name="line.539"></a>
+<FONT color="green">540</FONT>       *          specified name and value, or {@code false} if not.<a name="line.540"></a>
+<FONT color="green">541</FONT>       */<a name="line.541"></a>
+<FONT color="green">542</FONT>      public final boolean hasAttributeValue(final String attributeName,<a name="line.542"></a>
+<FONT color="green">543</FONT>                                             final byte[] attributeValue,<a name="line.543"></a>
+<FONT color="green">544</FONT>                                             final MatchingRule matchingRule)<a name="line.544"></a>
+<FONT color="green">545</FONT>      {<a name="line.545"></a>
+<FONT color="green">546</FONT>        ensureNotNull(attributeName, attributeValue);<a name="line.546"></a>
+<FONT color="green">547</FONT>    <a name="line.547"></a>
+<FONT color="green">548</FONT>        final Attribute attr = attributes.get(toLowerCase(attributeName));<a name="line.548"></a>
+<FONT color="green">549</FONT>        return ((attr != null) &amp;&amp; attr.hasValue(attributeValue, matchingRule));<a name="line.549"></a>
+<FONT color="green">550</FONT>      }<a name="line.550"></a>
+<FONT color="green">551</FONT>    <a name="line.551"></a>
+<FONT color="green">552</FONT>    <a name="line.552"></a>
+<FONT color="green">553</FONT>    <a name="line.553"></a>
+<FONT color="green">554</FONT>      /**<a name="line.554"></a>
+<FONT color="green">555</FONT>       * Indicates whether this entry contains the specified object class.<a name="line.555"></a>
+<FONT color="green">556</FONT>       *<a name="line.556"></a>
+<FONT color="green">557</FONT>       * @param  objectClassName  The name of the object class for which to make the<a name="line.557"></a>
+<FONT color="green">558</FONT>       *                          determination.  It must not be {@code null}.<a name="line.558"></a>
+<FONT color="green">559</FONT>       *<a name="line.559"></a>
+<FONT color="green">560</FONT>       * @return  {@code true} if this entry contains the specified object class, or<a name="line.560"></a>
+<FONT color="green">561</FONT>       *          {@code false} if not.<a name="line.561"></a>
+<FONT color="green">562</FONT>       */<a name="line.562"></a>
+<FONT color="green">563</FONT>      public final boolean hasObjectClass(final String objectClassName)<a name="line.563"></a>
+<FONT color="green">564</FONT>      {<a name="line.564"></a>
+<FONT color="green">565</FONT>        return hasAttributeValue("objectClass", objectClassName);<a name="line.565"></a>
+<FONT color="green">566</FONT>      }<a name="line.566"></a>
+<FONT color="green">567</FONT>    <a name="line.567"></a>
+<FONT color="green">568</FONT>    <a name="line.568"></a>
+<FONT color="green">569</FONT>    <a name="line.569"></a>
+<FONT color="green">570</FONT>      /**<a name="line.570"></a>
+<FONT color="green">571</FONT>       * Retrieves the set of attributes contained in this entry.<a name="line.571"></a>
+<FONT color="green">572</FONT>       *<a name="line.572"></a>
+<FONT color="green">573</FONT>       * @return  The set of attributes contained in this entry.<a name="line.573"></a>
+<FONT color="green">574</FONT>       */<a name="line.574"></a>
+<FONT color="green">575</FONT>      public final Collection&lt;Attribute&gt; getAttributes()<a name="line.575"></a>
+<FONT color="green">576</FONT>      {<a name="line.576"></a>
+<FONT color="green">577</FONT>        return Collections.unmodifiableCollection(attributes.values());<a name="line.577"></a>
+<FONT color="green">578</FONT>      }<a name="line.578"></a>
+<FONT color="green">579</FONT>    <a name="line.579"></a>
+<FONT color="green">580</FONT>    <a name="line.580"></a>
+<FONT color="green">581</FONT>    <a name="line.581"></a>
+<FONT color="green">582</FONT>      /**<a name="line.582"></a>
+<FONT color="green">583</FONT>       * Retrieves the attribute with the specified name.<a name="line.583"></a>
+<FONT color="green">584</FONT>       *<a name="line.584"></a>
+<FONT color="green">585</FONT>       * @param  attributeName  The name of the attribute to retrieve.  It must not<a name="line.585"></a>
+<FONT color="green">586</FONT>       *                        be {@code null}.<a name="line.586"></a>
+<FONT color="green">587</FONT>       *<a name="line.587"></a>
+<FONT color="green">588</FONT>       * @return  The requested attribute from this entry, or {@code null} if the<a name="line.588"></a>
+<FONT color="green">589</FONT>       *          specified attribute is not present in this entry.<a name="line.589"></a>
+<FONT color="green">590</FONT>       */<a name="line.590"></a>
+<FONT color="green">591</FONT>      public final Attribute getAttribute(final String attributeName)<a name="line.591"></a>
+<FONT color="green">592</FONT>      {<a name="line.592"></a>
+<FONT color="green">593</FONT>        ensureNotNull(attributeName);<a name="line.593"></a>
+<FONT color="green">594</FONT>    <a name="line.594"></a>
+<FONT color="green">595</FONT>        return attributes.get(toLowerCase(attributeName));<a name="line.595"></a>
+<FONT color="green">596</FONT>      }<a name="line.596"></a>
+<FONT color="green">597</FONT>    <a name="line.597"></a>
+<FONT color="green">598</FONT>    <a name="line.598"></a>
+<FONT color="green">599</FONT>    <a name="line.599"></a>
+<FONT color="green">600</FONT>      /**<a name="line.600"></a>
+<FONT color="green">601</FONT>       * Retrieves the list of attributes with the given base name and all of the<a name="line.601"></a>
+<FONT color="green">602</FONT>       * specified options.<a name="line.602"></a>
+<FONT color="green">603</FONT>       *<a name="line.603"></a>
+<FONT color="green">604</FONT>       * @param  baseName  The base name (without any options) for the attribute to<a name="line.604"></a>
+<FONT color="green">605</FONT>       *                   retrieve.  It must not be {@code null}.<a name="line.605"></a>
+<FONT color="green">606</FONT>       * @param  options   The set of options that should be included in the<a name="line.606"></a>
+<FONT color="green">607</FONT>       *                   attributes that are returned.  It may be empty or<a name="line.607"></a>
+<FONT color="green">608</FONT>       *                   {@code null} if all attributes with the specified base<a name="line.608"></a>
+<FONT color="green">609</FONT>       *                   name should be returned, regardless of the options that<a name="line.609"></a>
+<FONT color="green">610</FONT>       *                   they contain (if any).<a name="line.610"></a>
+<FONT color="green">611</FONT>       *<a name="line.611"></a>
+<FONT color="green">612</FONT>       * @return  The list of attributes with the given base name and all of the<a name="line.612"></a>
+<FONT color="green">613</FONT>       *          specified options.  It may be empty if there are no attributes<a name="line.613"></a>
+<FONT color="green">614</FONT>       *          with the specified base name and set of options.<a name="line.614"></a>
+<FONT color="green">615</FONT>       */<a name="line.615"></a>
+<FONT color="green">616</FONT>      public final List&lt;Attribute&gt; getAttributesWithOptions(final String baseName,<a name="line.616"></a>
+<FONT color="green">617</FONT>                                        final Set&lt;String&gt; options)<a name="line.617"></a>
+<FONT color="green">618</FONT>      {<a name="line.618"></a>
+<FONT color="green">619</FONT>        ensureNotNull(baseName);<a name="line.619"></a>
+<FONT color="green">620</FONT>    <a name="line.620"></a>
+<FONT color="green">621</FONT>        final ArrayList&lt;Attribute&gt; attrList = new ArrayList&lt;Attribute&gt;(10);<a name="line.621"></a>
+<FONT color="green">622</FONT>    <a name="line.622"></a>
+<FONT color="green">623</FONT>        for (final Attribute a : attributes.values())<a name="line.623"></a>
+<FONT color="green">624</FONT>        {<a name="line.624"></a>
+<FONT color="green">625</FONT>          if (a.getBaseName().equalsIgnoreCase(baseName))<a name="line.625"></a>
+<FONT color="green">626</FONT>          {<a name="line.626"></a>
+<FONT color="green">627</FONT>            if ((options == null) || options.isEmpty())<a name="line.627"></a>
+<FONT color="green">628</FONT>            {<a name="line.628"></a>
+<FONT color="green">629</FONT>              attrList.add(a);<a name="line.629"></a>
+<FONT color="green">630</FONT>            }<a name="line.630"></a>
+<FONT color="green">631</FONT>            else<a name="line.631"></a>
+<FONT color="green">632</FONT>            {<a name="line.632"></a>
+<FONT color="green">633</FONT>              boolean allFound = true;<a name="line.633"></a>
+<FONT color="green">634</FONT>              for (final String option : options)<a name="line.634"></a>
+<FONT color="green">635</FONT>              {<a name="line.635"></a>
+<FONT color="green">636</FONT>                if (! a.hasOption(option))<a name="line.636"></a>
+<FONT color="green">637</FONT>                {<a name="line.637"></a>
+<FONT color="green">638</FONT>                  allFound = false;<a name="line.638"></a>
+<FONT color="green">639</FONT>                  break;<a name="line.639"></a>
+<FONT color="green">640</FONT>                }<a name="line.640"></a>
+<FONT color="green">641</FONT>              }<a name="line.641"></a>
+<FONT color="green">642</FONT>    <a name="line.642"></a>
+<FONT color="green">643</FONT>              if (allFound)<a name="line.643"></a>
+<FONT color="green">644</FONT>              {<a name="line.644"></a>
+<FONT color="green">645</FONT>                attrList.add(a);<a name="line.645"></a>
+<FONT color="green">646</FONT>              }<a name="line.646"></a>
+<FONT color="green">647</FONT>            }<a name="line.647"></a>
+<FONT color="green">648</FONT>          }<a name="line.648"></a>
+<FONT color="green">649</FONT>        }<a name="line.649"></a>
+<FONT color="green">650</FONT>    <a name="line.650"></a>
+<FONT color="green">651</FONT>        return Collections.unmodifiableList(attrList);<a name="line.651"></a>
+<FONT color="green">652</FONT>      }<a name="line.652"></a>
+<FONT color="green">653</FONT>    <a name="line.653"></a>
+<FONT color="green">654</FONT>    <a name="line.654"></a>
+<FONT color="green">655</FONT>    <a name="line.655"></a>
+<FONT color="green">656</FONT>      /**<a name="line.656"></a>
+<FONT color="green">657</FONT>       * Retrieves the value for the specified attribute, if available.  If the<a name="line.657"></a>
+<FONT color="green">658</FONT>       * attribute has more than one value, then the first value will be returned.<a name="line.658"></a>
+<FONT color="green">659</FONT>       *<a name="line.659"></a>
+<FONT color="green">660</FONT>       * @param  attributeName  The name of the attribute for which to retrieve the<a name="line.660"></a>
+<FONT color="green">661</FONT>       *                        value.  It must not be {@code null}.<a name="line.661"></a>
+<FONT color="green">662</FONT>       *<a name="line.662"></a>
+<FONT color="green">663</FONT>       * @return  The value for the specified attribute, or {@code null} if that<a name="line.663"></a>
+<FONT color="green">664</FONT>       *          attribute is not available.<a name="line.664"></a>
+<FONT color="green">665</FONT>       */<a name="line.665"></a>
+<FONT color="green">666</FONT>      public String getAttributeValue(final String attributeName)<a name="line.666"></a>
+<FONT color="green">667</FONT>      {<a name="line.667"></a>
+<FONT color="green">668</FONT>        ensureNotNull(attributeName);<a name="line.668"></a>
+<FONT color="green">669</FONT>    <a name="line.669"></a>
+<FONT color="green">670</FONT>        final Attribute a = attributes.get(toLowerCase(attributeName));<a name="line.670"></a>
+<FONT color="green">671</FONT>        if (a == null)<a name="line.671"></a>
+<FONT color="green">672</FONT>        {<a name="line.672"></a>
+<FONT color="green">673</FONT>          return null;<a name="line.673"></a>
+<FONT color="green">674</FONT>        }<a name="line.674"></a>
+<FONT color="green">675</FONT>        else<a name="line.675"></a>
+<FONT color="green">676</FONT>        {<a name="line.676"></a>
+<FONT color="green">677</FONT>          return a.getValue();<a name="line.677"></a>
+<FONT color="green">678</FONT>        }<a name="line.678"></a>
+<FONT color="green">679</FONT>      }<a name="line.679"></a>
+<FONT color="green">680</FONT>    <a name="line.680"></a>
+<FONT color="green">681</FONT>    <a name="line.681"></a>
+<FONT color="green">682</FONT>    <a name="line.682"></a>
+<FONT color="green">683</FONT>      /**<a name="line.683"></a>
+<FONT color="green">684</FONT>       * Retrieves the value for the specified attribute as a byte array, if<a name="line.684"></a>
+<FONT color="green">685</FONT>       * available.  If the attribute has more than one value, then the first value<a name="line.685"></a>
+<FONT color="green">686</FONT>       * will be returned.<a name="line.686"></a>
+<FONT color="green">687</FONT>       *<a name="line.687"></a>
+<FONT color="green">688</FONT>       * @param  attributeName  The name of the attribute for which to retrieve the<a name="line.688"></a>
+<FONT color="green">689</FONT>       *                        value.  It must not be {@code null}.<a name="line.689"></a>
+<FONT color="green">690</FONT>       *<a name="line.690"></a>
+<FONT color="green">691</FONT>       * @return  The value for the specified attribute as a byte array, or<a name="line.691"></a>
+<FONT color="green">692</FONT>       *          {@code null} if that attribute is not available.<a name="line.692"></a>
+<FONT color="green">693</FONT>       */<a name="line.693"></a>
+<FONT color="green">694</FONT>      public byte[] getAttributeValueBytes(final String attributeName)<a name="line.694"></a>
+<FONT color="green">695</FONT>      {<a name="line.695"></a>
+<FONT color="green">696</FONT>        ensureNotNull(attributeName);<a name="line.696"></a>
+<FONT color="green">697</FONT>    <a name="line.697"></a>
+<FONT color="green">698</FONT>        final Attribute a = attributes.get(toLowerCase(attributeName));<a name="line.698"></a>
+<FONT color="green">699</FONT>        if (a == null)<a name="line.699"></a>
+<FONT color="green">700</FONT>        {<a name="line.700"></a>
+<FONT color="green">701</FONT>          return null;<a name="line.701"></a>
+<FONT color="green">702</FONT>        }<a name="line.702"></a>
+<FONT color="green">703</FONT>        else<a name="line.703"></a>
+<FONT color="green">704</FONT>        {<a name="line.704"></a>
+<FONT color="green">705</FONT>          return a.getValueByteArray();<a name="line.705"></a>
+<FONT color="green">706</FONT>        }<a name="line.706"></a>
+<FONT color="green">707</FONT>      }<a name="line.707"></a>
+<FONT color="green">708</FONT>    <a name="line.708"></a>
+<FONT color="green">709</FONT>    <a name="line.709"></a>
+<FONT color="green">710</FONT>    <a name="line.710"></a>
+<FONT color="green">711</FONT>      /**<a name="line.711"></a>
+<FONT color="green">712</FONT>       * Retrieves the value for the specified attribute as a Boolean, if available.<a name="line.712"></a>
+<FONT color="green">713</FONT>       * If the attribute has more than one value, then the first value will be<a name="line.713"></a>
+<FONT color="green">714</FONT>       * returned.  Values of "true", "t", "yes", "y", "on", and "1" will be<a name="line.714"></a>
+<FONT color="green">715</FONT>       * interpreted as {@code TRUE}.  Values of "false", "f", "no", "n", "off", and<a name="line.715"></a>
+<FONT color="green">716</FONT>       * "0" will be interpreted as {@code FALSE}.<a name="line.716"></a>
+<FONT color="green">717</FONT>       *<a name="line.717"></a>
+<FONT color="green">718</FONT>       * @param  attributeName  The name of the attribute for which to retrieve the<a name="line.718"></a>
+<FONT color="green">719</FONT>       *                        value.  It must not be {@code null}.<a name="line.719"></a>
+<FONT color="green">720</FONT>       *<a name="line.720"></a>
+<FONT color="green">721</FONT>       * @return  The Boolean value parsed from the specified attribute, or<a name="line.721"></a>
+<FONT color="green">722</FONT>       *          {@code null} if that attribute is not available or the value<a name="line.722"></a>
+<FONT color="green">723</FONT>       *          cannot be parsed as a Boolean.<a name="line.723"></a>
+<FONT color="green">724</FONT>       */<a name="line.724"></a>
+<FONT color="green">725</FONT>      public Boolean getAttributeValueAsBoolean(final String attributeName)<a name="line.725"></a>
+<FONT color="green">726</FONT>      {<a name="line.726"></a>
+<FONT color="green">727</FONT>        ensureNotNull(attributeName);<a name="line.727"></a>
+<FONT color="green">728</FONT>    <a name="line.728"></a>
+<FONT color="green">729</FONT>        final Attribute a = attributes.get(toLowerCase(attributeName));<a name="line.729"></a>
+<FONT color="green">730</FONT>        if (a == null)<a name="line.730"></a>
+<FONT color="green">731</FONT>        {<a name="line.731"></a>
+<FONT color="green">732</FONT>          return null;<a name="line.732"></a>
+<FONT color="green">733</FONT>        }<a name="line.733"></a>
+<FONT color="green">734</FONT>        else<a name="line.734"></a>
+<FONT color="green">735</FONT>        {<a name="line.735"></a>
+<FONT color="green">736</FONT>          return a.getValueAsBoolean();<a name="line.736"></a>
+<FONT color="green">737</FONT>        }<a name="line.737"></a>
+<FONT color="green">738</FONT>      }<a name="line.738"></a>
+<FONT color="green">739</FONT>    <a name="line.739"></a>
+<FONT color="green">740</FONT>    <a name="line.740"></a>
+<FONT color="green">741</FONT>    <a name="line.741"></a>
+<FONT color="green">742</FONT>      /**<a name="line.742"></a>
+<FONT color="green">743</FONT>       * Retrieves the value for the specified attribute as a Date, formatted using<a name="line.743"></a>
+<FONT color="green">744</FONT>       * the generalized time syntax, if available.  If the attribute has more than<a name="line.744"></a>
+<FONT color="green">745</FONT>       * one value, then the first value will be returned.<a name="line.745"></a>
+<FONT color="green">746</FONT>       *<a name="line.746"></a>
+<FONT color="green">747</FONT>       * @param  attributeName  The name of the attribute for which to retrieve the<a name="line.747"></a>
+<FONT color="green">748</FONT>       *                        value.  It must not be {@code null}.<a name="line.748"></a>
+<FONT color="green">749</FONT>       *<a name="line.749"></a>
+<FONT color="green">750</FONT>       * @return  The Date value parsed from the specified attribute, or<a name="line.750"></a>
+<FONT color="green">751</FONT>       *           {@code null} if that attribute is not available or the value<a name="line.751"></a>
+<FONT color="green">752</FONT>       *           cannot be parsed as a Date.<a name="line.752"></a>
+<FONT color="green">753</FONT>       */<a name="line.753"></a>
+<FONT color="green">754</FONT>      public Date getAttributeValueAsDate(final String attributeName)<a name="line.754"></a>
+<FONT color="green">755</FONT>      {<a name="line.755"></a>
+<FONT color="green">756</FONT>        ensureNotNull(attributeName);<a name="line.756"></a>
+<FONT color="green">757</FONT>    <a name="line.757"></a>
+<FONT color="green">758</FONT>        final Attribute a = attributes.get(toLowerCase(attributeName));<a name="line.758"></a>
+<FONT color="green">759</FONT>        if (a == null)<a name="line.759"></a>
+<FONT color="green">760</FONT>        {<a name="line.760"></a>
+<FONT color="green">761</FONT>          return null;<a name="line.761"></a>
+<FONT color="green">762</FONT>        }<a name="line.762"></a>
+<FONT color="green">763</FONT>        else<a name="line.763"></a>
+<FONT color="green">764</FONT>        {<a name="line.764"></a>
+<FONT color="green">765</FONT>          return a.getValueAsDate();<a name="line.765"></a>
+<FONT color="green">766</FONT>        }<a name="line.766"></a>
+<FONT color="green">767</FONT>      }<a name="line.767"></a>
+<FONT color="green">768</FONT>    <a name="line.768"></a>
+<FONT color="green">769</FONT>    <a name="line.769"></a>
+<FONT color="green">770</FONT>    <a name="line.770"></a>
+<FONT color="green">771</FONT>      /**<a name="line.771"></a>
+<FONT color="green">772</FONT>       * Retrieves the value for the specified attribute as a DN, if available.  If<a name="line.772"></a>
+<FONT color="green">773</FONT>       * the attribute has more than one value, then the first value will be<a name="line.773"></a>
+<FONT color="green">774</FONT>       * returned.<a name="line.774"></a>
+<FONT color="green">775</FONT>       *<a name="line.775"></a>
+<FONT color="green">776</FONT>       * @param  attributeName  The name of the attribute for which to retrieve the<a name="line.776"></a>
+<FONT color="green">777</FONT>       *                        value.  It must not be {@code null}.<a name="line.777"></a>
+<FONT color="green">778</FONT>       *<a name="line.778"></a>
+<FONT color="green">779</FONT>       * @return  The DN value parsed from the specified attribute, or {@code null}<a name="line.779"></a>
+<FONT color="green">780</FONT>       *          if that attribute is not available or the value cannot be parsed<a name="line.780"></a>
+<FONT color="green">781</FONT>       *          as a DN.<a name="line.781"></a>
+<FONT color="green">782</FONT>       */<a name="line.782"></a>
+<FONT color="green">783</FONT>      public DN getAttributeValueAsDN(final String attributeName)<a name="line.783"></a>
+<FONT color="green">784</FONT>      {<a name="line.784"></a>
+<FONT color="green">785</FONT>        ensureNotNull(attributeName);<a name="line.785"></a>
+<FONT color="green">786</FONT>    <a name="line.786"></a>
+<FONT color="green">787</FONT>        final Attribute a = attributes.get(toLowerCase(attributeName));<a name="line.787"></a>
+<FONT color="green">788</FONT>        if (a == null)<a name="line.788"></a>
+<FONT color="green">789</FONT>        {<a name="line.789"></a>
+<FONT color="green">790</FONT>          return null;<a name="line.790"></a>
+<FONT color="green">791</FONT>        }<a name="line.791"></a>
+<FONT color="green">792</FONT>        else<a name="line.792"></a>
+<FONT color="green">793</FONT>        {<a name="line.793"></a>
+<FONT color="green">794</FONT>          return a.getValueAsDN();<a name="line.794"></a>
+<FONT color="green">795</FONT>        }<a name="line.795"></a>
+<FONT color="green">796</FONT>      }<a name="line.796"></a>
+<FONT color="green">797</FONT>    <a name="line.797"></a>
+<FONT color="green">798</FONT>    <a name="line.798"></a>
+<FONT color="green">799</FONT>    <a name="line.799"></a>
+<FONT color="green">800</FONT>      /**<a name="line.800"></a>
+<FONT color="green">801</FONT>       * Retrieves the value for the specified attribute as an Integer, if<a name="line.801"></a>
+<FONT color="green">802</FONT>       * available.  If the attribute has more than one value, then the first value<a name="line.802"></a>
+<FONT color="green">803</FONT>       * will be returned.<a name="line.803"></a>
+<FONT color="green">804</FONT>       *<a name="line.804"></a>
+<FONT color="green">805</FONT>       * @param  attributeName  The name of the attribute for which to retrieve the<a name="line.805"></a>
+<FONT color="green">806</FONT>       *                        value.  It must not be {@code null}.<a name="line.806"></a>
+<FONT color="green">807</FONT>       *<a name="line.807"></a>
+<FONT color="green">808</FONT>       * @return  The Integer value parsed from the specified attribute, or<a name="line.808"></a>
+<FONT color="green">809</FONT>       *          {@code null} if that attribute is not available or the value<a name="line.809"></a>
+<FONT color="green">810</FONT>       *          cannot be parsed as an Integer.<a name="line.810"></a>
+<FONT color="green">811</FONT>       */<a name="line.811"></a>
+<FONT color="green">812</FONT>      public Integer getAttributeValueAsInteger(final String attributeName)<a name="line.812"></a>
+<FONT color="green">813</FONT>      {<a name="line.813"></a>
+<FONT color="green">814</FONT>        ensureNotNull(attributeName);<a name="line.814"></a>
+<FONT color="green">815</FONT>    <a name="line.815"></a>
+<FONT color="green">816</FONT>        final Attribute a = attributes.get(toLowerCase(attributeName));<a name="line.816"></a>
+<FONT color="green">817</FONT>        if (a == null)<a name="line.817"></a>
+<FONT color="green">818</FONT>        {<a name="line.818"></a>
+<FONT color="green">819</FONT>          return null;<a name="line.819"></a>
+<FONT color="green">820</FONT>        }<a name="line.820"></a>
+<FONT color="green">821</FONT>        else<a name="line.821"></a>
+<FONT color="green">822</FONT>        {<a name="line.822"></a>
+<FONT color="green">823</FONT>          return a.getValueAsInteger();<a name="line.823"></a>
+<FONT color="green">824</FONT>        }<a name="line.824"></a>
+<FONT color="green">825</FONT>      }<a name="line.825"></a>
+<FONT color="green">826</FONT>    <a name="line.826"></a>
+<FONT color="green">827</FONT>    <a name="line.827"></a>
+<FONT color="green">828</FONT>    <a name="line.828"></a>
+<FONT color="green">829</FONT>      /**<a name="line.829"></a>
+<FONT color="green">830</FONT>       * Retrieves the value for the specified attribute as a Long, if available.<a name="line.830"></a>
+<FONT color="green">831</FONT>       * If the attribute has more than one value, then the first value will be<a name="line.831"></a>
+<FONT color="green">832</FONT>       * returned.<a name="line.832"></a>
+<FONT color="green">833</FONT>       *<a name="line.833"></a>
+<FONT color="green">834</FONT>       * @param  attributeName  The name of the attribute for which to retrieve the<a name="line.834"></a>
+<FONT color="green">835</FONT>       *                        value.  It must not be {@code null}.<a name="line.835"></a>
+<FONT color="green">836</FONT>       *<a name="line.836"></a>
+<FONT color="green">837</FONT>       * @return  The Long value parsed from the specified attribute, or<a name="line.837"></a>
+<FONT color="green">838</FONT>       *          {@code null} if that attribute is not available or the value<a name="line.838"></a>
+<FONT color="green">839</FONT>       *          cannot be parsed as a Long.<a name="line.839"></a>
+<FONT color="green">840</FONT>       */<a name="line.840"></a>
+<FONT color="green">841</FONT>      public Long getAttributeValueAsLong(final String attributeName)<a name="line.841"></a>
+<FONT color="green">842</FONT>      {<a name="line.842"></a>
+<FONT color="green">843</FONT>        ensureNotNull(attributeName);<a name="line.843"></a>
+<FONT color="green">844</FONT>    <a name="line.844"></a>
+<FONT color="green">845</FONT>        final Attribute a = attributes.get(toLowerCase(attributeName));<a name="line.845"></a>
+<FONT color="green">846</FONT>        if (a == null)<a name="line.846"></a>
+<FONT color="green">847</FONT>        {<a name="line.847"></a>
+<FONT color="green">848</FONT>          return null;<a name="line.848"></a>
+<FONT color="green">849</FONT>        }<a name="line.849"></a>
+<FONT color="green">850</FONT>        else<a name="line.850"></a>
+<FONT color="green">851</FONT>        {<a name="line.851"></a>
+<FONT color="green">852</FONT>          return a.getValueAsLong();<a name="line.852"></a>
+<FONT color="green">853</FONT>        }<a name="line.853"></a>
+<FONT color="green">854</FONT>      }<a name="line.854"></a>
+<FONT color="green">855</FONT>    <a name="line.855"></a>
+<FONT color="green">856</FONT>    <a name="line.856"></a>
+<FONT color="green">857</FONT>    <a name="line.857"></a>
+<FONT color="green">858</FONT>      /**<a name="line.858"></a>
+<FONT color="green">859</FONT>       * Retrieves the set of values for the specified attribute, if available.<a name="line.859"></a>
+<FONT color="green">860</FONT>       *<a name="line.860"></a>
+<FONT color="green">861</FONT>       * @param  attributeName  The name of the attribute for which to retrieve the<a name="line.861"></a>
+<FONT color="green">862</FONT>       *                        values.  It must not be {@code null}.<a name="line.862"></a>
+<FONT color="green">863</FONT>       *<a name="line.863"></a>
+<FONT color="green">864</FONT>       * @return  The set of values for the specified attribute, or {@code null} if<a name="line.864"></a>
+<FONT color="green">865</FONT>       *          that attribute is not available.<a name="line.865"></a>
+<FONT color="green">866</FONT>       */<a name="line.866"></a>
+<FONT color="green">867</FONT>      public String[] getAttributeValues(final String attributeName)<a name="line.867"></a>
+<FONT color="green">868</FONT>      {<a name="line.868"></a>
+<FONT color="green">869</FONT>        ensureNotNull(attributeName);<a name="line.869"></a>
+<FONT color="green">870</FONT>    <a name="line.870"></a>
+<FONT color="green">871</FONT>        final Attribute a = attributes.get(toLowerCase(attributeName));<a name="line.871"></a>
+<FONT color="green">872</FONT>        if (a == null)<a name="line.872"></a>
+<FONT color="green">873</FONT>        {<a name="line.873"></a>
+<FONT color="green">874</FONT>          return null;<a name="line.874"></a>
+<FONT color="green">875</FONT>        }<a name="line.875"></a>
+<FONT color="green">876</FONT>        else<a name="line.876"></a>
+<FONT color="green">877</FONT>        {<a name="line.877"></a>
+<FONT color="green">878</FONT>          return a.getValues();<a name="line.878"></a>
+<FONT color="green">879</FONT>        }<a name="line.879"></a>
+<FONT color="green">880</FONT>      }<a name="line.880"></a>
+<FONT color="green">881</FONT>    <a name="line.881"></a>
+<FONT color="green">882</FONT>    <a name="line.882"></a>
+<FONT color="green">883</FONT>    <a name="line.883"></a>
+<FONT color="green">884</FONT>      /**<a name="line.884"></a>
+<FONT color="green">885</FONT>       * Retrieves the set of values for the specified attribute as byte arrays, if<a name="line.885"></a>
+<FONT color="green">886</FONT>       * available.<a name="line.886"></a>
+<FONT color="green">887</FONT>       *<a name="line.887"></a>
+<FONT color="green">888</FONT>       * @param  attributeName  The name of the attribute for which to retrieve the<a name="line.888"></a>
+<FONT color="green">889</FONT>       *                        values.  It must not be {@code null}.<a name="line.889"></a>
+<FONT color="green">890</FONT>       *<a name="line.890"></a>
+<FONT color="green">891</FONT>       * @return  The set of values for the specified attribute as byte arrays, or<a name="line.891"></a>
+<FONT color="green">892</FONT>       *          {@code null} if that attribute is not available.<a name="line.892"></a>
+<FONT color="green">893</FONT>       */<a name="line.893"></a>
+<FONT color="green">894</FONT>      public byte[][] getAttributeValueByteArrays(final String attributeName)<a name="line.894"></a>
+<FONT color="green">895</FONT>      {<a name="line.895"></a>
+<FONT color="green">896</FONT>        ensureNotNull(attributeName);<a name="line.896"></a>
+<FONT color="green">897</FONT>    <a name="line.897"></a>
+<FONT color="green">898</FONT>        final Attribute a = attributes.get(toLowerCase(attributeName));<a name="line.898"></a>
+<FONT color="green">899</FONT>        if (a == null)<a name="line.899"></a>
+<FONT color="green">900</FONT>        {<a name="line.900"></a>
+<FONT color="green">901</FONT>          return null;<a name="line.901"></a>
+<FONT color="green">902</FONT>        }<a name="line.902"></a>
+<FONT color="green">903</FONT>        else<a name="line.903"></a>
+<FONT color="green">904</FONT>        {<a name="line.904"></a>
+<FONT color="green">905</FONT>          return a.getValueByteArrays();<a name="line.905"></a>
+<FONT color="green">906</FONT>        }<a name="line.906"></a>
+<FONT color="green">907</FONT>      }<a name="line.907"></a>
+<FONT color="green">908</FONT>    <a name="line.908"></a>
+<FONT color="green">909</FONT>    <a name="line.909"></a>
+<FONT color="green">910</FONT>    <a name="line.910"></a>
+<FONT color="green">911</FONT>      /**<a name="line.911"></a>
+<FONT color="green">912</FONT>       * Retrieves the "objectClass" attribute from the entry, if available.<a name="line.912"></a>
+<FONT color="green">913</FONT>       *<a name="line.913"></a>
+<FONT color="green">914</FONT>       * @return  The "objectClass" attribute from the entry, or {@code null} if<a name="line.914"></a>
+<FONT color="green">915</FONT>       *          that attribute not available.<a name="line.915"></a>
+<FONT color="green">916</FONT>       */<a name="line.916"></a>
+<FONT color="green">917</FONT>      public final Attribute getObjectClassAttribute()<a name="line.917"></a>
+<FONT color="green">918</FONT>      {<a name="line.918"></a>
+<FONT color="green">919</FONT>        return getAttribute("objectClass");<a name="line.919"></a>
+<FONT color="green">920</FONT>      }<a name="line.920"></a>
+<FONT color="green">921</FONT>    <a name="line.921"></a>
+<FONT color="green">922</FONT>    <a name="line.922"></a>
+<FONT color="green">923</FONT>    <a name="line.923"></a>
+<FONT color="green">924</FONT>      /**<a name="line.924"></a>
+<FONT color="green">925</FONT>       * Retrieves the values of the "objectClass" attribute from the entry, if<a name="line.925"></a>
+<FONT color="green">926</FONT>       * available.<a name="line.926"></a>
+<FONT color="green">927</FONT>       *<a name="line.927"></a>
+<FONT color="green">928</FONT>       * @return  The values of the "objectClass" attribute from the entry, or<a name="line.928"></a>
+<FONT color="green">929</FONT>       *          {@code null} if that attribute is not available.<a name="line.929"></a>
+<FONT color="green">930</FONT>       */<a name="line.930"></a>
+<FONT color="green">931</FONT>      public final String[] getObjectClassValues()<a name="line.931"></a>
+<FONT color="green">932</FONT>      {<a name="line.932"></a>
+<FONT color="green">933</FONT>        return getAttributeValues("objectClass");<a name="line.933"></a>
+<FONT color="green">934</FONT>      }<a name="line.934"></a>
+<FONT color="green">935</FONT>    <a name="line.935"></a>
+<FONT color="green">936</FONT>    <a name="line.936"></a>
+<FONT color="green">937</FONT>    <a name="line.937"></a>
+<FONT color="green">938</FONT>      /**<a name="line.938"></a>
+<FONT color="green">939</FONT>       * Adds the provided attribute to this entry.  If this entry already contains<a name="line.939"></a>
+<FONT color="green">940</FONT>       * an attribute with the same name, then their values will be merged.<a name="line.940"></a>
+<FONT color="green">941</FONT>       *<a name="line.941"></a>
+<FONT color="green">942</FONT>       * @param  attribute  The attribute to be added.  It must not be {@code null}.<a name="line.942"></a>
+<FONT color="green">943</FONT>       *<a name="line.943"></a>
+<FONT color="green">944</FONT>       * @return  {@code true} if the entry was updated, or {@code false} because<a name="line.944"></a>
+<FONT color="green">945</FONT>       *          the specified attribute already existed with all provided values.<a name="line.945"></a>
+<FONT color="green">946</FONT>       */<a name="line.946"></a>
+<FONT color="green">947</FONT>      public boolean addAttribute(final Attribute attribute)<a name="line.947"></a>
+<FONT color="green">948</FONT>      {<a name="line.948"></a>
+<FONT color="green">949</FONT>        ensureNotNull(attribute);<a name="line.949"></a>
+<FONT color="green">950</FONT>    <a name="line.950"></a>
+<FONT color="green">951</FONT>        final String lowerName = toLowerCase(attribute.getName());<a name="line.951"></a>
+<FONT color="green">952</FONT>        final Attribute attr = attributes.get(lowerName);<a name="line.952"></a>
+<FONT color="green">953</FONT>        if (attr == null)<a name="line.953"></a>
+<FONT color="green">954</FONT>        {<a name="line.954"></a>
+<FONT color="green">955</FONT>          attributes.put(lowerName, attribute);<a name="line.955"></a>
+<FONT color="green">956</FONT>          return true;<a name="line.956"></a>
+<FONT color="green">957</FONT>        }<a name="line.957"></a>
+<FONT color="green">958</FONT>        else<a name="line.958"></a>
+<FONT color="green">959</FONT>        {<a name="line.959"></a>
+<FONT color="green">960</FONT>          final Attribute newAttr = Attribute.mergeAttributes(attr, attribute);<a name="line.960"></a>
+<FONT color="green">961</FONT>          attributes.put(lowerName, newAttr);<a name="line.961"></a>
+<FONT color="green">962</FONT>          return (attr.getRawValues().length != newAttr.getRawValues().length);<a name="line.962"></a>
+<FONT color="green">963</FONT>        }<a name="line.963"></a>
+<FONT color="green">964</FONT>      }<a name="line.964"></a>
+<FONT color="green">965</FONT>    <a name="line.965"></a>
+<FONT color="green">966</FONT>    <a name="line.966"></a>
+<FONT color="green">967</FONT>    <a name="line.967"></a>
+<FONT color="green">968</FONT>      /**<a name="line.968"></a>
+<FONT color="green">969</FONT>       * Adds the specified attribute value to this entry, if it is not already<a name="line.969"></a>
+<FONT color="green">970</FONT>       * present.<a name="line.970"></a>
+<FONT color="green">971</FONT>       *<a name="line.971"></a>
+<FONT color="green">972</FONT>       * @param  attributeName   The name for the attribute to be added.  It must<a name="line.972"></a>
+<FONT color="green">973</FONT>       *                         not be {@code null}.<a name="line.973"></a>
+<FONT color="green">974</FONT>       * @param  attributeValue  The value for the attribute to be added.  It must<a name="line.974"></a>
+<FONT color="green">975</FONT>       *                         not be {@code null}.<a name="line.975"></a>
+<FONT color="green">976</FONT>       *<a name="line.976"></a>
+<FONT color="green">977</FONT>       * @return  {@code true} if the entry was updated, or {@code false} because<a name="line.977"></a>
+<FONT color="green">978</FONT>       *          the specified attribute already existed with the given value.<a name="line.978"></a>
+<FONT color="green">979</FONT>       */<a name="line.979"></a>
+<FONT color="green">980</FONT>      public boolean addAttribute(final String attributeName,<a name="line.980"></a>
+<FONT color="green">981</FONT>                                  final String attributeValue)<a name="line.981"></a>
+<FONT color="green">982</FONT>      {<a name="line.982"></a>
+<FONT color="green">983</FONT>        ensureNotNull(attributeName, attributeValue);<a name="line.983"></a>
+<FONT color="green">984</FONT>        return addAttribute(new Attribute(attributeName, attributeValue));<a name="line.984"></a>
+<FONT color="green">985</FONT>      }<a name="line.985"></a>
+<FONT color="green">986</FONT>    <a name="line.986"></a>
+<FONT color="green">987</FONT>    <a name="line.987"></a>
+<FONT color="green">988</FONT>    <a name="line.988"></a>
+<FONT color="green">989</FONT>      /**<a name="line.989"></a>
+<FONT color="green">990</FONT>       * Adds the specified attribute value to this entry, if it is not already<a name="line.990"></a>
+<FONT color="green">991</FONT>       * present.<a name="line.991"></a>
+<FONT color="green">992</FONT>       *<a name="line.992"></a>
+<FONT color="green">993</FONT>       * @param  attributeName   The name for the attribute to be added.  It must<a name="line.993"></a>
+<FONT color="green">994</FONT>       *                         not be {@code null}.<a name="line.994"></a>
+<FONT color="green">995</FONT>       * @param  attributeValue  The value for the attribute to be added.  It must<a name="line.995"></a>
+<FONT color="green">996</FONT>       *                         not be {@code null}.<a name="line.996"></a>
+<FONT color="green">997</FONT>       *<a name="line.997"></a>
+<FONT color="green">998</FONT>       * @return  {@code true} if the entry was updated, or {@code false} because<a name="line.998"></a>
+<FONT color="green">999</FONT>       *          the specified attribute already existed with the given value.<a name="line.999"></a>
+<FONT color="green">1000</FONT>       */<a name="line.1000"></a>
+<FONT color="green">1001</FONT>      public boolean addAttribute(final String attributeName,<a name="line.1001"></a>
+<FONT color="green">1002</FONT>                                  final byte[] attributeValue)<a name="line.1002"></a>
+<FONT color="green">1003</FONT>      {<a name="line.1003"></a>
+<FONT color="green">1004</FONT>        ensureNotNull(attributeName, attributeValue);<a name="line.1004"></a>
+<FONT color="green">1005</FONT>        return addAttribute(new Attribute(attributeName, attributeValue));<a name="line.1005"></a>
+<FONT color="green">1006</FONT>      }<a name="line.1006"></a>
+<FONT color="green">1007</FONT>    <a name="line.1007"></a>
+<FONT color="green">1008</FONT>    <a name="line.1008"></a>
+<FONT color="green">1009</FONT>    <a name="line.1009"></a>
+<FONT color="green">1010</FONT>      /**<a name="line.1010"></a>
+<FONT color="green">1011</FONT>       * Adds the provided attribute to this entry.  If this entry already contains<a name="line.1011"></a>
+<FONT color="green">1012</FONT>       * an attribute with the same name, then their values will be merged.<a name="line.1012"></a>
+<FONT color="green">1013</FONT>       *<a name="line.1013"></a>
+<FONT color="green">1014</FONT>       * @param  attributeName    The name for the attribute to be added.  It must<a name="line.1014"></a>
+<FONT color="green">1015</FONT>       *                          not be {@code null}.<a name="line.1015"></a>
+<FONT color="green">1016</FONT>       * @param  attributeValues  The value for the attribute to be added.  It must<a name="line.1016"></a>
+<FONT color="green">1017</FONT>       *                          not be {@code null}.<a name="line.1017"></a>
+<FONT color="green">1018</FONT>       *<a name="line.1018"></a>
+<FONT color="green">1019</FONT>       * @return  {@code true} if the entry was updated, or {@code false} because<a name="line.1019"></a>
+<FONT color="green">1020</FONT>       *          the specified attribute already existed with all provided values.<a name="line.1020"></a>
+<FONT color="green">1021</FONT>       */<a name="line.1021"></a>
+<FONT color="green">1022</FONT>      public boolean addAttribute(final String attributeName,<a name="line.1022"></a>
+<FONT color="green">1023</FONT>                                  final String... attributeValues)<a name="line.1023"></a>
+<FONT color="green">1024</FONT>      {<a name="line.1024"></a>
+<FONT color="green">1025</FONT>        ensureNotNull(attributeName, attributeValues);<a name="line.1025"></a>
+<FONT color="green">1026</FONT>        return addAttribute(new Attribute(attributeName, attributeValues));<a name="line.1026"></a>
+<FONT color="green">1027</FONT>      }<a name="line.1027"></a>
+<FONT color="green">1028</FONT>    <a name="line.1028"></a>
+<FONT color="green">1029</FONT>    <a name="line.1029"></a>
+<FONT color="green">1030</FONT>    <a name="line.1030"></a>
+<FONT color="green">1031</FONT>      /**<a name="line.1031"></a>
+<FONT color="green">1032</FONT>       * Adds the provided attribute to this entry.  If this entry already contains<a name="line.1032"></a>
+<FONT color="green">1033</FONT>       * an attribute with the same name, then their values will be merged.<a name="line.1033"></a>
+<FONT color="green">1034</FONT>       *<a name="line.1034"></a>
+<FONT color="green">1035</FONT>       * @param  attributeName    The name for the attribute to be added.  It must<a name="line.1035"></a>
+<FONT color="green">1036</FONT>       *                          not be {@code null}.<a name="line.1036"></a>
+<FONT color="green">1037</FONT>       * @param  attributeValues  The value for the attribute to be added.  It must<a name="line.1037"></a>
+<FONT color="green">1038</FONT>       *                          not be {@code null}.<a name="line.1038"></a>
+<FONT color="green">1039</FONT>       *<a name="line.1039"></a>
+<FONT color="green">1040</FONT>       * @return  {@code true} if the entry was updated, or {@code false} because<a name="line.1040"></a>
+<FONT color="green">1041</FONT>       *          the specified attribute already existed with all provided values.<a name="line.1041"></a>
+<FONT color="green">1042</FONT>       */<a name="line.1042"></a>
+<FONT color="green">1043</FONT>      public boolean addAttribute(final String attributeName,<a name="line.1043"></a>
+<FONT color="green">1044</FONT>                                  final byte[]... attributeValues)<a name="line.1044"></a>
+<FONT color="green">1045</FONT>      {<a name="line.1045"></a>
+<FONT color="green">1046</FONT>        ensureNotNull(attributeName, attributeValues);<a name="line.1046"></a>
+<FONT color="green">1047</FONT>        return addAttribute(new Attribute(attributeName, attributeValues));<a name="line.1047"></a>
+<FONT color="green">1048</FONT>      }<a name="line.1048"></a>
+<FONT color="green">1049</FONT>    <a name="line.1049"></a>
+<FONT color="green">1050</FONT>    <a name="line.1050"></a>
+<FONT color="green">1051</FONT>    <a name="line.1051"></a>
+<FONT color="green">1052</FONT>      /**<a name="line.1052"></a>
+<FONT color="green">1053</FONT>       * Removes the specified attribute from this entry.<a name="line.1053"></a>
+<FONT color="green">1054</FONT>       *<a name="line.1054"></a>
+<FONT color="green">1055</FONT>       * @param  attributeName  The name of the attribute to remove.  It must not be<a name="line.1055"></a>
+<FONT color="green">1056</FONT>       *                        {@code null}.<a name="line.1056"></a>
+<FONT color="green">1057</FONT>       *<a name="line.1057"></a>
+<FONT color="green">1058</FONT>       * @return  {@code true} if the attribute was removed from the entry, or<a name="line.1058"></a>
+<FONT color="green">1059</FONT>       *          {@code false} if it was not present.<a name="line.1059"></a>
+<FONT color="green">1060</FONT>       */<a name="line.1060"></a>
+<FONT color="green">1061</FONT>      public boolean removeAttribute(final String attributeName)<a name="line.1061"></a>
+<FONT color="green">1062</FONT>      {<a name="line.1062"></a>
+<FONT color="green">1063</FONT>        ensureNotNull(attributeName);<a name="line.1063"></a>
+<FONT color="green">1064</FONT>    <a name="line.1064"></a>
+<FONT color="green">1065</FONT>        return (attributes.remove(toLowerCase(attributeName)) != null);<a name="line.1065"></a>
+<FONT color="green">1066</FONT>      }<a name="line.1066"></a>
+<FONT color="green">1067</FONT>    <a name="line.1067"></a>
+<FONT color="green">1068</FONT>    <a name="line.1068"></a>
+<FONT color="green">1069</FONT>    <a name="line.1069"></a>
+<FONT color="green">1070</FONT>      /**<a name="line.1070"></a>
+<FONT color="green">1071</FONT>       * Removes the specified attribute value from this entry if it is present.  If<a name="line.1071"></a>
+<FONT color="green">1072</FONT>       * it is the last value for the attribute, then the entire attribute will be<a name="line.1072"></a>
+<FONT color="green">1073</FONT>       * removed.  If the specified value is not present, then no change will be<a name="line.1073"></a>
+<FONT color="green">1074</FONT>       * made.<a name="line.1074"></a>
+<FONT color="green">1075</FONT>       *<a name="line.1075"></a>
+<FONT color="green">1076</FONT>       * @param  attributeName   The name of the attribute from which to remove the<a name="line.1076"></a>
+<FONT color="green">1077</FONT>       *                         value.  It must not be {@code null}.<a name="line.1077"></a>
+<FONT color="green">1078</FONT>       * @param  attributeValue  The value to remove from the attribute.  It must<a name="line.1078"></a>
+<FONT color="green">1079</FONT>       *                         not be {@code null}.<a name="line.1079"></a>
+<FONT color="green">1080</FONT>       *<a name="line.1080"></a>
+<FONT color="green">1081</FONT>       * @return  {@code true} if the attribute value was removed from the entry, or<a name="line.1081"></a>
+<FONT color="green">1082</FONT>       *          {@code false} if it was not present.<a name="line.1082"></a>
+<FONT color="green">1083</FONT>       */<a name="line.1083"></a>
+<FONT color="green">1084</FONT>      public boolean removeAttributeValue(final String attributeName,<a name="line.1084"></a>
+<FONT color="green">1085</FONT>                                          final String attributeValue)<a name="line.1085"></a>
+<FONT color="green">1086</FONT>      {<a name="line.1086"></a>
+<FONT color="green">1087</FONT>        ensureNotNull(attributeName, attributeValue);<a name="line.1087"></a>
+<FONT color="green">1088</FONT>    <a name="line.1088"></a>
+<FONT color="green">1089</FONT>        final String lowerName = toLowerCase(attributeName);<a name="line.1089"></a>
+<FONT color="green">1090</FONT>        final Attribute attr = attributes.get(lowerName);<a name="line.1090"></a>
+<FONT color="green">1091</FONT>        if (attr == null)<a name="line.1091"></a>
+<FONT color="green">1092</FONT>        {<a name="line.1092"></a>
+<FONT color="green">1093</FONT>          return false;<a name="line.1093"></a>
+<FONT color="green">1094</FONT>        }<a name="line.1094"></a>
+<FONT color="green">1095</FONT>        else<a name="line.1095"></a>
+<FONT color="green">1096</FONT>        {<a name="line.1096"></a>
+<FONT color="green">1097</FONT>          final Attribute newAttr = Attribute.removeValues(attr,<a name="line.1097"></a>
+<FONT color="green">1098</FONT>               new Attribute(attributeName, attributeValue));<a name="line.1098"></a>
+<FONT color="green">1099</FONT>          if (newAttr.hasValue())<a name="line.1099"></a>
+<FONT color="green">1100</FONT>          {<a name="line.1100"></a>
+<FONT color="green">1101</FONT>            attributes.put(lowerName, newAttr);<a name="line.1101"></a>
+<FONT color="green">1102</FONT>          }<a name="line.1102"></a>
+<FONT color="green">1103</FONT>          else<a name="line.1103"></a>
+<FONT color="green">1104</FONT>          {<a name="line.1104"></a>
+<FONT color="green">1105</FONT>            attributes.remove(lowerName);<a name="line.1105"></a>
+<FONT color="green">1106</FONT>          }<a name="line.1106"></a>
+<FONT color="green">1107</FONT>    <a name="line.1107"></a>
+<FONT color="green">1108</FONT>          return (attr.getRawValues().length != newAttr.getRawValues().length);<a name="line.1108"></a>
+<FONT color="green">1109</FONT>        }<a name="line.1109"></a>
+<FONT color="green">1110</FONT>      }<a name="line.1110"></a>
+<FONT color="green">1111</FONT>    <a name="line.1111"></a>
+<FONT color="green">1112</FONT>    <a name="line.1112"></a>
+<FONT color="green">1113</FONT>    <a name="line.1113"></a>
+<FONT color="green">1114</FONT>      /**<a name="line.1114"></a>
+<FONT color="green">1115</FONT>       * Removes the specified attribute value from this entry if it is present.  If<a name="line.1115"></a>
+<FONT color="green">1116</FONT>       * it is the last value for the attribute, then the entire attribute will be<a name="line.1116"></a>
+<FONT color="green">1117</FONT>       * removed.  If the specified value is not present, then no change will be<a name="line.1117"></a>
+<FONT color="green">1118</FONT>       * made.<a name="line.1118"></a>
+<FONT color="green">1119</FONT>       *<a name="line.1119"></a>
+<FONT color="green">1120</FONT>       * @param  attributeName   The name of the attribute from which to remove the<a name="line.1120"></a>
+<FONT color="green">1121</FONT>       *                         value.  It must not be {@code null}.<a name="line.1121"></a>
+<FONT color="green">1122</FONT>       * @param  attributeValue  The value to remove from the attribute.  It must<a name="line.1122"></a>
+<FONT color="green">1123</FONT>       *                         not be {@code null}.<a name="line.1123"></a>
+<FONT color="green">1124</FONT>       *<a name="line.1124"></a>
+<FONT color="green">1125</FONT>       * @return  {@code true} if the attribute value was removed from the entry, or<a name="line.1125"></a>
+<FONT color="green">1126</FONT>       *          {@code false} if it was not present.<a name="line.1126"></a>
+<FONT color="green">1127</FONT>       */<a name="line.1127"></a>
+<FONT color="green">1128</FONT>      public boolean removeAttributeValue(final String attributeName,<a name="line.1128"></a>
+<FONT color="green">1129</FONT>                                          final byte[] attributeValue)<a name="line.1129"></a>
+<FONT color="green">1130</FONT>      {<a name="line.1130"></a>
+<FONT color="green">1131</FONT>        ensureNotNull(attributeName, attributeValue);<a name="line.1131"></a>
+<FONT color="green">1132</FONT>    <a name="line.1132"></a>
+<FONT color="green">1133</FONT>        final String lowerName = toLowerCase(attributeName);<a name="line.1133"></a>
+<FONT color="green">1134</FONT>        final Attribute attr = attributes.get(lowerName);<a name="line.1134"></a>
+<FONT color="green">1135</FONT>        if (attr == null)<a name="line.1135"></a>
+<FONT color="green">1136</FONT>        {<a name="line.1136"></a>
+<FONT color="green">1137</FONT>          return false;<a name="line.1137"></a>
+<FONT color="green">1138</FONT>        }<a name="line.1138"></a>
+<FONT color="green">1139</FONT>        else<a name="line.1139"></a>
+<FONT color="green">1140</FONT>        {<a name="line.1140"></a>
+<FONT color="green">1141</FONT>          final Attribute newAttr = Attribute.removeValues(attr,<a name="line.1141"></a>
+<FONT color="green">1142</FONT>               new Attribute(attributeName, attributeValue));<a name="line.1142"></a>
+<FONT color="green">1143</FONT>          if (newAttr.hasValue())<a name="line.1143"></a>
+<FONT color="green">1144</FONT>          {<a name="line.1144"></a>
+<FONT color="green">1145</FONT>            attributes.put(lowerName, newAttr);<a name="line.1145"></a>
+<FONT color="green">1146</FONT>          }<a name="line.1146"></a>
+<FONT color="green">1147</FONT>          else<a name="line.1147"></a>
+<FONT color="green">1148</FONT>          {<a name="line.1148"></a>
+<FONT color="green">1149</FONT>            attributes.remove(lowerName);<a name="line.1149"></a>
+<FONT color="green">1150</FONT>          }<a name="line.1150"></a>
+<FONT color="green">1151</FONT>    <a name="line.1151"></a>
+<FONT color="green">1152</FONT>          return (attr.getRawValues().length != newAttr.getRawValues().length);<a name="line.1152"></a>
+<FONT color="green">1153</FONT>        }<a name="line.1153"></a>
+<FONT color="green">1154</FONT>      }<a name="line.1154"></a>
+<FONT color="green">1155</FONT>    <a name="line.1155"></a>
+<FONT color="green">1156</FONT>    <a name="line.1156"></a>
+<FONT color="green">1157</FONT>    <a name="line.1157"></a>
+<FONT color="green">1158</FONT>      /**<a name="line.1158"></a>
+<FONT color="green">1159</FONT>       * Removes the specified attribute values from this entry if they are present.<a name="line.1159"></a>
+<FONT color="green">1160</FONT>       * If the attribute does not have any remaining values, then the entire<a name="line.1160"></a>
+<FONT color="green">1161</FONT>       * attribute will be removed.  If any of the provided values are not present,<a name="line.1161"></a>
+<FONT color="green">1162</FONT>       * then they will be ignored.<a name="line.1162"></a>
+<FONT color="green">1163</FONT>       *<a name="line.1163"></a>
+<FONT color="green">1164</FONT>       * @param  attributeName    The name of the attribute from which to remove the<a name="line.1164"></a>
+<FONT color="green">1165</FONT>       *                          values.  It must not be {@code null}.<a name="line.1165"></a>
+<FONT color="green">1166</FONT>       * @param  attributeValues  The set of values to remove from the attribute.<a name="line.1166"></a>
+<FONT color="green">1167</FONT>       *                          It must not be {@code null}.<a name="line.1167"></a>
+<FONT color="green">1168</FONT>       *<a name="line.1168"></a>
+<FONT color="green">1169</FONT>       * @return  {@code true} if any attribute values were removed from the entry,<a name="line.1169"></a>
+<FONT color="green">1170</FONT>       *          or {@code false} none of them were present.<a name="line.1170"></a>
+<FONT color="green">1171</FONT>       */<a name="line.1171"></a>
+<FONT color="green">1172</FONT>      public boolean removeAttributeValues(final String attributeName,<a name="line.1172"></a>
+<FONT color="green">1173</FONT>                                           final String... attributeValues)<a name="line.1173"></a>
+<FONT color="green">1174</FONT>      {<a name="line.1174"></a>
+<FONT color="green">1175</FONT>        ensureNotNull(attributeName, attributeValues);<a name="line.1175"></a>
+<FONT color="green">1176</FONT>    <a name="line.1176"></a>
+<FONT color="green">1177</FONT>        final String lowerName = toLowerCase(attributeName);<a name="line.1177"></a>
+<FONT color="green">1178</FONT>        final Attribute attr = attributes.get(lowerName);<a name="line.1178"></a>
+<FONT color="green">1179</FONT>        if (attr == null)<a name="line.1179"></a>
+<FONT color="green">1180</FONT>        {<a name="line.1180"></a>
+<FONT color="green">1181</FONT>          return false;<a name="line.1181"></a>
+<FONT color="green">1182</FONT>        }<a name="line.1182"></a>
+<FONT color="green">1183</FONT>        else<a name="line.1183"></a>
+<FONT color="green">1184</FONT>        {<a name="line.1184"></a>
+<FONT color="green">1185</FONT>          final Attribute newAttr = Attribute.removeValues(attr,<a name="line.1185"></a>
+<FONT color="green">1186</FONT>               new Attribute(attributeName, attributeValues));<a name="line.1186"></a>
+<FONT color="green">1187</FONT>          if (newAttr.hasValue())<a name="line.1187"></a>
+<FONT color="green">1188</FONT>          {<a name="line.1188"></a>
+<FONT color="green">1189</FONT>            attributes.put(lowerName, newAttr);<a name="line.1189"></a>
+<FONT color="green">1190</FONT>          }<a name="line.1190"></a>
+<FONT color="green">1191</FONT>          else<a name="line.1191"></a>
+<FONT color="green">1192</FONT>          {<a name="line.1192"></a>
+<FONT color="green">1193</FONT>            attributes.remove(lowerName);<a name="line.1193"></a>
+<FONT color="green">1194</FONT>          }<a name="line.1194"></a>
+<FONT color="green">1195</FONT>    <a name="line.1195"></a>
+<FONT color="green">1196</FONT>          return (attr.getRawValues().length != newAttr.getRawValues().length);<a name="line.1196"></a>
+<FONT color="green">1197</FONT>        }<a name="line.1197"></a>
+<FONT color="green">1198</FONT>      }<a name="line.1198"></a>
+<FONT color="green">1199</FONT>    <a name="line.1199"></a>
+<FONT color="green">1200</FONT>    <a name="line.1200"></a>
+<FONT color="green">1201</FONT>    <a name="line.1201"></a>
+<FONT color="green">1202</FONT>      /**<a name="line.1202"></a>
+<FONT color="green">1203</FONT>       * Removes the specified attribute values from this entry if they are present.<a name="line.1203"></a>
+<FONT color="green">1204</FONT>       * If the attribute does not have any remaining values, then the entire<a name="line.1204"></a>
+<FONT color="green">1205</FONT>       * attribute will be removed.  If any of the provided values are not present,<a name="line.1205"></a>
+<FONT color="green">1206</FONT>       * then they will be ignored.<a name="line.1206"></a>
+<FONT color="green">1207</FONT>       *<a name="line.1207"></a>
+<FONT color="green">1208</FONT>       * @param  attributeName    The name of the attribute from which to remove the<a name="line.1208"></a>
+<FONT color="green">1209</FONT>       *                          values.  It must not be {@code null}.<a name="line.1209"></a>
+<FONT color="green">1210</FONT>       * @param  attributeValues  The set of values to remove from the attribute.<a name="line.1210"></a>
+<FONT color="green">1211</FONT>       *                          It must not be {@code null}.<a name="line.1211"></a>
+<FONT color="green">1212</FONT>       *<a name="line.1212"></a>
+<FONT color="green">1213</FONT>       * @return  {@code true} if any attribute values were removed from the entry,<a name="line.1213"></a>
+<FONT color="green">1214</FONT>       *          or {@code false} none of them were present.<a name="line.1214"></a>
+<FONT color="green">1215</FONT>       */<a name="line.1215"></a>
+<FONT color="green">1216</FONT>      public boolean removeAttributeValues(final String attributeName,<a name="line.1216"></a>
+<FONT color="green">1217</FONT>                                           final byte[]... attributeValues)<a name="line.1217"></a>
+<FONT color="green">1218</FONT>      {<a name="line.1218"></a>
+<FONT color="green">1219</FONT>        ensureNotNull(attributeName, attributeValues);<a name="line.1219"></a>
+<FONT color="green">1220</FONT>    <a name="line.1220"></a>
+<FONT color="green">1221</FONT>        final String lowerName = toLowerCase(attributeName);<a name="line.1221"></a>
+<FONT color="green">1222</FONT>        final Attribute attr = attributes.get(lowerName);<a name="line.1222"></a>
+<FONT color="green">1223</FONT>        if (attr == null)<a name="line.1223"></a>
+<FONT color="green">1224</FONT>        {<a name="line.1224"></a>
+<FONT color="green">1225</FONT>          return false;<a name="line.1225"></a>
+<FONT color="green">1226</FONT>        }<a name="line.1226"></a>
+<FONT color="green">1227</FONT>        else<a name="line.1227"></a>
+<FONT color="green">1228</FONT>        {<a name="line.1228"></a>
+<FONT color="green">1229</FONT>          final Attribute newAttr = Attribute.removeValues(attr,<a name="line.1229"></a>
+<FONT color="green">1230</FONT>               new Attribute(attributeName, attributeValues));<a name="line.1230"></a>
+<FONT color="green">1231</FONT>          if (newAttr.hasValue())<a name="line.1231"></a>
+<FONT color="green">1232</FONT>          {<a name="line.1232"></a>
+<FONT color="green">1233</FONT>            attributes.put(lowerName, newAttr);<a name="line.1233"></a>
+<FONT color="green">1234</FONT>          }<a name="line.1234"></a>
+<FONT color="green">1235</FONT>          else<a name="line.1235"></a>
+<FONT color="green">1236</FONT>          {<a name="line.1236"></a>
+<FONT color="green">1237</FONT>            attributes.remove(lowerName);<a name="line.1237"></a>
+<FONT color="green">1238</FONT>          }<a name="line.1238"></a>
+<FONT color="green">1239</FONT>    <a name="line.1239"></a>
+<FONT color="green">1240</FONT>          return (attr.getRawValues().length != newAttr.getRawValues().length);<a name="line.1240"></a>
+<FONT color="green">1241</FONT>        }<a name="line.1241"></a>
+<FONT color="green">1242</FONT>      }<a name="line.1242"></a>
+<FONT color="green">1243</FONT>    <a name="line.1243"></a>
+<FONT color="green">1244</FONT>    <a name="line.1244"></a>
+<FONT color="green">1245</FONT>    <a name="line.1245"></a>
+<FONT color="green">1246</FONT>      /**<a name="line.1246"></a>
+<FONT color="green">1247</FONT>       * Adds the provided attribute to this entry, replacing any existing set of<a name="line.1247"></a>
+<FONT color="green">1248</FONT>       * values for the associated attribute.<a name="line.1248"></a>
+<FONT color="green">1249</FONT>       *<a name="line.1249"></a>
+<FONT color="green">1250</FONT>       * @param  attribute  The attribute to be included in this entry.  It must not<a name="line.1250"></a>
+<FONT color="green">1251</FONT>       *                    be {@code null}.<a name="line.1251"></a>
+<FONT color="green">1252</FONT>       */<a name="line.1252"></a>
+<FONT color="green">1253</FONT>      public void setAttribute(final Attribute attribute)<a name="line.1253"></a>
+<FONT color="green">1254</FONT>      {<a name="line.1254"></a>
+<FONT color="green">1255</FONT>        ensureNotNull(attribute);<a name="line.1255"></a>
+<FONT color="green">1256</FONT>    <a name="line.1256"></a>
+<FONT color="green">1257</FONT>        final String lowerName = toLowerCase(attribute.getName());<a name="line.1257"></a>
+<FONT color="green">1258</FONT>        attributes.put(lowerName, attribute);<a name="line.1258"></a>
+<FONT color="green">1259</FONT>      }<a name="line.1259"></a>
+<FONT color="green">1260</FONT>    <a name="line.1260"></a>
+<FONT color="green">1261</FONT>    <a name="line.1261"></a>
+<FONT color="green">1262</FONT>    <a name="line.1262"></a>
+<FONT color="green">1263</FONT>      /**<a name="line.1263"></a>
+<FONT color="green">1264</FONT>       * Adds the provided attribute to this entry, replacing any existing set of<a name="line.1264"></a>
+<FONT color="green">1265</FONT>       * values for the associated attribute.<a name="line.1265"></a>
+<FONT color="green">1266</FONT>       *<a name="line.1266"></a>
+<FONT color="green">1267</FONT>       * @param  attributeName   The name to use for the attribute.  It must not be<a name="line.1267"></a>
+<FONT color="green">1268</FONT>       *                         {@code null}.<a name="line.1268"></a>
+<FONT color="green">1269</FONT>       * @param  attributeValue  The value to use for the attribute.  It must not be<a name="line.1269"></a>
+<FONT color="green">1270</FONT>       *                         {@code null}.<a name="line.1270"></a>
+<FONT color="green">1271</FONT>       */<a name="line.1271"></a>
+<FONT color="green">1272</FONT>      public void setAttribute(final String attributeName,<a name="line.1272"></a>
+<FONT color="green">1273</FONT>                               final String attributeValue)<a name="line.1273"></a>
+<FONT color="green">1274</FONT>      {<a name="line.1274"></a>
+<FONT color="green">1275</FONT>        ensureNotNull(attributeName, attributeValue);<a name="line.1275"></a>
+<FONT color="green">1276</FONT>    <a name="line.1276"></a>
+<FONT color="green">1277</FONT>        final String lowerName = toLowerCase(attributeName);<a name="line.1277"></a>
+<FONT color="green">1278</FONT>        attributes.put(lowerName, new Attribute(attributeName, attributeValue));<a name="line.1278"></a>
+<FONT color="green">1279</FONT>      }<a name="line.1279"></a>
+<FONT color="green">1280</FONT>    <a name="line.1280"></a>
+<FONT color="green">1281</FONT>    <a name="line.1281"></a>
+<FONT color="green">1282</FONT>    <a name="line.1282"></a>
+<FONT color="green">1283</FONT>      /**<a name="line.1283"></a>
+<FONT color="green">1284</FONT>       * Adds the provided attribute to this entry, replacing any existing set of<a name="line.1284"></a>
+<FONT color="green">1285</FONT>       * values for the associated attribute.<a name="line.1285"></a>
+<FONT color="green">1286</FONT>       *<a name="line.1286"></a>
+<FONT color="green">1287</FONT>       * @param  attributeName   The name to use for the attribute.  It must not be<a name="line.1287"></a>
+<FONT color="green">1288</FONT>       *                         {@code null}.<a name="line.1288"></a>
+<FONT color="green">1289</FONT>       * @param  attributeValue  The value to use for the attribute.  It must not be<a name="line.1289"></a>
+<FONT color="green">1290</FONT>       *                         {@code null}.<a name="line.1290"></a>
+<FONT color="green">1291</FONT>       */<a name="line.1291"></a>
+<FONT color="green">1292</FONT>      public void setAttribute(final String attributeName,<a name="line.1292"></a>
+<FONT color="green">1293</FONT>                               final byte[] attributeValue)<a name="line.1293"></a>
+<FONT color="green">1294</FONT>      {<a name="line.1294"></a>
+<FONT color="green">1295</FONT>        ensureNotNull(attributeName, attributeValue);<a name="line.1295"></a>
+<FONT color="green">1296</FONT>    <a name="line.1296"></a>
+<FONT color="green">1297</FONT>        final String lowerName = toLowerCase(attributeName);<a name="line.1297"></a>
+<FONT color="green">1298</FONT>        attributes.put(lowerName, new Attribute(attributeName, attributeValue));<a name="line.1298"></a>
+<FONT color="green">1299</FONT>      }<a name="line.1299"></a>
+<FONT color="green">1300</FONT>    <a name="line.1300"></a>
+<FONT color="green">1301</FONT>    <a name="line.1301"></a>
+<FONT color="green">1302</FONT>    <a name="line.1302"></a>
+<FONT color="green">1303</FONT>      /**<a name="line.1303"></a>
+<FONT color="green">1304</FONT>       * Adds the provided attribute to this entry, replacing any existing set of<a name="line.1304"></a>
+<FONT color="green">1305</FONT>       * values for the associated attribute.<a name="line.1305"></a>
+<FONT color="green">1306</FONT>       *<a name="line.1306"></a>
+<FONT color="green">1307</FONT>       * @param  attributeName    The name to use for the attribute.  It must not be<a name="line.1307"></a>
+<FONT color="green">1308</FONT>       *                          {@code null}.<a name="line.1308"></a>
+<FONT color="green">1309</FONT>       * @param  attributeValues  The set of values to use for the attribute.  It<a name="line.1309"></a>
+<FONT color="green">1310</FONT>       *                          must not be {@code null}.<a name="line.1310"></a>
+<FONT color="green">1311</FONT>       */<a name="line.1311"></a>
+<FONT color="green">1312</FONT>      public void setAttribute(final String attributeName,<a name="line.1312"></a>
+<FONT color="green">1313</FONT>                                     final String... attributeValues)<a name="line.1313"></a>
+<FONT color="green">1314</FONT>      {<a name="line.1314"></a>
+<FONT color="green">1315</FONT>        ensureNotNull(attributeName, attributeValues);<a name="line.1315"></a>
+<FONT color="green">1316</FONT>    <a name="line.1316"></a>
+<FONT color="green">1317</FONT>        final String lowerName = toLowerCase(attributeName);<a name="line.1317"></a>
+<FONT color="green">1318</FONT>        attributes.put(lowerName, new Attribute(attributeName, attributeValues));<a name="line.1318"></a>
+<FONT color="green">1319</FONT>      }<a name="line.1319"></a>
+<FONT color="green">1320</FONT>    <a name="line.1320"></a>
+<FONT color="green">1321</FONT>    <a name="line.1321"></a>
+<FONT color="green">1322</FONT>    <a name="line.1322"></a>
+<FONT color="green">1323</FONT>      /**<a name="line.1323"></a>
+<FONT color="green">1324</FONT>       * Adds the provided attribute to this entry, replacing any existing set of<a name="line.1324"></a>
+<FONT color="green">1325</FONT>       * values for the associated attribute.<a name="line.1325"></a>
+<FONT color="green">1326</FONT>       *<a name="line.1326"></a>
+<FONT color="green">1327</FONT>       * @param  attributeName    The name to use for the attribute.  It must not be<a name="line.1327"></a>
+<FONT color="green">1328</FONT>       *                          {@code null}.<a name="line.1328"></a>
+<FONT color="green">1329</FONT>       * @param  attributeValues  The set of values to use for the attribute.  It<a name="line.1329"></a>
+<FONT color="green">1330</FONT>       *                          must not be {@code null}.<a name="line.1330"></a>
+<FONT color="green">1331</FONT>       */<a name="line.1331"></a>
+<FONT color="green">1332</FONT>      public void setAttribute(final String attributeName,<a name="line.1332"></a>
+<FONT color="green">1333</FONT>                                     final byte[]... attributeValues)<a name="line.1333"></a>
+<FONT color="green">1334</FONT>      {<a name="line.1334"></a>
+<FONT color="green">1335</FONT>        ensureNotNull(attributeName, attributeValues);<a name="line.1335"></a>
+<FONT color="green">1336</FONT>    <a name="line.1336"></a>
+<FONT color="green">1337</FONT>        final String lowerName = toLowerCase(attributeName);<a name="line.1337"></a>
+<FONT color="green">1338</FONT>        attributes.put(lowerName, new Attribute(attributeName, attributeValues));<a name="line.1338"></a>
+<FONT color="green">1339</FONT>      }<a name="line.1339"></a>
+<FONT color="green">1340</FONT>    <a name="line.1340"></a>
+<FONT color="green">1341</FONT>    <a name="line.1341"></a>
+<FONT color="green">1342</FONT>    <a name="line.1342"></a>
+<FONT color="green">1343</FONT>      /**<a name="line.1343"></a>
+<FONT color="green">1344</FONT>       * Indicates whether this entry falls within the range of the provided search<a name="line.1344"></a>
+<FONT color="green">1345</FONT>       * base DN and scope.<a name="line.1345"></a>
+<FONT color="green">1346</FONT>       *<a name="line.1346"></a>
+<FONT color="green">1347</FONT>       * @param  baseDN  The base DN for which to make the determination.  It must<a name="line.1347"></a>
+<FONT color="green">1348</FONT>       *                 not be {@code null}.<a name="line.1348"></a>
+<FONT color="green">1349</FONT>       * @param  scope   The scope for which to make the determination.  It must not<a name="line.1349"></a>
+<FONT color="green">1350</FONT>       *                 be {@code null}.<a name="line.1350"></a>
+<FONT color="green">1351</FONT>       *<a name="line.1351"></a>
+<FONT color="green">1352</FONT>       * @return  {@code true} if this entry is within the range of the provided<a name="line.1352"></a>
+<FONT color="green">1353</FONT>       *          base and scope, or {@code false} if not.<a name="line.1353"></a>
+<FONT color="green">1354</FONT>       *<a name="line.1354"></a>
+<FONT color="green">1355</FONT>       * @throws  LDAPException  If a problem occurs while making the determination.<a name="line.1355"></a>
+<FONT color="green">1356</FONT>       */<a name="line.1356"></a>
+<FONT color="green">1357</FONT>      public boolean matchesBaseAndScope(final String baseDN,<a name="line.1357"></a>
+<FONT color="green">1358</FONT>                                         final SearchScope scope)<a name="line.1358"></a>
+<FONT color="green">1359</FONT>             throws LDAPException<a name="line.1359"></a>
+<FONT color="green">1360</FONT>      {<a name="line.1360"></a>
+<FONT color="green">1361</FONT>        return getParsedDN().matchesBaseAndScope(new DN(baseDN), scope);<a name="line.1361"></a>
+<FONT color="green">1362</FONT>      }<a name="line.1362"></a>
+<FONT color="green">1363</FONT>    <a name="line.1363"></a>
+<FONT color="green">1364</FONT>    <a name="line.1364"></a>
+<FONT color="green">1365</FONT>    <a name="line.1365"></a>
+<FONT color="green">1366</FONT>      /**<a name="line.1366"></a>
+<FONT color="green">1367</FONT>       * Indicates whether this entry falls within the range of the provided search<a name="line.1367"></a>
+<FONT color="green">1368</FONT>       * base DN and scope.<a name="line.1368"></a>
+<FONT color="green">1369</FONT>       *<a name="line.1369"></a>
+<FONT color="green">1370</FONT>       * @param  baseDN  The base DN for which to make the determination.  It must<a name="line.1370"></a>
+<FONT color="green">1371</FONT>       *                 not be {@code null}.<a name="line.1371"></a>
+<FONT color="green">1372</FONT>       * @param  scope   The scope for which to make the determination.  It must not<a name="line.1372"></a>
+<FONT color="green">1373</FONT>       *                 be {@code null}.<a name="line.1373"></a>
+<FONT color="green">1374</FONT>       *<a name="line.1374"></a>
+<FONT color="green">1375</FONT>       * @return  {@code true} if this entry is within the range of the provided<a name="line.1375"></a>
+<FONT color="green">1376</FONT>       *          base and scope, or {@code false} if not.<a name="line.1376"></a>
+<FONT color="green">1377</FONT>       *<a name="line.1377"></a>
+<FONT color="green">1378</FONT>       * @throws  LDAPException  If a problem occurs while making the determination.<a name="line.1378"></a>
+<FONT color="green">1379</FONT>       */<a name="line.1379"></a>
+<FONT color="green">1380</FONT>      public boolean matchesBaseAndScope(final DN baseDN, final SearchScope scope)<a name="line.1380"></a>
+<FONT color="green">1381</FONT>             throws LDAPException<a name="line.1381"></a>
+<FONT color="green">1382</FONT>      {<a name="line.1382"></a>
+<FONT color="green">1383</FONT>        return getParsedDN().matchesBaseAndScope(baseDN, scope);<a name="line.1383"></a>
+<FONT color="green">1384</FONT>      }<a name="line.1384"></a>
+<FONT color="green">1385</FONT>    <a name="line.1385"></a>
+<FONT color="green">1386</FONT>    <a name="line.1386"></a>
+<FONT color="green">1387</FONT>    <a name="line.1387"></a>
+<FONT color="green">1388</FONT>      /**<a name="line.1388"></a>
+<FONT color="green">1389</FONT>       * Retrieves a set of modifications that can be applied to the source entry in<a name="line.1389"></a>
+<FONT color="green">1390</FONT>       * order to make it match the target entry.  The diff will be generated in<a name="line.1390"></a>
+<FONT color="green">1391</FONT>       * reversible form (i.e., the same as calling<a name="line.1391"></a>
+<FONT color="green">1392</FONT>       * {@code diff(sourceEntry, targetEntry, ignoreRDN, true, attributes)}.<a name="line.1392"></a>
+<FONT color="green">1393</FONT>       *<a name="line.1393"></a>
+<FONT color="green">1394</FONT>       * @param  sourceEntry  The source entry for which the set of modifications<a name="line.1394"></a>
+<FONT color="green">1395</FONT>       *                      should be generated.<a name="line.1395"></a>
+<FONT color="green">1396</FONT>       * @param  targetEntry  The target entry, which is what the source entry<a name="line.1396"></a>
+<FONT color="green">1397</FONT>       *                      should look like if the returned modifications are<a name="line.1397"></a>
+<FONT color="green">1398</FONT>       *                      applied.<a name="line.1398"></a>
+<FONT color="green">1399</FONT>       * @param  ignoreRDN    Indicates whether to ignore differences in the RDNs<a name="line.1399"></a>
+<FONT color="green">1400</FONT>       *                      of the provided entries.  If this is {@code false},<a name="line.1400"></a>
+<FONT color="green">1401</FONT>       *                      then the resulting set of modifications may include<a name="line.1401"></a>
+<FONT color="green">1402</FONT>       *                      changes to the RDN attribute.  If it is {@code true},<a name="line.1402"></a>
+<FONT color="green">1403</FONT>       *                      then differences in the entry DNs will be ignored.<a name="line.1403"></a>
+<FONT color="green">1404</FONT>       * @param  attributes   The set of attributes to be compared.  If this is<a name="line.1404"></a>
+<FONT color="green">1405</FONT>       *                      {@code null} or empty, then all attributes will be<a name="line.1405"></a>
+<FONT color="green">1406</FONT>       *                      compared.<a name="line.1406"></a>
+<FONT color="green">1407</FONT>       *<a name="line.1407"></a>
+<FONT color="green">1408</FONT>       * @return  A set of modifications that can be applied to the source entry in<a name="line.1408"></a>
+<FONT color="green">1409</FONT>       *          order to make it match the target entry.<a name="line.1409"></a>
+<FONT color="green">1410</FONT>       */<a name="line.1410"></a>
+<FONT color="green">1411</FONT>      public static List&lt;Modification&gt; diff(final Entry sourceEntry,<a name="line.1411"></a>
+<FONT color="green">1412</FONT>                                            final Entry targetEntry,<a name="line.1412"></a>
+<FONT color="green">1413</FONT>                                            final boolean ignoreRDN,<a name="line.1413"></a>
+<FONT color="green">1414</FONT>                                            final String... attributes)<a name="line.1414"></a>
+<FONT color="green">1415</FONT>      {<a name="line.1415"></a>
+<FONT color="green">1416</FONT>        return diff(sourceEntry, targetEntry, ignoreRDN, true, attributes);<a name="line.1416"></a>
+<FONT color="green">1417</FONT>      }<a name="line.1417"></a>
+<FONT color="green">1418</FONT>    <a name="line.1418"></a>
+<FONT color="green">1419</FONT>    <a name="line.1419"></a>
+<FONT color="green">1420</FONT>    <a name="line.1420"></a>
+<FONT color="green">1421</FONT>      /**<a name="line.1421"></a>
+<FONT color="green">1422</FONT>       * Retrieves a set of modifications that can be applied to the source entry in<a name="line.1422"></a>
+<FONT color="green">1423</FONT>       * order to make it match the target entry.<a name="line.1423"></a>
+<FONT color="green">1424</FONT>       *<a name="line.1424"></a>
+<FONT color="green">1425</FONT>       * @param  sourceEntry  The source entry for which the set of modifications<a name="line.1425"></a>
+<FONT color="green">1426</FONT>       *                      should be generated.<a name="line.1426"></a>
+<FONT color="green">1427</FONT>       * @param  targetEntry  The target entry, which is what the source entry<a name="line.1427"></a>
+<FONT color="green">1428</FONT>       *                      should look like if the returned modifications are<a name="line.1428"></a>
+<FONT color="green">1429</FONT>       *                      applied.<a name="line.1429"></a>
+<FONT color="green">1430</FONT>       * @param  ignoreRDN    Indicates whether to ignore differences in the RDNs<a name="line.1430"></a>
+<FONT color="green">1431</FONT>       *                      of the provided entries.  If this is {@code false},<a name="line.1431"></a>
+<FONT color="green">1432</FONT>       *                      then the resulting set of modifications may include<a name="line.1432"></a>
+<FONT color="green">1433</FONT>       *                      changes to the RDN attribute.  If it is {@code true},<a name="line.1433"></a>
+<FONT color="green">1434</FONT>       *                      then differences in the entry DNs will be ignored.<a name="line.1434"></a>
+<FONT color="green">1435</FONT>       * @param  reversible   Indicates whether to generate the diff in reversible<a name="line.1435"></a>
+<FONT color="green">1436</FONT>       *                      form.  In reversible form, only the ADD or DELETE<a name="line.1436"></a>
+<FONT color="green">1437</FONT>       *                      modification types will be used so that source entry<a name="line.1437"></a>
+<FONT color="green">1438</FONT>       *                      could be reconstructed from the target and the<a name="line.1438"></a>
+<FONT color="green">1439</FONT>       *                      resulting modifications.  In non-reversible form, only<a name="line.1439"></a>
+<FONT color="green">1440</FONT>       *                      the REPLACE modification type will be used.  Attempts<a name="line.1440"></a>
+<FONT color="green">1441</FONT>       *                      to apply the modifications obtained when using<a name="line.1441"></a>
+<FONT color="green">1442</FONT>       *                      reversible form are more likely to fail if the entry<a name="line.1442"></a>
+<FONT color="green">1443</FONT>       *                      has been modified since the source and target forms<a name="line.1443"></a>
+<FONT color="green">1444</FONT>       *                      were obtained.<a name="line.1444"></a>
+<FONT color="green">1445</FONT>       * @param  attributes   The set of attributes to be compared.  If this is<a name="line.1445"></a>
+<FONT color="green">1446</FONT>       *                      {@code null} or empty, then all attributes will be<a name="line.1446"></a>
+<FONT color="green">1447</FONT>       *                      compared.<a name="line.1447"></a>
+<FONT color="green">1448</FONT>       *<a name="line.1448"></a>
+<FONT color="green">1449</FONT>       * @return  A set of modifications that can be applied to the source entry in<a name="line.1449"></a>
+<FONT color="green">1450</FONT>       *          order to make it match the target entry.<a name="line.1450"></a>
+<FONT color="green">1451</FONT>       */<a name="line.1451"></a>
+<FONT color="green">1452</FONT>      public static List&lt;Modification&gt; diff(final Entry sourceEntry,<a name="line.1452"></a>
+<FONT color="green">1453</FONT>                                            final Entry targetEntry,<a name="line.1453"></a>
+<FONT color="green">1454</FONT>                                            final boolean ignoreRDN,<a name="line.1454"></a>
+<FONT color="green">1455</FONT>                                            final boolean reversible,<a name="line.1455"></a>
+<FONT color="green">1456</FONT>                                            final String... attributes)<a name="line.1456"></a>
+<FONT color="green">1457</FONT>      {<a name="line.1457"></a>
+<FONT color="green">1458</FONT>        HashSet&lt;String&gt; compareAttrs = null;<a name="line.1458"></a>
+<FONT color="green">1459</FONT>        if ((attributes != null) &amp;&amp; (attributes.length &gt; 0))<a name="line.1459"></a>
+<FONT color="green">1460</FONT>        {<a name="line.1460"></a>
+<FONT color="green">1461</FONT>          compareAttrs = new HashSet&lt;String&gt;(attributes.length);<a name="line.1461"></a>
+<FONT color="green">1462</FONT>          for (final String s : attributes)<a name="line.1462"></a>
+<FONT color="green">1463</FONT>          {<a name="line.1463"></a>
+<FONT color="green">1464</FONT>            compareAttrs.add(toLowerCase(s));<a name="line.1464"></a>
+<FONT color="green">1465</FONT>          }<a name="line.1465"></a>
+<FONT color="green">1466</FONT>        }<a name="line.1466"></a>
+<FONT color="green">1467</FONT>    <a name="line.1467"></a>
+<FONT color="green">1468</FONT>        final LinkedHashMap&lt;String,Attribute&gt; sourceOnlyAttrs =<a name="line.1468"></a>
+<FONT color="green">1469</FONT>             new LinkedHashMap&lt;String,Attribute&gt;();<a name="line.1469"></a>
+<FONT color="green">1470</FONT>        final LinkedHashMap&lt;String,Attribute&gt; targetOnlyAttrs =<a name="line.1470"></a>
+<FONT color="green">1471</FONT>             new LinkedHashMap&lt;String,Attribute&gt;();<a name="line.1471"></a>
+<FONT color="green">1472</FONT>        final LinkedHashMap&lt;String,Attribute&gt; commonAttrs =<a name="line.1472"></a>
+<FONT color="green">1473</FONT>             new LinkedHashMap&lt;String,Attribute&gt;();<a name="line.1473"></a>
+<FONT color="green">1474</FONT>    <a name="line.1474"></a>
+<FONT color="green">1475</FONT>        for (final Map.Entry&lt;String,Attribute&gt; e :<a name="line.1475"></a>
+<FONT color="green">1476</FONT>             sourceEntry.attributes.entrySet())<a name="line.1476"></a>
+<FONT color="green">1477</FONT>        {<a name="line.1477"></a>
+<FONT color="green">1478</FONT>          final String lowerName = toLowerCase(e.getKey());<a name="line.1478"></a>
+<FONT color="green">1479</FONT>          if ((compareAttrs != null) &amp;&amp; (! compareAttrs.contains(lowerName)))<a name="line.1479"></a>
+<FONT color="green">1480</FONT>          {<a name="line.1480"></a>
+<FONT color="green">1481</FONT>            continue;<a name="line.1481"></a>
+<FONT color="green">1482</FONT>          }<a name="line.1482"></a>
+<FONT color="green">1483</FONT>    <a name="line.1483"></a>
+<FONT color="green">1484</FONT>          sourceOnlyAttrs.put(lowerName, e.getValue());<a name="line.1484"></a>
+<FONT color="green">1485</FONT>          commonAttrs.put(lowerName, e.getValue());<a name="line.1485"></a>
+<FONT color="green">1486</FONT>        }<a name="line.1486"></a>
+<FONT color="green">1487</FONT>    <a name="line.1487"></a>
+<FONT color="green">1488</FONT>        for (final Map.Entry&lt;String,Attribute&gt; e :<a name="line.1488"></a>
+<FONT color="green">1489</FONT>             targetEntry.attributes.entrySet())<a name="line.1489"></a>
+<FONT color="green">1490</FONT>        {<a name="line.1490"></a>
+<FONT color="green">1491</FONT>          final String lowerName = toLowerCase(e.getKey());<a name="line.1491"></a>
+<FONT color="green">1492</FONT>          if ((compareAttrs != null) &amp;&amp; (! compareAttrs.contains(lowerName)))<a name="line.1492"></a>
+<FONT color="green">1493</FONT>          {<a name="line.1493"></a>
+<FONT color="green">1494</FONT>            continue;<a name="line.1494"></a>
+<FONT color="green">1495</FONT>          }<a name="line.1495"></a>
+<FONT color="green">1496</FONT>    <a name="line.1496"></a>
+<FONT color="green">1497</FONT>    <a name="line.1497"></a>
+<FONT color="green">1498</FONT>          if (sourceOnlyAttrs.remove(lowerName) == null)<a name="line.1498"></a>
+<FONT color="green">1499</FONT>          {<a name="line.1499"></a>
+<FONT color="green">1500</FONT>            // It wasn't in the set of source attributes, so it must be a<a name="line.1500"></a>
+<FONT color="green">1501</FONT>            // target-only attribute.<a name="line.1501"></a>
+<FONT color="green">1502</FONT>            targetOnlyAttrs.put(lowerName,e.getValue());<a name="line.1502"></a>
+<FONT color="green">1503</FONT>          }<a name="line.1503"></a>
+<FONT color="green">1504</FONT>        }<a name="line.1504"></a>
+<FONT color="green">1505</FONT>    <a name="line.1505"></a>
+<FONT color="green">1506</FONT>        for (final String lowerName : sourceOnlyAttrs.keySet())<a name="line.1506"></a>
+<FONT color="green">1507</FONT>        {<a name="line.1507"></a>
+<FONT color="green">1508</FONT>          commonAttrs.remove(lowerName);<a name="line.1508"></a>
+<FONT color="green">1509</FONT>        }<a name="line.1509"></a>
+<FONT color="green">1510</FONT>    <a name="line.1510"></a>
+<FONT color="green">1511</FONT>        RDN sourceRDN = null;<a name="line.1511"></a>
+<FONT color="green">1512</FONT>        RDN targetRDN = null;<a name="line.1512"></a>
+<FONT color="green">1513</FONT>        if (ignoreRDN)<a name="line.1513"></a>
+<FONT color="green">1514</FONT>        {<a name="line.1514"></a>
+<FONT color="green">1515</FONT>          try<a name="line.1515"></a>
+<FONT color="green">1516</FONT>          {<a name="line.1516"></a>
+<FONT color="green">1517</FONT>            sourceRDN = sourceEntry.getRDN();<a name="line.1517"></a>
+<FONT color="green">1518</FONT>          }<a name="line.1518"></a>
+<FONT color="green">1519</FONT>          catch (Exception e)<a name="line.1519"></a>
+<FONT color="green">1520</FONT>          {<a name="line.1520"></a>
+<FONT color="green">1521</FONT>            debugException(e);<a name="line.1521"></a>
+<FONT color="green">1522</FONT>          }<a name="line.1522"></a>
+<FONT color="green">1523</FONT>    <a name="line.1523"></a>
+<FONT color="green">1524</FONT>          try<a name="line.1524"></a>
+<FONT color="green">1525</FONT>          {<a name="line.1525"></a>
+<FONT color="green">1526</FONT>            targetRDN = targetEntry.getRDN();<a name="line.1526"></a>
+<FONT color="green">1527</FONT>          }<a name="line.1527"></a>
+<FONT color="green">1528</FONT>          catch (Exception e)<a name="line.1528"></a>
+<FONT color="green">1529</FONT>          {<a name="line.1529"></a>
+<FONT color="green">1530</FONT>            debugException(e);<a name="line.1530"></a>
+<FONT color="green">1531</FONT>          }<a name="line.1531"></a>
+<FONT color="green">1532</FONT>        }<a name="line.1532"></a>
+<FONT color="green">1533</FONT>    <a name="line.1533"></a>
+<FONT color="green">1534</FONT>        final ArrayList&lt;Modification&gt; mods = new ArrayList&lt;Modification&gt;(10);<a name="line.1534"></a>
+<FONT color="green">1535</FONT>    <a name="line.1535"></a>
+<FONT color="green">1536</FONT>        for (final Attribute a : sourceOnlyAttrs.values())<a name="line.1536"></a>
+<FONT color="green">1537</FONT>        {<a name="line.1537"></a>
+<FONT color="green">1538</FONT>          if (reversible)<a name="line.1538"></a>
+<FONT color="green">1539</FONT>          {<a name="line.1539"></a>
+<FONT color="green">1540</FONT>            ASN1OctetString[] values = a.getRawValues();<a name="line.1540"></a>
+<FONT color="green">1541</FONT>            if ((sourceRDN != null) &amp;&amp; (sourceRDN.hasAttribute(a.getName())))<a name="line.1541"></a>
+<FONT color="green">1542</FONT>            {<a name="line.1542"></a>
+<FONT color="green">1543</FONT>              final ArrayList&lt;ASN1OctetString&gt; newValues =<a name="line.1543"></a>
+<FONT color="green">1544</FONT>                   new ArrayList&lt;ASN1OctetString&gt;(values.length);<a name="line.1544"></a>
+<FONT color="green">1545</FONT>              for (final ASN1OctetString value : values)<a name="line.1545"></a>
+<FONT color="green">1546</FONT>              {<a name="line.1546"></a>
+<FONT color="green">1547</FONT>                if (! sourceRDN.hasAttributeValue(a.getName(), value.getValue()))<a name="line.1547"></a>
+<FONT color="green">1548</FONT>                {<a name="line.1548"></a>
+<FONT color="green">1549</FONT>                  newValues.add(value);<a name="line.1549"></a>
+<FONT color="green">1550</FONT>                }<a name="line.1550"></a>
+<FONT color="green">1551</FONT>              }<a name="line.1551"></a>
+<FONT color="green">1552</FONT>    <a name="line.1552"></a>
+<FONT color="green">1553</FONT>              if (newValues.isEmpty())<a name="line.1553"></a>
+<FONT color="green">1554</FONT>              {<a name="line.1554"></a>
+<FONT color="green">1555</FONT>                continue;<a name="line.1555"></a>
+<FONT color="green">1556</FONT>              }<a name="line.1556"></a>
+<FONT color="green">1557</FONT>              else<a name="line.1557"></a>
+<FONT color="green">1558</FONT>              {<a name="line.1558"></a>
+<FONT color="green">1559</FONT>                values = new ASN1OctetString[newValues.size()];<a name="line.1559"></a>
+<FONT color="green">1560</FONT>                newValues.toArray(values);<a name="line.1560"></a>
+<FONT color="green">1561</FONT>              }<a name="line.1561"></a>
+<FONT color="green">1562</FONT>            }<a name="line.1562"></a>
+<FONT color="green">1563</FONT>    <a name="line.1563"></a>
+<FONT color="green">1564</FONT>            mods.add(new Modification(ModificationType.DELETE, a.getName(),<a name="line.1564"></a>
+<FONT color="green">1565</FONT>                 values));<a name="line.1565"></a>
+<FONT color="green">1566</FONT>          }<a name="line.1566"></a>
+<FONT color="green">1567</FONT>          else<a name="line.1567"></a>
+<FONT color="green">1568</FONT>          {<a name="line.1568"></a>
+<FONT color="green">1569</FONT>            mods.add(new Modification(ModificationType.REPLACE, a.getName()));<a name="line.1569"></a>
+<FONT color="green">1570</FONT>          }<a name="line.1570"></a>
+<FONT color="green">1571</FONT>        }<a name="line.1571"></a>
+<FONT color="green">1572</FONT>    <a name="line.1572"></a>
+<FONT color="green">1573</FONT>        for (final Attribute a : targetOnlyAttrs.values())<a name="line.1573"></a>
+<FONT color="green">1574</FONT>        {<a name="line.1574"></a>
+<FONT color="green">1575</FONT>          ASN1OctetString[] values = a.getRawValues();<a name="line.1575"></a>
+<FONT color="green">1576</FONT>          if ((targetRDN != null) &amp;&amp; (targetRDN.hasAttribute(a.getName())))<a name="line.1576"></a>
+<FONT color="green">1577</FONT>          {<a name="line.1577"></a>
+<FONT color="green">1578</FONT>            final ArrayList&lt;ASN1OctetString&gt; newValues =<a name="line.1578"></a>
+<FONT color="green">1579</FONT>                 new ArrayList&lt;ASN1OctetString&gt;(values.length);<a name="line.1579"></a>
+<FONT color="green">1580</FONT>            for (final ASN1OctetString value : values)<a name="line.1580"></a>
+<FONT color="green">1581</FONT>            {<a name="line.1581"></a>
+<FONT color="green">1582</FONT>              if (! targetRDN.hasAttributeValue(a.getName(), value.getValue()))<a name="line.1582"></a>
+<FONT color="green">1583</FONT>              {<a name="line.1583"></a>
+<FONT color="green">1584</FONT>                newValues.add(value);<a name="line.1584"></a>
+<FONT color="green">1585</FONT>              }<a name="line.1585"></a>
+<FONT color="green">1586</FONT>            }<a name="line.1586"></a>
+<FONT color="green">1587</FONT>    <a name="line.1587"></a>
+<FONT color="green">1588</FONT>            if (newValues.isEmpty())<a name="line.1588"></a>
+<FONT color="green">1589</FONT>            {<a name="line.1589"></a>
+<FONT color="green">1590</FONT>              continue;<a name="line.1590"></a>
+<FONT color="green">1591</FONT>            }<a name="line.1591"></a>
+<FONT color="green">1592</FONT>            else<a name="line.1592"></a>
+<FONT color="green">1593</FONT>            {<a name="line.1593"></a>
+<FONT color="green">1594</FONT>              values = new ASN1OctetString[newValues.size()];<a name="line.1594"></a>
+<FONT color="green">1595</FONT>              newValues.toArray(values);<a name="line.1595"></a>
+<FONT color="green">1596</FONT>            }<a name="line.1596"></a>
+<FONT color="green">1597</FONT>          }<a name="line.1597"></a>
+<FONT color="green">1598</FONT>    <a name="line.1598"></a>
+<FONT color="green">1599</FONT>          if (reversible)<a name="line.1599"></a>
+<FONT color="green">1600</FONT>          {<a name="line.1600"></a>
+<FONT color="green">1601</FONT>            mods.add(new Modification(ModificationType.ADD, a.getName(), values));<a name="line.1601"></a>
+<FONT color="green">1602</FONT>          }<a name="line.1602"></a>
+<FONT color="green">1603</FONT>          else<a name="line.1603"></a>
+<FONT color="green">1604</FONT>          {<a name="line.1604"></a>
+<FONT color="green">1605</FONT>            mods.add(new Modification(ModificationType.REPLACE, a.getName(),<a name="line.1605"></a>
+<FONT color="green">1606</FONT>                 values));<a name="line.1606"></a>
+<FONT color="green">1607</FONT>          }<a name="line.1607"></a>
+<FONT color="green">1608</FONT>        }<a name="line.1608"></a>
+<FONT color="green">1609</FONT>    <a name="line.1609"></a>
+<FONT color="green">1610</FONT>        for (final Attribute sourceAttr : commonAttrs.values())<a name="line.1610"></a>
+<FONT color="green">1611</FONT>        {<a name="line.1611"></a>
+<FONT color="green">1612</FONT>          final Attribute targetAttr =<a name="line.1612"></a>
+<FONT color="green">1613</FONT>               targetEntry.getAttribute(sourceAttr.getName());<a name="line.1613"></a>
+<FONT color="green">1614</FONT>          if (sourceAttr.equals(targetAttr))<a name="line.1614"></a>
+<FONT color="green">1615</FONT>          {<a name="line.1615"></a>
+<FONT color="green">1616</FONT>            continue;<a name="line.1616"></a>
+<FONT color="green">1617</FONT>          }<a name="line.1617"></a>
+<FONT color="green">1618</FONT>    <a name="line.1618"></a>
+<FONT color="green">1619</FONT>          if (reversible ||<a name="line.1619"></a>
+<FONT color="green">1620</FONT>              ((targetRDN != null) &amp;&amp; targetRDN.hasAttribute(targetAttr.getName())))<a name="line.1620"></a>
+<FONT color="green">1621</FONT>          {<a name="line.1621"></a>
+<FONT color="green">1622</FONT>            final ArrayList&lt;ASN1OctetString&gt; addValues =<a name="line.1622"></a>
+<FONT color="green">1623</FONT>                 new ArrayList&lt;ASN1OctetString&gt;();<a name="line.1623"></a>
+<FONT color="green">1624</FONT>            final ArrayList&lt;ASN1OctetString&gt; delValues =<a name="line.1624"></a>
+<FONT color="green">1625</FONT>                 new ArrayList&lt;ASN1OctetString&gt;();<a name="line.1625"></a>
+<FONT color="green">1626</FONT>            for (final ASN1OctetString value : sourceAttr.getRawValues())<a name="line.1626"></a>
+<FONT color="green">1627</FONT>            {<a name="line.1627"></a>
+<FONT color="green">1628</FONT>              if (! targetAttr.hasValue(value))<a name="line.1628"></a>
+<FONT color="green">1629</FONT>              {<a name="line.1629"></a>
+<FONT color="green">1630</FONT>                if ((sourceRDN == null) ||<a name="line.1630"></a>
+<FONT color="green">1631</FONT>                    (! sourceRDN.hasAttributeValue(sourceAttr.getName(),<a name="line.1631"></a>
+<FONT color="green">1632</FONT>                                                   value.getValue())))<a name="line.1632"></a>
+<FONT color="green">1633</FONT>                {<a name="line.1633"></a>
+<FONT color="green">1634</FONT>                  delValues.add(value);<a name="line.1634"></a>
+<FONT color="green">1635</FONT>                }<a name="line.1635"></a>
+<FONT color="green">1636</FONT>              }<a name="line.1636"></a>
+<FONT color="green">1637</FONT>            }<a name="line.1637"></a>
+<FONT color="green">1638</FONT>    <a name="line.1638"></a>
+<FONT color="green">1639</FONT>            for (final ASN1OctetString value : targetAttr.getRawValues())<a name="line.1639"></a>
+<FONT color="green">1640</FONT>            {<a name="line.1640"></a>
+<FONT color="green">1641</FONT>              if (! sourceAttr.hasValue(value))<a name="line.1641"></a>
+<FONT color="green">1642</FONT>              {<a name="line.1642"></a>
+<FONT color="green">1643</FONT>                if ((targetRDN == null) ||<a name="line.1643"></a>
+<FONT color="green">1644</FONT>                    (! targetRDN.hasAttributeValue(targetAttr.getName(),<a name="line.1644"></a>
+<FONT color="green">1645</FONT>                                                   value.getValue())))<a name="line.1645"></a>
+<FONT color="green">1646</FONT>                {<a name="line.1646"></a>
+<FONT color="green">1647</FONT>                  addValues.add(value);<a name="line.1647"></a>
+<FONT color="green">1648</FONT>                }<a name="line.1648"></a>
+<FONT color="green">1649</FONT>              }<a name="line.1649"></a>
+<FONT color="green">1650</FONT>            }<a name="line.1650"></a>
+<FONT color="green">1651</FONT>    <a name="line.1651"></a>
+<FONT color="green">1652</FONT>            if (! addValues.isEmpty())<a name="line.1652"></a>
+<FONT color="green">1653</FONT>            {<a name="line.1653"></a>
+<FONT color="green">1654</FONT>              final ASN1OctetString[] addArray =<a name="line.1654"></a>
+<FONT color="green">1655</FONT>                   new ASN1OctetString[addValues.size()];<a name="line.1655"></a>
+<FONT color="green">1656</FONT>              mods.add(new Modification(ModificationType.ADD, targetAttr.getName(),<a name="line.1656"></a>
+<FONT color="green">1657</FONT>                   addValues.toArray(addArray)));<a name="line.1657"></a>
+<FONT color="green">1658</FONT>            }<a name="line.1658"></a>
+<FONT color="green">1659</FONT>    <a name="line.1659"></a>
+<FONT color="green">1660</FONT>            if (! delValues.isEmpty())<a name="line.1660"></a>
+<FONT color="green">1661</FONT>            {<a name="line.1661"></a>
+<FONT color="green">1662</FONT>              final ASN1OctetString[] delArray =<a name="line.1662"></a>
+<FONT color="green">1663</FONT>                   new ASN1OctetString[delValues.size()];<a name="line.1663"></a>
+<FONT color="green">1664</FONT>              mods.add(new Modification(ModificationType.DELETE,<a name="line.1664"></a>
+<FONT color="green">1665</FONT>                   sourceAttr.getName(), delValues.toArray(delArray)));<a name="line.1665"></a>
+<FONT color="green">1666</FONT>            }<a name="line.1666"></a>
+<FONT color="green">1667</FONT>          }<a name="line.1667"></a>
+<FONT color="green">1668</FONT>          else<a name="line.1668"></a>
+<FONT color="green">1669</FONT>          {<a name="line.1669"></a>
+<FONT color="green">1670</FONT>            mods.add(new Modification(ModificationType.REPLACE,<a name="line.1670"></a>
+<FONT color="green">1671</FONT>                 targetAttr.getName(), targetAttr.getRawValues()));<a name="line.1671"></a>
+<FONT color="green">1672</FONT>          }<a name="line.1672"></a>
+<FONT color="green">1673</FONT>        }<a name="line.1673"></a>
+<FONT color="green">1674</FONT>    <a name="line.1674"></a>
+<FONT color="green">1675</FONT>        return mods;<a name="line.1675"></a>
+<FONT color="green">1676</FONT>      }<a name="line.1676"></a>
+<FONT color="green">1677</FONT>    <a name="line.1677"></a>
+<FONT color="green">1678</FONT>    <a name="line.1678"></a>
+<FONT color="green">1679</FONT>    <a name="line.1679"></a>
+<FONT color="green">1680</FONT>      /**<a name="line.1680"></a>
+<FONT color="green">1681</FONT>       * Creates a duplicate of the provided entry with the given set of<a name="line.1681"></a>
+<FONT color="green">1682</FONT>       * modifications applied to it.<a name="line.1682"></a>
+<FONT color="green">1683</FONT>       *<a name="line.1683"></a>
+<FONT color="green">1684</FONT>       * @param  entry          The entry to be modified.  It must not be<a name="line.1684"></a>
+<FONT color="green">1685</FONT>       *                        {@code null}.<a name="line.1685"></a>
+<FONT color="green">1686</FONT>       * @param  lenient        Indicates whether to exhibit a lenient behavior for<a name="line.1686"></a>
+<FONT color="green">1687</FONT>       *                        the modifications, which will cause it to ignore<a name="line.1687"></a>
+<FONT color="green">1688</FONT>       *                        problems like trying to add values that already<a name="line.1688"></a>
+<FONT color="green">1689</FONT>       *                        exist or to remove nonexistent attributes or values.<a name="line.1689"></a>
+<FONT color="green">1690</FONT>       * @param  modifications  The set of modifications to apply to the entry.  It<a name="line.1690"></a>
+<FONT color="green">1691</FONT>       *                        must not be {@code null} or empty.<a name="line.1691"></a>
+<FONT color="green">1692</FONT>       *<a name="line.1692"></a>
+<FONT color="green">1693</FONT>       * @return  An updated version of the entry with the requested modifications<a name="line.1693"></a>
+<FONT color="green">1694</FONT>       *          applied.<a name="line.1694"></a>
+<FONT color="green">1695</FONT>       *<a name="line.1695"></a>
+<FONT color="green">1696</FONT>       * @throws  LDAPException  If a problem occurs while attempting to apply the<a name="line.1696"></a>
+<FONT color="green">1697</FONT>       *                         modifications.<a name="line.1697"></a>
+<FONT color="green">1698</FONT>       */<a name="line.1698"></a>
+<FONT color="green">1699</FONT>      public static Entry applyModifications(final Entry entry,<a name="line.1699"></a>
+<FONT color="green">1700</FONT>                                             final boolean lenient,<a name="line.1700"></a>
+<FONT color="green">1701</FONT>                                             final Modification... modifications)<a name="line.1701"></a>
+<FONT color="green">1702</FONT>             throws LDAPException<a name="line.1702"></a>
+<FONT color="green">1703</FONT>      {<a name="line.1703"></a>
+<FONT color="green">1704</FONT>        ensureNotNull(entry, modifications);<a name="line.1704"></a>
+<FONT color="green">1705</FONT>        ensureFalse(modifications.length == 0);<a name="line.1705"></a>
+<FONT color="green">1706</FONT>    <a name="line.1706"></a>
+<FONT color="green">1707</FONT>        return applyModifications(entry, lenient, Arrays.asList(modifications));<a name="line.1707"></a>
+<FONT color="green">1708</FONT>      }<a name="line.1708"></a>
+<FONT color="green">1709</FONT>    <a name="line.1709"></a>
+<FONT color="green">1710</FONT>    <a name="line.1710"></a>
+<FONT color="green">1711</FONT>    <a name="line.1711"></a>
+<FONT color="green">1712</FONT>      /**<a name="line.1712"></a>
+<FONT color="green">1713</FONT>       * Creates a duplicate of the provided entry with the given set of<a name="line.1713"></a>
+<FONT color="green">1714</FONT>       * modifications applied to it.<a name="line.1714"></a>
+<FONT color="green">1715</FONT>       *<a name="line.1715"></a>
+<FONT color="green">1716</FONT>       * @param  entry          The entry to be modified.  It must not be<a name="line.1716"></a>
+<FONT color="green">1717</FONT>       *                        {@code null}.<a name="line.1717"></a>
+<FONT color="green">1718</FONT>       * @param  lenient        Indicates whether to exhibit a lenient behavior for<a name="line.1718"></a>
+<FONT color="green">1719</FONT>       *                        the modifications, which will cause it to ignore<a name="line.1719"></a>
+<FONT color="green">1720</FONT>       *                        problems like trying to add values that already<a name="line.1720"></a>
+<FONT color="green">1721</FONT>       *                        exist or to remove nonexistent attributes or values.<a name="line.1721"></a>
+<FONT color="green">1722</FONT>       * @param  modifications  The set of modifications to apply to the entry.  It<a name="line.1722"></a>
+<FONT color="green">1723</FONT>       *                        must not be {@code null} or empty.<a name="line.1723"></a>
+<FONT color="green">1724</FONT>       *<a name="line.1724"></a>
+<FONT color="green">1725</FONT>       * @return  An updated version of the entry with the requested modifications<a name="line.1725"></a>
+<FONT color="green">1726</FONT>       *          applied.<a name="line.1726"></a>
+<FONT color="green">1727</FONT>       *<a name="line.1727"></a>
+<FONT color="green">1728</FONT>       * @throws  LDAPException  If a problem occurs while attempting to apply the<a name="line.1728"></a>
+<FONT color="green">1729</FONT>       *                         modifications.<a name="line.1729"></a>
+<FONT color="green">1730</FONT>       */<a name="line.1730"></a>
+<FONT color="green">1731</FONT>      public static Entry applyModifications(final Entry entry,<a name="line.1731"></a>
+<FONT color="green">1732</FONT>                                             final boolean lenient,<a name="line.1732"></a>
+<FONT color="green">1733</FONT>                                             final List&lt;Modification&gt; modifications)<a name="line.1733"></a>
+<FONT color="green">1734</FONT>             throws LDAPException<a name="line.1734"></a>
+<FONT color="green">1735</FONT>      {<a name="line.1735"></a>
+<FONT color="green">1736</FONT>        ensureNotNull(entry, modifications);<a name="line.1736"></a>
+<FONT color="green">1737</FONT>        ensureFalse(modifications.isEmpty());<a name="line.1737"></a>
+<FONT color="green">1738</FONT>    <a name="line.1738"></a>
+<FONT color="green">1739</FONT>        final Entry e = entry.duplicate();<a name="line.1739"></a>
+<FONT color="green">1740</FONT>        final ArrayList&lt;String&gt; errors =<a name="line.1740"></a>
+<FONT color="green">1741</FONT>             new ArrayList&lt;String&gt;(modifications.size());<a name="line.1741"></a>
+<FONT color="green">1742</FONT>    <a name="line.1742"></a>
+<FONT color="green">1743</FONT>        for (final Modification m : modifications)<a name="line.1743"></a>
+<FONT color="green">1744</FONT>        {<a name="line.1744"></a>
+<FONT color="green">1745</FONT>          final String   name   = m.getAttributeName();<a name="line.1745"></a>
+<FONT color="green">1746</FONT>          final byte[][] values = m.getValueByteArrays();<a name="line.1746"></a>
+<FONT color="green">1747</FONT>          switch (m.getModificationType().intValue())<a name="line.1747"></a>
+<FONT color="green">1748</FONT>          {<a name="line.1748"></a>
+<FONT color="green">1749</FONT>            case ModificationType.ADD_INT_VALUE:<a name="line.1749"></a>
+<FONT color="green">1750</FONT>              if (lenient)<a name="line.1750"></a>
+<FONT color="green">1751</FONT>              {<a name="line.1751"></a>
+<FONT color="green">1752</FONT>                e.addAttribute(m.getAttribute());<a name="line.1752"></a>
+<FONT color="green">1753</FONT>              }<a name="line.1753"></a>
+<FONT color="green">1754</FONT>              else<a name="line.1754"></a>
+<FONT color="green">1755</FONT>              {<a name="line.1755"></a>
+<FONT color="green">1756</FONT>                if (values.length == 0)<a name="line.1756"></a>
+<FONT color="green">1757</FONT>                {<a name="line.1757"></a>
+<FONT color="green">1758</FONT>                  errors.add(ERR_ENTRY_APPLY_MODS_ADD_NO_VALUES.get(name));<a name="line.1758"></a>
+<FONT color="green">1759</FONT>                }<a name="line.1759"></a>
+<FONT color="green">1760</FONT>    <a name="line.1760"></a>
+<FONT color="green">1761</FONT>                for (int i=0; i &lt; values.length; i++)<a name="line.1761"></a>
+<FONT color="green">1762</FONT>                {<a name="line.1762"></a>
+<FONT color="green">1763</FONT>                  if (! e.addAttribute(name, values[i]))<a name="line.1763"></a>
+<FONT color="green">1764</FONT>                  {<a name="line.1764"></a>
+<FONT color="green">1765</FONT>                    errors.add(ERR_ENTRY_APPLY_MODS_ADD_EXISTING.get(<a name="line.1765"></a>
+<FONT color="green">1766</FONT>                         m.getValues()[i], name));<a name="line.1766"></a>
+<FONT color="green">1767</FONT>                  }<a name="line.1767"></a>
+<FONT color="green">1768</FONT>                }<a name="line.1768"></a>
+<FONT color="green">1769</FONT>              }<a name="line.1769"></a>
+<FONT color="green">1770</FONT>              break;<a name="line.1770"></a>
+<FONT color="green">1771</FONT>    <a name="line.1771"></a>
+<FONT color="green">1772</FONT>            case ModificationType.DELETE_INT_VALUE:<a name="line.1772"></a>
+<FONT color="green">1773</FONT>              if (values.length == 0)<a name="line.1773"></a>
+<FONT color="green">1774</FONT>              {<a name="line.1774"></a>
+<FONT color="green">1775</FONT>                final boolean removed = e.removeAttribute(name);<a name="line.1775"></a>
+<FONT color="green">1776</FONT>                if (! (lenient || removed))<a name="line.1776"></a>
+<FONT color="green">1777</FONT>                {<a name="line.1777"></a>
+<FONT color="green">1778</FONT>                  errors.add(ERR_ENTRY_APPLY_MODS_DELETE_NONEXISTENT_ATTR.get(<a name="line.1778"></a>
+<FONT color="green">1779</FONT>                       name));<a name="line.1779"></a>
+<FONT color="green">1780</FONT>                }<a name="line.1780"></a>
+<FONT color="green">1781</FONT>              }<a name="line.1781"></a>
+<FONT color="green">1782</FONT>              else<a name="line.1782"></a>
+<FONT color="green">1783</FONT>              {<a name="line.1783"></a>
+<FONT color="green">1784</FONT>                for (int i=0; i &lt; values.length; i++)<a name="line.1784"></a>
+<FONT color="green">1785</FONT>                {<a name="line.1785"></a>
+<FONT color="green">1786</FONT>                  final boolean removed = e.removeAttributeValue(name, values[i]);<a name="line.1786"></a>
+<FONT color="green">1787</FONT>                  if (! (lenient || removed))<a name="line.1787"></a>
+<FONT color="green">1788</FONT>                  {<a name="line.1788"></a>
+<FONT color="green">1789</FONT>                    errors.add(ERR_ENTRY_APPLY_MODS_DELETE_NONEXISTENT_VALUE.get(<a name="line.1789"></a>
+<FONT color="green">1790</FONT>                         m.getValues()[i], name));<a name="line.1790"></a>
+<FONT color="green">1791</FONT>                  }<a name="line.1791"></a>
+<FONT color="green">1792</FONT>                }<a name="line.1792"></a>
+<FONT color="green">1793</FONT>              }<a name="line.1793"></a>
+<FONT color="green">1794</FONT>              break;<a name="line.1794"></a>
+<FONT color="green">1795</FONT>    <a name="line.1795"></a>
+<FONT color="green">1796</FONT>            case ModificationType.REPLACE_INT_VALUE:<a name="line.1796"></a>
+<FONT color="green">1797</FONT>              if (values.length == 0)<a name="line.1797"></a>
+<FONT color="green">1798</FONT>              {<a name="line.1798"></a>
+<FONT color="green">1799</FONT>                e.removeAttribute(name);<a name="line.1799"></a>
+<FONT color="green">1800</FONT>              }<a name="line.1800"></a>
+<FONT color="green">1801</FONT>              else<a name="line.1801"></a>
+<FONT color="green">1802</FONT>              {<a name="line.1802"></a>
+<FONT color="green">1803</FONT>                e.setAttribute(m.getAttribute());<a name="line.1803"></a>
+<FONT color="green">1804</FONT>              }<a name="line.1804"></a>
+<FONT color="green">1805</FONT>              break;<a name="line.1805"></a>
+<FONT color="green">1806</FONT>    <a name="line.1806"></a>
+<FONT color="green">1807</FONT>            case ModificationType.INCREMENT_INT_VALUE:<a name="line.1807"></a>
+<FONT color="green">1808</FONT>              final Attribute a = e.getAttribute(name);<a name="line.1808"></a>
+<FONT color="green">1809</FONT>              if ((a == null) || (! a.hasValue()))<a name="line.1809"></a>
+<FONT color="green">1810</FONT>              {<a name="line.1810"></a>
+<FONT color="green">1811</FONT>                errors.add(ERR_ENTRY_APPLY_MODS_INCREMENT_NO_SUCH_ATTR.get(name));<a name="line.1811"></a>
+<FONT color="green">1812</FONT>                continue;<a name="line.1812"></a>
+<FONT color="green">1813</FONT>              }<a name="line.1813"></a>
+<FONT color="green">1814</FONT>    <a name="line.1814"></a>
+<FONT color="green">1815</FONT>              if (a.size() &gt; 1)<a name="line.1815"></a>
+<FONT color="green">1816</FONT>              {<a name="line.1816"></a>
+<FONT color="green">1817</FONT>                errors.add(ERR_ENTRY_APPLY_MODS_INCREMENT_NOT_SINGLE_VALUED.get(<a name="line.1817"></a>
+<FONT color="green">1818</FONT>                     name));<a name="line.1818"></a>
+<FONT color="green">1819</FONT>                continue;<a name="line.1819"></a>
+<FONT color="green">1820</FONT>              }<a name="line.1820"></a>
+<FONT color="green">1821</FONT>    <a name="line.1821"></a>
+<FONT color="green">1822</FONT>              final BigInteger currentValue;<a name="line.1822"></a>
+<FONT color="green">1823</FONT>              try<a name="line.1823"></a>
+<FONT color="green">1824</FONT>              {<a name="line.1824"></a>
+<FONT color="green">1825</FONT>                currentValue = new BigInteger(a.getValue());<a name="line.1825"></a>
+<FONT color="green">1826</FONT>              }<a name="line.1826"></a>
+<FONT color="green">1827</FONT>              catch (NumberFormatException nfe)<a name="line.1827"></a>
+<FONT color="green">1828</FONT>              {<a name="line.1828"></a>
+<FONT color="green">1829</FONT>                debugException(nfe);<a name="line.1829"></a>
+<FONT color="green">1830</FONT>                errors.add(<a name="line.1830"></a>
+<FONT color="green">1831</FONT>                     ERR_ENTRY_APPLY_MODS_INCREMENT_ENTRY_VALUE_NOT_INTEGER.get(<a name="line.1831"></a>
+<FONT color="green">1832</FONT>                          name, a.getValue()));<a name="line.1832"></a>
+<FONT color="green">1833</FONT>                continue;<a name="line.1833"></a>
+<FONT color="green">1834</FONT>              }<a name="line.1834"></a>
+<FONT color="green">1835</FONT>    <a name="line.1835"></a>
+<FONT color="green">1836</FONT>              if (values.length == 0)<a name="line.1836"></a>
+<FONT color="green">1837</FONT>              {<a name="line.1837"></a>
+<FONT color="green">1838</FONT>                errors.add(ERR_ENTRY_APPLY_MODS_INCREMENT_NO_MOD_VALUES.get(name));<a name="line.1838"></a>
+<FONT color="green">1839</FONT>                continue;<a name="line.1839"></a>
+<FONT color="green">1840</FONT>              }<a name="line.1840"></a>
+<FONT color="green">1841</FONT>              else if (values.length &gt; 1)<a name="line.1841"></a>
+<FONT color="green">1842</FONT>              {<a name="line.1842"></a>
+<FONT color="green">1843</FONT>                errors.add(ERR_ENTRY_APPLY_MODS_INCREMENT_MULTIPLE_MOD_VALUES.get(<a name="line.1843"></a>
+<FONT color="green">1844</FONT>                     name));<a name="line.1844"></a>
+<FONT color="green">1845</FONT>                continue;<a name="line.1845"></a>
+<FONT color="green">1846</FONT>              }<a name="line.1846"></a>
+<FONT color="green">1847</FONT>    <a name="line.1847"></a>
+<FONT color="green">1848</FONT>              final BigInteger incrementValue;<a name="line.1848"></a>
+<FONT color="green">1849</FONT>              final String incrementValueStr = m.getValues()[0];<a name="line.1849"></a>
+<FONT color="green">1850</FONT>              try<a name="line.1850"></a>
+<FONT color="green">1851</FONT>              {<a name="line.1851"></a>
+<FONT color="green">1852</FONT>                incrementValue = new BigInteger(incrementValueStr);<a name="line.1852"></a>
+<FONT color="green">1853</FONT>              }<a name="line.1853"></a>
+<FONT color="green">1854</FONT>              catch (NumberFormatException nfe)<a name="line.1854"></a>
+<FONT color="green">1855</FONT>              {<a name="line.1855"></a>
+<FONT color="green">1856</FONT>                debugException(nfe);<a name="line.1856"></a>
+<FONT color="green">1857</FONT>                errors.add(ERR_ENTRY_APPLY_MODS_INCREMENT_MOD_VALUE_NOT_INTEGER.get(<a name="line.1857"></a>
+<FONT color="green">1858</FONT>                     name, incrementValueStr));<a name="line.1858"></a>
+<FONT color="green">1859</FONT>                continue;<a name="line.1859"></a>
+<FONT color="green">1860</FONT>              }<a name="line.1860"></a>
+<FONT color="green">1861</FONT>    <a name="line.1861"></a>
+<FONT color="green">1862</FONT>              final BigInteger newValue = currentValue.add(incrementValue);<a name="line.1862"></a>
+<FONT color="green">1863</FONT>              e.setAttribute(name, newValue.toString());<a name="line.1863"></a>
+<FONT color="green">1864</FONT>              break;<a name="line.1864"></a>
+<FONT color="green">1865</FONT>    <a name="line.1865"></a>
+<FONT color="green">1866</FONT>            default:<a name="line.1866"></a>
+<FONT color="green">1867</FONT>              errors.add(ERR_ENTRY_APPLY_MODS_UNKNOWN_TYPE.get(<a name="line.1867"></a>
+<FONT color="green">1868</FONT>                   String.valueOf(m.getModificationType())));<a name="line.1868"></a>
+<FONT color="green">1869</FONT>              break;<a name="line.1869"></a>
+<FONT color="green">1870</FONT>          }<a name="line.1870"></a>
+<FONT color="green">1871</FONT>        }<a name="line.1871"></a>
+<FONT color="green">1872</FONT>    <a name="line.1872"></a>
+<FONT color="green">1873</FONT>        if (errors.isEmpty())<a name="line.1873"></a>
+<FONT color="green">1874</FONT>        {<a name="line.1874"></a>
+<FONT color="green">1875</FONT>          return e;<a name="line.1875"></a>
+<FONT color="green">1876</FONT>        }<a name="line.1876"></a>
+<FONT color="green">1877</FONT>    <a name="line.1877"></a>
+<FONT color="green">1878</FONT>        throw new LDAPException(ResultCode.CONSTRAINT_VIOLATION,<a name="line.1878"></a>
+<FONT color="green">1879</FONT>             ERR_ENTRY_APPLY_MODS_FAILURE.get(e.getDN(),<a name="line.1879"></a>
+<FONT color="green">1880</FONT>                  concatenateStrings(errors)));<a name="line.1880"></a>
+<FONT color="green">1881</FONT>      }<a name="line.1881"></a>
+<FONT color="green">1882</FONT>    <a name="line.1882"></a>
+<FONT color="green">1883</FONT>    <a name="line.1883"></a>
+<FONT color="green">1884</FONT>    <a name="line.1884"></a>
+<FONT color="green">1885</FONT>      /**<a name="line.1885"></a>
+<FONT color="green">1886</FONT>       * Generates a hash code for this entry.<a name="line.1886"></a>
+<FONT color="green">1887</FONT>       *<a name="line.1887"></a>
+<FONT color="green">1888</FONT>       * @return  The generated hash code for this entry.<a name="line.1888"></a>
+<FONT color="green">1889</FONT>       */<a name="line.1889"></a>
+<FONT color="green">1890</FONT>      @Override()<a name="line.1890"></a>
+<FONT color="green">1891</FONT>      public int hashCode()<a name="line.1891"></a>
+<FONT color="green">1892</FONT>      {<a name="line.1892"></a>
+<FONT color="green">1893</FONT>        int hashCode = 0;<a name="line.1893"></a>
+<FONT color="green">1894</FONT>        try<a name="line.1894"></a>
+<FONT color="green">1895</FONT>        {<a name="line.1895"></a>
+<FONT color="green">1896</FONT>          hashCode += getParsedDN().hashCode();<a name="line.1896"></a>
+<FONT color="green">1897</FONT>        }<a name="line.1897"></a>
+<FONT color="green">1898</FONT>        catch (LDAPException le)<a name="line.1898"></a>
+<FONT color="green">1899</FONT>        {<a name="line.1899"></a>
+<FONT color="green">1900</FONT>          debugException(le);<a name="line.1900"></a>
+<FONT color="green">1901</FONT>          hashCode += dn.hashCode();<a name="line.1901"></a>
+<FONT color="green">1902</FONT>        }<a name="line.1902"></a>
+<FONT color="green">1903</FONT>    <a name="line.1903"></a>
+<FONT color="green">1904</FONT>        for (final Attribute a : attributes.values())<a name="line.1904"></a>
+<FONT color="green">1905</FONT>        {<a name="line.1905"></a>
+<FONT color="green">1906</FONT>          hashCode += a.hashCode();<a name="line.1906"></a>
+<FONT color="green">1907</FONT>        }<a name="line.1907"></a>
+<FONT color="green">1908</FONT>    <a name="line.1908"></a>
+<FONT color="green">1909</FONT>        return hashCode;<a name="line.1909"></a>
+<FONT color="green">1910</FONT>      }<a name="line.1910"></a>
+<FONT color="green">1911</FONT>    <a name="line.1911"></a>
+<FONT color="green">1912</FONT>    <a name="line.1912"></a>
+<FONT color="green">1913</FONT>    <a name="line.1913"></a>
+<FONT color="green">1914</FONT>      /**<a name="line.1914"></a>
+<FONT color="green">1915</FONT>       * Indicates whether the provided object is equal to this entry.  The provided<a name="line.1915"></a>
+<FONT color="green">1916</FONT>       * object will only be considered equal to this entry if it is an entry with<a name="line.1916"></a>
+<FONT color="green">1917</FONT>       * the same DN and set of attributes.<a name="line.1917"></a>
+<FONT color="green">1918</FONT>       *<a name="line.1918"></a>
+<FONT color="green">1919</FONT>       * @param  o  The object for which to make the determination.<a name="line.1919"></a>
+<FONT color="green">1920</FONT>       *<a name="line.1920"></a>
+<FONT color="green">1921</FONT>       * @return  {@code true} if the provided object is considered equal to this<a name="line.1921"></a>
+<FONT color="green">1922</FONT>       *          entry, or {@code false} if not.<a name="line.1922"></a>
+<FONT color="green">1923</FONT>       */<a name="line.1923"></a>
+<FONT color="green">1924</FONT>      @Override()<a name="line.1924"></a>
+<FONT color="green">1925</FONT>      public boolean equals(final Object o)<a name="line.1925"></a>
+<FONT color="green">1926</FONT>      {<a name="line.1926"></a>
+<FONT color="green">1927</FONT>        if (o == null)<a name="line.1927"></a>
+<FONT color="green">1928</FONT>        {<a name="line.1928"></a>
+<FONT color="green">1929</FONT>          return false;<a name="line.1929"></a>
+<FONT color="green">1930</FONT>        }<a name="line.1930"></a>
+<FONT color="green">1931</FONT>    <a name="line.1931"></a>
+<FONT color="green">1932</FONT>        if (o == this)<a name="line.1932"></a>
+<FONT color="green">1933</FONT>        {<a name="line.1933"></a>
+<FONT color="green">1934</FONT>          return true;<a name="line.1934"></a>
+<FONT color="green">1935</FONT>        }<a name="line.1935"></a>
+<FONT color="green">1936</FONT>    <a name="line.1936"></a>
+<FONT color="green">1937</FONT>        if (! (o instanceof Entry))<a name="line.1937"></a>
+<FONT color="green">1938</FONT>        {<a name="line.1938"></a>
+<FONT color="green">1939</FONT>          return false;<a name="line.1939"></a>
+<FONT color="green">1940</FONT>        }<a name="line.1940"></a>
+<FONT color="green">1941</FONT>    <a name="line.1941"></a>
+<FONT color="green">1942</FONT>        final Entry e = (Entry) o;<a name="line.1942"></a>
+<FONT color="green">1943</FONT>    <a name="line.1943"></a>
+<FONT color="green">1944</FONT>        try<a name="line.1944"></a>
+<FONT color="green">1945</FONT>        {<a name="line.1945"></a>
+<FONT color="green">1946</FONT>          final DN thisDN = getParsedDN();<a name="line.1946"></a>
+<FONT color="green">1947</FONT>          final DN thatDN = e.getParsedDN();<a name="line.1947"></a>
+<FONT color="green">1948</FONT>          if (! thisDN.equals(thatDN))<a name="line.1948"></a>
+<FONT color="green">1949</FONT>          {<a name="line.1949"></a>
+<FONT color="green">1950</FONT>            return false;<a name="line.1950"></a>
+<FONT color="green">1951</FONT>          }<a name="line.1951"></a>
+<FONT color="green">1952</FONT>        }<a name="line.1952"></a>
+<FONT color="green">1953</FONT>        catch (LDAPException le)<a name="line.1953"></a>
+<FONT color="green">1954</FONT>        {<a name="line.1954"></a>
+<FONT color="green">1955</FONT>          debugException(le);<a name="line.1955"></a>
+<FONT color="green">1956</FONT>          if (! dn.equals(e.dn))<a name="line.1956"></a>
+<FONT color="green">1957</FONT>          {<a name="line.1957"></a>
+<FONT color="green">1958</FONT>            return false;<a name="line.1958"></a>
+<FONT color="green">1959</FONT>          }<a name="line.1959"></a>
+<FONT color="green">1960</FONT>        }<a name="line.1960"></a>
+<FONT color="green">1961</FONT>    <a name="line.1961"></a>
+<FONT color="green">1962</FONT>        if (attributes.size() != e.attributes.size())<a name="line.1962"></a>
+<FONT color="green">1963</FONT>        {<a name="line.1963"></a>
+<FONT color="green">1964</FONT>          return false;<a name="line.1964"></a>
+<FONT color="green">1965</FONT>        }<a name="line.1965"></a>
+<FONT color="green">1966</FONT>    <a name="line.1966"></a>
+<FONT color="green">1967</FONT>        for (final Attribute a : attributes.values())<a name="line.1967"></a>
+<FONT color="green">1968</FONT>        {<a name="line.1968"></a>
+<FONT color="green">1969</FONT>          if (! e.hasAttribute(a))<a name="line.1969"></a>
+<FONT color="green">1970</FONT>          {<a name="line.1970"></a>
+<FONT color="green">1971</FONT>            return false;<a name="line.1971"></a>
+<FONT color="green">1972</FONT>          }<a name="line.1972"></a>
+<FONT color="green">1973</FONT>        }<a name="line.1973"></a>
+<FONT color="green">1974</FONT>    <a name="line.1974"></a>
+<FONT color="green">1975</FONT>        return true;<a name="line.1975"></a>
+<FONT color="green">1976</FONT>      }<a name="line.1976"></a>
+<FONT color="green">1977</FONT>    <a name="line.1977"></a>
+<FONT color="green">1978</FONT>    <a name="line.1978"></a>
+<FONT color="green">1979</FONT>    <a name="line.1979"></a>
+<FONT color="green">1980</FONT>      /**<a name="line.1980"></a>
+<FONT color="green">1981</FONT>       * Creates a new entry that is a duplicate of this entry.<a name="line.1981"></a>
+<FONT color="green">1982</FONT>       *<a name="line.1982"></a>
+<FONT color="green">1983</FONT>       * @return  A new entry that is a duplicate of this entry.<a name="line.1983"></a>
+<FONT color="green">1984</FONT>       */<a name="line.1984"></a>
+<FONT color="green">1985</FONT>      public Entry duplicate()<a name="line.1985"></a>
+<FONT color="green">1986</FONT>      {<a name="line.1986"></a>
+<FONT color="green">1987</FONT>        return new Entry(dn, attributes.values());<a name="line.1987"></a>
+<FONT color="green">1988</FONT>      }<a name="line.1988"></a>
+<FONT color="green">1989</FONT>    <a name="line.1989"></a>
+<FONT color="green">1990</FONT>    <a name="line.1990"></a>
+<FONT color="green">1991</FONT>    <a name="line.1991"></a>
+<FONT color="green">1992</FONT>      /**<a name="line.1992"></a>
+<FONT color="green">1993</FONT>       * Retrieves an LDIF representation of this entry, with each attribute value<a name="line.1993"></a>
+<FONT color="green">1994</FONT>       * on a separate line.  Long lines will not be wrapped.<a name="line.1994"></a>
+<FONT color="green">1995</FONT>       *<a name="line.1995"></a>
+<FONT color="green">1996</FONT>       * @return  An LDIF representation of this entry.<a name="line.1996"></a>
+<FONT color="green">1997</FONT>       */<a name="line.1997"></a>
+<FONT color="green">1998</FONT>      public final String[] toLDIF()<a name="line.1998"></a>
+<FONT color="green">1999</FONT>      {<a name="line.1999"></a>
+<FONT color="green">2000</FONT>        return toLDIF(0);<a name="line.2000"></a>
+<FONT color="green">2001</FONT>      }<a name="line.2001"></a>
+<FONT color="green">2002</FONT>    <a name="line.2002"></a>
+<FONT color="green">2003</FONT>    <a name="line.2003"></a>
+<FONT color="green">2004</FONT>    <a name="line.2004"></a>
+<FONT color="green">2005</FONT>      /**<a name="line.2005"></a>
+<FONT color="green">2006</FONT>       * Retrieves an LDIF representation of this entry, with each attribute value<a name="line.2006"></a>
+<FONT color="green">2007</FONT>       * on a separate line.  Long lines will be wrapped at the specified column.<a name="line.2007"></a>
+<FONT color="green">2008</FONT>       *<a name="line.2008"></a>
+<FONT color="green">2009</FONT>       * @param  wrapColumn  The column at which long lines should be wrapped.  A<a name="line.2009"></a>
+<FONT color="green">2010</FONT>       *                     value less than or equal to two indicates that no<a name="line.2010"></a>
+<FONT color="green">2011</FONT>       *                     wrapping should be performed.<a name="line.2011"></a>
+<FONT color="green">2012</FONT>       *<a name="line.2012"></a>
+<FONT color="green">2013</FONT>       * @return  An LDIF representation of this entry.<a name="line.2013"></a>
+<FONT color="green">2014</FONT>       */<a name="line.2014"></a>
+<FONT color="green">2015</FONT>      public final String[] toLDIF(final int wrapColumn)<a name="line.2015"></a>
+<FONT color="green">2016</FONT>      {<a name="line.2016"></a>
+<FONT color="green">2017</FONT>        List&lt;String&gt; ldifLines = new ArrayList&lt;String&gt;(2*attributes.size());<a name="line.2017"></a>
+<FONT color="green">2018</FONT>        ldifLines.add(LDIFWriter.encodeNameAndValue("dn", new ASN1OctetString(dn)));<a name="line.2018"></a>
+<FONT color="green">2019</FONT>    <a name="line.2019"></a>
+<FONT color="green">2020</FONT>        for (final Attribute a : attributes.values())<a name="line.2020"></a>
+<FONT color="green">2021</FONT>        {<a name="line.2021"></a>
+<FONT color="green">2022</FONT>          final String name = a.getName();<a name="line.2022"></a>
+<FONT color="green">2023</FONT>          for (final ASN1OctetString value : a.getRawValues())<a name="line.2023"></a>
+<FONT color="green">2024</FONT>          {<a name="line.2024"></a>
+<FONT color="green">2025</FONT>            ldifLines.add(LDIFWriter.encodeNameAndValue(name, value));<a name="line.2025"></a>
+<FONT color="green">2026</FONT>          }<a name="line.2026"></a>
+<FONT color="green">2027</FONT>        }<a name="line.2027"></a>
+<FONT color="green">2028</FONT>    <a name="line.2028"></a>
+<FONT color="green">2029</FONT>        if (wrapColumn &gt; 2)<a name="line.2029"></a>
+<FONT color="green">2030</FONT>        {<a name="line.2030"></a>
+<FONT color="green">2031</FONT>          ldifLines = LDIFWriter.wrapLines(wrapColumn, ldifLines);<a name="line.2031"></a>
+<FONT color="green">2032</FONT>        }<a name="line.2032"></a>
+<FONT color="green">2033</FONT>    <a name="line.2033"></a>
+<FONT color="green">2034</FONT>        final String[] lineArray = new String[ldifLines.size()];<a name="line.2034"></a>
+<FONT color="green">2035</FONT>        ldifLines.toArray(lineArray);<a name="line.2035"></a>
+<FONT color="green">2036</FONT>        return lineArray;<a name="line.2036"></a>
+<FONT color="green">2037</FONT>      }<a name="line.2037"></a>
+<FONT color="green">2038</FONT>    <a name="line.2038"></a>
+<FONT color="green">2039</FONT>    <a name="line.2039"></a>
+<FONT color="green">2040</FONT>    <a name="line.2040"></a>
+<FONT color="green">2041</FONT>      /**<a name="line.2041"></a>
+<FONT color="green">2042</FONT>       * Appends an LDIF representation of this entry to the provided buffer.  Long<a name="line.2042"></a>
+<FONT color="green">2043</FONT>       * lines will not be wrapped.<a name="line.2043"></a>
+<FONT color="green">2044</FONT>       *<a name="line.2044"></a>
+<FONT color="green">2045</FONT>       * @param  buffer The buffer to which the LDIF representation of this entry<a name="line.2045"></a>
+<FONT color="green">2046</FONT>       *                should be written.<a name="line.2046"></a>
+<FONT color="green">2047</FONT>       */<a name="line.2047"></a>
+<FONT color="green">2048</FONT>      public final void toLDIF(final ByteStringBuffer buffer)<a name="line.2048"></a>
+<FONT color="green">2049</FONT>      {<a name="line.2049"></a>
+<FONT color="green">2050</FONT>        toLDIF(buffer, 0);<a name="line.2050"></a>
+<FONT color="green">2051</FONT>      }<a name="line.2051"></a>
+<FONT color="green">2052</FONT>    <a name="line.2052"></a>
+<FONT color="green">2053</FONT>    <a name="line.2053"></a>
+<FONT color="green">2054</FONT>    <a name="line.2054"></a>
+<FONT color="green">2055</FONT>      /**<a name="line.2055"></a>
+<FONT color="green">2056</FONT>       * Appends an LDIF representation of this entry to the provided buffer.<a name="line.2056"></a>
+<FONT color="green">2057</FONT>       *<a name="line.2057"></a>
+<FONT color="green">2058</FONT>       * @param  buffer      The buffer to which the LDIF representation of this<a name="line.2058"></a>
+<FONT color="green">2059</FONT>       *                     entry should be written.<a name="line.2059"></a>
+<FONT color="green">2060</FONT>       * @param  wrapColumn  The column at which long lines should be wrapped.  A<a name="line.2060"></a>
+<FONT color="green">2061</FONT>       *                     value less than or equal to two indicates that no<a name="line.2061"></a>
+<FONT color="green">2062</FONT>       *                     wrapping should be performed.<a name="line.2062"></a>
+<FONT color="green">2063</FONT>       */<a name="line.2063"></a>
+<FONT color="green">2064</FONT>      public final void toLDIF(final ByteStringBuffer buffer, final int wrapColumn)<a name="line.2064"></a>
+<FONT color="green">2065</FONT>      {<a name="line.2065"></a>
+<FONT color="green">2066</FONT>        LDIFWriter.encodeNameAndValue("dn", new ASN1OctetString(dn), buffer,<a name="line.2066"></a>
+<FONT color="green">2067</FONT>                           wrapColumn);<a name="line.2067"></a>
+<FONT color="green">2068</FONT>        buffer.append(EOL_BYTES);<a name="line.2068"></a>
+<FONT color="green">2069</FONT>    <a name="line.2069"></a>
+<FONT color="green">2070</FONT>        for (final Attribute a : attributes.values())<a name="line.2070"></a>
+<FONT color="green">2071</FONT>        {<a name="line.2071"></a>
+<FONT color="green">2072</FONT>          final String name = a.getName();<a name="line.2072"></a>
+<FONT color="green">2073</FONT>          for (final ASN1OctetString value : a.getRawValues())<a name="line.2073"></a>
+<FONT color="green">2074</FONT>          {<a name="line.2074"></a>
+<FONT color="green">2075</FONT>            LDIFWriter.encodeNameAndValue(name, value, buffer, wrapColumn);<a name="line.2075"></a>
+<FONT color="green">2076</FONT>            buffer.append(EOL_BYTES);<a name="line.2076"></a>
+<FONT color="green">2077</FONT>          }<a name="line.2077"></a>
+<FONT color="green">2078</FONT>        }<a name="line.2078"></a>
+<FONT color="green">2079</FONT>      }<a name="line.2079"></a>
+<FONT color="green">2080</FONT>    <a name="line.2080"></a>
+<FONT color="green">2081</FONT>    <a name="line.2081"></a>
+<FONT color="green">2082</FONT>    <a name="line.2082"></a>
+<FONT color="green">2083</FONT>      /**<a name="line.2083"></a>
+<FONT color="green">2084</FONT>       * Retrieves an LDIF-formatted string representation of this entry.  No<a name="line.2084"></a>
+<FONT color="green">2085</FONT>       * wrapping will be performed, and no extra blank lines will be added.<a name="line.2085"></a>
+<FONT color="green">2086</FONT>       *<a name="line.2086"></a>
+<FONT color="green">2087</FONT>       * @return  An LDIF-formatted string representation of this entry.<a name="line.2087"></a>
+<FONT color="green">2088</FONT>       */<a name="line.2088"></a>
+<FONT color="green">2089</FONT>      public final String toLDIFString()<a name="line.2089"></a>
+<FONT color="green">2090</FONT>      {<a name="line.2090"></a>
+<FONT color="green">2091</FONT>        final StringBuilder buffer = new StringBuilder();<a name="line.2091"></a>
+<FONT color="green">2092</FONT>        toLDIFString(buffer, 0);<a name="line.2092"></a>
+<FONT color="green">2093</FONT>        return buffer.toString();<a name="line.2093"></a>
+<FONT color="green">2094</FONT>      }<a name="line.2094"></a>
+<FONT color="green">2095</FONT>    <a name="line.2095"></a>
+<FONT color="green">2096</FONT>    <a name="line.2096"></a>
+<FONT color="green">2097</FONT>    <a name="line.2097"></a>
+<FONT color="green">2098</FONT>      /**<a name="line.2098"></a>
+<FONT color="green">2099</FONT>       * Retrieves an LDIF-formatted string representation of this entry.  No<a name="line.2099"></a>
+<FONT color="green">2100</FONT>       * extra blank lines will be added.<a name="line.2100"></a>
+<FONT color="green">2101</FONT>       *<a name="line.2101"></a>
+<FONT color="green">2102</FONT>       * @param  wrapColumn  The column at which long lines should be wrapped.  A<a name="line.2102"></a>
+<FONT color="green">2103</FONT>       *                     value less than or equal to two indicates that no<a name="line.2103"></a>
+<FONT color="green">2104</FONT>       *                     wrapping should be performed.<a name="line.2104"></a>
+<FONT color="green">2105</FONT>       *<a name="line.2105"></a>
+<FONT color="green">2106</FONT>       * @return  An LDIF-formatted string representation of this entry.<a name="line.2106"></a>
+<FONT color="green">2107</FONT>       */<a name="line.2107"></a>
+<FONT color="green">2108</FONT>      public final String toLDIFString(final int wrapColumn)<a name="line.2108"></a>
+<FONT color="green">2109</FONT>      {<a name="line.2109"></a>
+<FONT color="green">2110</FONT>        final StringBuilder buffer = new StringBuilder();<a name="line.2110"></a>
+<FONT color="green">2111</FONT>        toLDIFString(buffer, wrapColumn);<a name="line.2111"></a>
+<FONT color="green">2112</FONT>        return buffer.toString();<a name="line.2112"></a>
+<FONT color="green">2113</FONT>      }<a name="line.2113"></a>
+<FONT color="green">2114</FONT>    <a name="line.2114"></a>
+<FONT color="green">2115</FONT>    <a name="line.2115"></a>
+<FONT color="green">2116</FONT>    <a name="line.2116"></a>
+<FONT color="green">2117</FONT>      /**<a name="line.2117"></a>
+<FONT color="green">2118</FONT>       * Appends an LDIF-formatted string representation of this entry to the<a name="line.2118"></a>
+<FONT color="green">2119</FONT>       * provided buffer.  No wrapping will be performed, and no extra blank lines<a name="line.2119"></a>
+<FONT color="green">2120</FONT>       * will be added.<a name="line.2120"></a>
+<FONT color="green">2121</FONT>       *<a name="line.2121"></a>
+<FONT color="green">2122</FONT>       * @param  buffer  The buffer to which to append the LDIF representation of<a name="line.2122"></a>
+<FONT color="green">2123</FONT>       *                 this entry.<a name="line.2123"></a>
+<FONT color="green">2124</FONT>       */<a name="line.2124"></a>
+<FONT color="green">2125</FONT>      public final void toLDIFString(final StringBuilder buffer)<a name="line.2125"></a>
+<FONT color="green">2126</FONT>      {<a name="line.2126"></a>
+<FONT color="green">2127</FONT>        toLDIFString(buffer, 0);<a name="line.2127"></a>
+<FONT color="green">2128</FONT>      }<a name="line.2128"></a>
+<FONT color="green">2129</FONT>    <a name="line.2129"></a>
+<FONT color="green">2130</FONT>    <a name="line.2130"></a>
+<FONT color="green">2131</FONT>    <a name="line.2131"></a>
+<FONT color="green">2132</FONT>      /**<a name="line.2132"></a>
+<FONT color="green">2133</FONT>       * Appends an LDIF-formatted string representation of this entry to the<a name="line.2133"></a>
+<FONT color="green">2134</FONT>       * provided buffer.  No extra blank lines will be added.<a name="line.2134"></a>
+<FONT color="green">2135</FONT>       *<a name="line.2135"></a>
+<FONT color="green">2136</FONT>       * @param  buffer      The buffer to which to append the LDIF representation<a name="line.2136"></a>
+<FONT color="green">2137</FONT>       *                     of this entry.<a name="line.2137"></a>
+<FONT color="green">2138</FONT>       * @param  wrapColumn  The column at which long lines should be wrapped.  A<a name="line.2138"></a>
+<FONT color="green">2139</FONT>       *                     value less than or equal to two indicates that no<a name="line.2139"></a>
+<FONT color="green">2140</FONT>       *                     wrapping should be performed.<a name="line.2140"></a>
+<FONT color="green">2141</FONT>       */<a name="line.2141"></a>
+<FONT color="green">2142</FONT>      public final void toLDIFString(final StringBuilder buffer,<a name="line.2142"></a>
+<FONT color="green">2143</FONT>                                     final int wrapColumn)<a name="line.2143"></a>
+<FONT color="green">2144</FONT>      {<a name="line.2144"></a>
+<FONT color="green">2145</FONT>        LDIFWriter.encodeNameAndValue("dn", new ASN1OctetString(dn), buffer,<a name="line.2145"></a>
+<FONT color="green">2146</FONT>                                      wrapColumn);<a name="line.2146"></a>
+<FONT color="green">2147</FONT>        buffer.append(EOL);<a name="line.2147"></a>
+<FONT color="green">2148</FONT>    <a name="line.2148"></a>
+<FONT color="green">2149</FONT>        for (final Attribute a : attributes.values())<a name="line.2149"></a>
+<FONT color="green">2150</FONT>        {<a name="line.2150"></a>
+<FONT color="green">2151</FONT>          final String name = a.getName();<a name="line.2151"></a>
+<FONT color="green">2152</FONT>          for (final ASN1OctetString value : a.getRawValues())<a name="line.2152"></a>
+<FONT color="green">2153</FONT>          {<a name="line.2153"></a>
+<FONT color="green">2154</FONT>            LDIFWriter.encodeNameAndValue(name, value, buffer, wrapColumn);<a name="line.2154"></a>
+<FONT color="green">2155</FONT>            buffer.append(EOL);<a name="line.2155"></a>
+<FONT color="green">2156</FONT>          }<a name="line.2156"></a>
+<FONT color="green">2157</FONT>        }<a name="line.2157"></a>
+<FONT color="green">2158</FONT>      }<a name="line.2158"></a>
+<FONT color="green">2159</FONT>    <a name="line.2159"></a>
+<FONT color="green">2160</FONT>    <a name="line.2160"></a>
+<FONT color="green">2161</FONT>    <a name="line.2161"></a>
+<FONT color="green">2162</FONT>      /**<a name="line.2162"></a>
+<FONT color="green">2163</FONT>       * Retrieves a string representation of this entry.<a name="line.2163"></a>
+<FONT color="green">2164</FONT>       *<a name="line.2164"></a>
+<FONT color="green">2165</FONT>       * @return  A string representation of this entry.<a name="line.2165"></a>
+<FONT color="green">2166</FONT>       */<a name="line.2166"></a>
+<FONT color="green">2167</FONT>      @Override()<a name="line.2167"></a>
+<FONT color="green">2168</FONT>      public final String toString()<a name="line.2168"></a>
+<FONT color="green">2169</FONT>      {<a name="line.2169"></a>
+<FONT color="green">2170</FONT>        final StringBuilder buffer = new StringBuilder();<a name="line.2170"></a>
+<FONT color="green">2171</FONT>        toString(buffer);<a name="line.2171"></a>
+<FONT color="green">2172</FONT>        return buffer.toString();<a name="line.2172"></a>
+<FONT color="green">2173</FONT>      }<a name="line.2173"></a>
+<FONT color="green">2174</FONT>    <a name="line.2174"></a>
+<FONT color="green">2175</FONT>    <a name="line.2175"></a>
+<FONT color="green">2176</FONT>    <a name="line.2176"></a>
+<FONT color="green">2177</FONT>      /**<a name="line.2177"></a>
+<FONT color="green">2178</FONT>       * Appends a string representation of this entry to the provided buffer.<a name="line.2178"></a>
+<FONT color="green">2179</FONT>       *<a name="line.2179"></a>
+<FONT color="green">2180</FONT>       * @param  buffer  The buffer to which to append the string representation of<a name="line.2180"></a>
+<FONT color="green">2181</FONT>       *                 this entry.<a name="line.2181"></a>
+<FONT color="green">2182</FONT>       */<a name="line.2182"></a>
+<FONT color="green">2183</FONT>      public void toString(final StringBuilder buffer)<a name="line.2183"></a>
+<FONT color="green">2184</FONT>      {<a name="line.2184"></a>
+<FONT color="green">2185</FONT>        buffer.append("Entry(dn='");<a name="line.2185"></a>
+<FONT color="green">2186</FONT>        buffer.append(dn);<a name="line.2186"></a>
+<FONT color="green">2187</FONT>        buffer.append("', attributes={");<a name="line.2187"></a>
+<FONT color="green">2188</FONT>    <a name="line.2188"></a>
+<FONT color="green">2189</FONT>        final Iterator&lt;Attribute&gt; iterator = attributes.values().iterator();<a name="line.2189"></a>
+<FONT color="green">2190</FONT>    <a name="line.2190"></a>
+<FONT color="green">2191</FONT>        while (iterator.hasNext())<a name="line.2191"></a>
+<FONT color="green">2192</FONT>        {<a name="line.2192"></a>
+<FONT color="green">2193</FONT>          iterator.next().toString(buffer);<a name="line.2193"></a>
+<FONT color="green">2194</FONT>          if (iterator.hasNext())<a name="line.2194"></a>
+<FONT color="green">2195</FONT>          {<a name="line.2195"></a>
+<FONT color="green">2196</FONT>            buffer.append(", ");<a name="line.2196"></a>
+<FONT color="green">2197</FONT>          }<a name="line.2197"></a>
+<FONT color="green">2198</FONT>        }<a name="line.2198"></a>
+<FONT color="green">2199</FONT>    <a name="line.2199"></a>
+<FONT color="green">2200</FONT>        buffer.append("})");<a name="line.2200"></a>
+<FONT color="green">2201</FONT>      }<a name="line.2201"></a>
+<FONT color="green">2202</FONT>    }<a name="line.2202"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>
