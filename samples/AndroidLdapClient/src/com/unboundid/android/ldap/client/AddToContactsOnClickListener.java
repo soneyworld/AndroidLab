@@ -22,15 +22,24 @@ package com.unboundid.android.ldap.client;
 
 
 
+import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 import android.app.Activity;
+import android.app.Application;
+import android.content.ContentProviderOperation;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.provider.Contacts;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.Contacts;
+import android.provider.ContactsContract.Contacts.Data;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.Toast;
 
 import com.unboundid.ldap.sdk.Entry;
 
@@ -43,7 +52,7 @@ import static com.unboundid.util.StaticUtils.*;
  * This class provides an on-click listener that is meant to add a user to the
  * phone's address book when the associated view is clicked.
  */
-final class AddToContactsOnClickListener
+final class AddToContactsOnClickListener extends Application
       implements OnClickListener
 {
   /**
@@ -106,13 +115,52 @@ final class AddToContactsOnClickListener
   public void onClick(final View view)
   {
     logEnter(LOG_TAG, "onClick", view);
+    // Get values from UI
+    String name = mContactNameEditText.getText().toString();
+    String phone = mContactPhoneEditText.getText().toString();
+    String email = mContactEmailEditText.getText().toString();
+    int phoneType = mContactPhoneTypes.get(
+            mContactPhoneTypeSpinner.getSelectedItemPosition());
+    int emailType = mContactEmailTypes.get(
+            mContactEmailTypeSpinner.getSelectedItemPosition());;
+
+    // Prepare contact creation request
+    ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
+    ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
+            .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, mSelectedAccount.getType())
+            .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, mSelectedAccount.getName())
+            .build());
+    ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+            .withValue(ContactsContract.Data.MIMETYPE,
+                    ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+            .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name)
+            .build());
+    ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+            .withValue(ContactsContract.Data.MIMETYPE,
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
+            .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, phone)
+            .withValue(ContactsContract.CommonDataKinds.Phone.TYPE, phoneType)
+            .build());
+    ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+            .withValue(ContactsContract.Data.MIMETYPE,
+                    ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
+            .withValue(ContactsContract.CommonDataKinds.Email.DATA, email)
+            .withValue(ContactsContract.CommonDataKinds.Email.TYPE, emailType)
+            .build());
+
+    // Ask the Contact provider to create a new contact
+    try {
+        getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+    } catch (Exception e) {
+        // Display warning
+    }
 
     final ContentValues values = new ContentValues();
-    values.put(Contacts.PeopleColumns.NAME, name);
-    values.put(Contacts.PeopleColumns.STARRED, 0);
-
-    final Uri contactURI = Contacts.People.createPersonInMyContactsGroup(
-         activity.getContentResolver(), values);
+    values.put(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name);
+    Uri contactURI = getContentResolver().insert(ContactsContract.Contacts.CONTENT_URI, values);
     if (contactURI == null)
     {
       final Intent i = new Intent(activity, PopUp.class);
@@ -195,8 +243,7 @@ final class AddToContactsOnClickListener
   {
     logEnter(LOG_TAG, "addPhoneNumber", number, type, uri);
 
-    final Uri phoneURI = Uri.withAppendedPath(uri,
-         Contacts.People.Phones.CONTENT_DIRECTORY);
+    final Uri phoneURI = Uri.withAppendedPath(uri,ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE);
 
     final ContentValues values = new ContentValues();
     values.put(Contacts.PhonesColumns.TYPE, type);
