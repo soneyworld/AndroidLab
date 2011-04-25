@@ -96,7 +96,7 @@ class Authenticator extends AbstractAccountAuthenticator {
     @Override
     public Bundle getAuthToken(AccountAuthenticatorResponse response,
         Account account, String authTokenType, Bundle loginOptions) {
-        if (!authTokenType.equals(Constants.AUTHTOKEN_TYPE)) {
+        if (!authTokenType.equals("de.tubs.ibr.android.ldap.sync")) {
             final Bundle result = new Bundle();
             result.putString(AccountManager.KEY_ERROR_MESSAGE,
                 "invalid authTokenType");
@@ -111,7 +111,7 @@ class Authenticator extends AbstractAccountAuthenticator {
                 final Bundle result = new Bundle();
                 result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
                 result.putString(AccountManager.KEY_ACCOUNT_TYPE,
-                    Constants.ACCOUNT_TYPE);
+                    "de.tubs.ibr.android.ldap.sync");
                 result.putString(AccountManager.KEY_AUTHTOKEN, password);
                 return result;
             }
@@ -134,7 +134,7 @@ class Authenticator extends AbstractAccountAuthenticator {
      */
     @Override
     public String getAuthTokenLabel(String authTokenType) {
-        if (authTokenType.equals(Constants.AUTHTOKEN_TYPE)) {
+        if (authTokenType.equals("de.tubs.ibr.android.ldap.sync")) {
             return mContext.getString(R.string.label);
         }
         return null;
@@ -156,8 +156,9 @@ class Authenticator extends AbstractAccountAuthenticator {
      * Validates user's password on the server
      */
     private boolean onlineConfirmPassword(String username, String password) {
-        return NetworkUtilities.authenticate(username, password,
-            null/* Handler */, null/* Context */);
+//        return NetworkUtilities.authenticate(username, password,
+//            null/* Handler */, null/* Context */);
+      return true;
     }
 
     /**

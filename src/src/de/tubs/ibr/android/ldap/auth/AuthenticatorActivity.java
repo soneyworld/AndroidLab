@@ -26,7 +26,7 @@ import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
+//import android.os.Handler;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
@@ -58,7 +58,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
     private Boolean mConfirmCredentials = false;
 
     /** for posting authentication attempts back to UI thread */
-    private final Handler mHandler = new Handler();
+//    private final Handler mHandler = new Handler();
     private TextView mMessage;
     private String mPassword;
     private EditText mPasswordEdit;
@@ -136,9 +136,9 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
         } else {
             showProgress();
             // Start authenticating...
-            mAuthThread =
-                NetworkUtilities.attemptAuth(mUsername, mPassword, mHandler,
-                    AuthenticatorActivity.this);
+//            mAuthThread =
+//                NetworkUtilities.attemptAuth(mUsername, mPassword, mHandler,
+//                    AuthenticatorActivity.this);
         }
     }
 
@@ -151,7 +151,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
      */
     protected void finishConfirmCredentials(boolean result) {
         Log.i(TAG, "finishConfirmCredentials()");
-        final Account account = new Account(mUsername, Constants.ACCOUNT_TYPE);
+        final Account account = new Account(mUsername, "de.tubs.ibr.android.ldap.sync");
         mAccountManager.setPassword(account, mPassword);
         final Intent intent = new Intent();
         intent.putExtra(AccountManager.KEY_BOOLEAN_RESULT, result);
@@ -172,7 +172,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
 
     protected void finishLogin() {
         Log.i(TAG, "finishLogin()");
-        final Account account = new Account(mUsername, Constants.ACCOUNT_TYPE);
+        final Account account = new Account(mUsername, "de.tubs.ibr.android.ldap.sync");
 
         if (mRequestNewAccount) {
             mAccountManager.addAccountExplicitly(account, mPassword, null);
@@ -186,9 +186,9 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
         mAuthtoken = mPassword;
         intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, mUsername);
         intent
-            .putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNT_TYPE);
+            .putExtra(AccountManager.KEY_ACCOUNT_TYPE, "de.tubs.ibr.android.ldap.sync");
         if (mAuthtokenType != null
-            && mAuthtokenType.equals(Constants.AUTHTOKEN_TYPE)) {
+            && mAuthtokenType.equals("de.tubs.ibr.android.ldap.sync")) {
             intent.putExtra(AccountManager.KEY_AUTHTOKEN, mAuthtoken);
         }
         setAccountAuthenticatorResult(intent.getExtras());

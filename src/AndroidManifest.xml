@@ -19,12 +19,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name="LDAPSyncService">
-            <intent-filter>
+        <service android:name="LDAPSyncService" android:exported="true">
+            <meta-data
+                android:name="android.provider.CONTACTS_STRUCTURE"
+                android:resource="@xml/contacts" /><intent-filter>
                 <action android:name="android.content.SyncAdapter"></action>
             </intent-filter>
+            <meta-data android:resource="@xml/syncadapter" android:name="android.content.SyncAdapter"></meta-data>
         </service>
         <provider android:authorities="@string/ldap_provider_authority" android:writePermission="@string/LDAP_write_Permission" android:syncable="true" android:readPermission="@string/LDAP_read_Permission" android:multiprocess="false" android:name="de.tubs.ibr.android.ldap.provider.LDAPContentProvider"></provider>
+        <service android:name="de.tubs.ibr.android.ldap.auth.AuthenticationService" android:exported="true">
+            <intent-filter>
+                <action android:name="android.accounts.AccountAuthenticator"></action>
+            </intent-filter>
+            <meta-data android:resource="@xml/authenticator" android:name="android.accounts.AccountAuthenticator"></meta-data>
+        </service>
 
     </application>
 </manifest>
