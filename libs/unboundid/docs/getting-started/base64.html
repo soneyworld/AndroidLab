@@ -1,0 +1,72 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+          "http://www.w3.org/TR/html4/loose.dtd">
+
+
+<html>
+  <head>
+    <title>UnboundID LDAP SDK for Java</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" href="../unboundid.css" type="text/css">
+    <link rel="shortcut icon" href="../images/favicon.ico">
+  </head>
+
+  <body>
+    <div id="wrapper">
+      <div id="headercontainer">
+        <a href="http://www.unboundid.com/" title="UnboundID LDAP SDK for Java" id="logo">
+          <img src="../images/+___.gif" width="274" height="99" alt="UnboundID" style="float: left;">
+        </a>
+        <div id="headertitle">
+          <br>
+          <h1>UnboundID LDAP SDK for Java</h1>
+        </div>
+      </div>
+
+      <div id="content">
+        <table cellpadding="0" cellspacing="0" border="0">
+          <tr valign="top">
+            <td style="padding: 10px 30px 20px 40px;">
+              <table border="0" width="100%">
+                <tr>
+                  <td align="right" valign="middle">
+                    <a href="http://www.unboundid.com/products/ldapsdk/" style="font-size: 85%">LDAP SDK Home Page</a>
+                    <br>
+                    <a href="../index.html" style="font-size: 85%">Product Information</a>
+                    <br>
+                    <a href="index.html" style="font-size: 85%">Getting Started with the LDAP SDK</a>
+                  </td>
+                </tr>
+              </table>
+
+              <h2>Base64 Processing</h2>
+
+              <p>
+                Base64 is a mechanism of encoding data in a form that can always be represented as
+                plain text.  It does this by converting three 8-bit values into four 6-bit values
+                and representing that 6-bit data using a set of 64 characters (uppercase letters,
+                lowercase letters, numeric digits, the plus sign and the forward slash).  It is a
+                safe and relatively compact way to represent binary data in a text form.  It is
+                used in LDIF processing if the data contains special characters that may not
+                otherwise be safe to represent in LDIF form.
+              </p>
+
+              <p>
+                The <tt>com.unboundid.util.Base64</tt> class provides a mechanism that can be used
+                to encode data to and from base64.  The <tt>decode(String data)</tt> method can be
+                used to decode a string containing base64-encoded data to a byte array.  The
+                <tt>encode(byte[] data)</tt> and <tt>encode(byte[] data, StringBuilder buffer)</tt>
+                methods can be used to base64-encode data from a byte array to a string
+                representation.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <div id="footer">
+        Copyright &copy; 2010 &ndash; UnboundID Corp. &ndash; All rights reserved.
+      </div>
+    </div>
+  </body>
+</html>
+
