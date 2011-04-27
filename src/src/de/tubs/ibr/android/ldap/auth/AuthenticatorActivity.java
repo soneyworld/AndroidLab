@@ -16,7 +16,7 @@
 
 package de.tubs.ibr.android.ldap.auth;
 
-import de.tubs.ibr.android.ldap.sync.R;
+import de.tubs.ibr.android.ldap.R;
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorActivity;
 import android.accounts.AccountManager;

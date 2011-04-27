@@ -22,7 +22,7 @@ package de.tubs.ibr.android.ldap.auth;
 
 
 
-import de.tubs.ibr.android.ldap.sync.R;
+import de.tubs.ibr.android.ldap.R;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;

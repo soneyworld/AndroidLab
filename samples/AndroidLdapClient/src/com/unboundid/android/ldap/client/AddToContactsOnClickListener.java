@@ -26,6 +26,7 @@ import java.util.StringTokenizer;
 import android.app.Activity;
 import android.app.Application;
 import android.content.ContentProviderOperation;
+import android.content.Intent;
 import android.provider.ContactsContract;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -46,6 +47,7 @@ final class AddToContactsOnClickListener extends Application implements
 	 */
 	private static final String LOG_TAG = "AddToContactsListener";
 
+	private final Activity activity;
 	// The information about the person to add.
 	private final String fax;
 	private final String homeAddress;
@@ -69,7 +71,7 @@ final class AddToContactsOnClickListener extends Application implements
 	 */
 	AddToContactsOnClickListener(final Activity activity, final Entry entry) {
 		logEnter(LOG_TAG, "<init>", activity, entry);
-
+		this.activity = activity;
 		name = entry.getAttributeValue(AttributeMapper.ATTR_FULL_NAME);
 		workPhone = entry.getAttributeValue(AttributeMapper.ATTR_PRIMARY_PHONE);
 		homePhone = entry.getAttributeValue(AttributeMapper.ATTR_HOME_PHONE);
@@ -159,7 +161,7 @@ final class AddToContactsOnClickListener extends Application implements
 		try {
 			getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
 		} catch (Exception e) {
-			// Display warning
+			logException("Add", "applyBatch", e);
 		}
 
 	}
@@ -174,8 +176,7 @@ final class AddToContactsOnClickListener extends Application implements
 	 * @param uri
 	 *            The base URI for the contact.
 	 * 
-	 * @return {@code true} if the update was successful, or {@code false} if
-	 *         not.
+	 * @return a addPhoneNumber Operation
 	 */
 	private ContentProviderOperation addPhoneNumber(final String number,
 			final int type) {
@@ -201,7 +202,7 @@ final class AddToContactsOnClickListener extends Application implements
 	 * @param uri
 	 *            The base URI for the contact.
 	 * 
-	 * @return ContentProviderOperation
+	 * @return a addEMailAdress Operation
 	 */
 	private ContentProviderOperation addEMailAddress(final String address,
 			final int type) {
@@ -223,9 +224,7 @@ final class AddToContactsOnClickListener extends Application implements
 	 *            The postal address to add.
 	 * @param type
 	 *            The type of address to add.
-	 * 
-	 * @return {@code true} if the update was successful, or {@code false} if
-	 *         not.
+	 * @return a addPostalAdress Operation
 	 */
 	private ContentProviderOperation addPostalAddress(final String address,
 			final int type) {

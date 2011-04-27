@@ -46,7 +46,7 @@ import com.unboundid.util.ssl.SSLUtil;
 import com.unboundid.util.ssl.TrustAllTrustManager;
 import static com.unboundid.util.StaticUtils.*;
 import de.tubs.ibr.android.ldap.provider.*;
-import de.tubs.ibr.android.ldap.sync.R;
+import de.tubs.ibr.android.ldap.R;
 
 /**
  * This class provides a data structure that holds information about a single

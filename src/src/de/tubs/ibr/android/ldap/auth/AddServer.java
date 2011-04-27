@@ -23,7 +23,7 @@ package de.tubs.ibr.android.ldap.auth;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import android.app.Activity;
+import android.accounts.AccountAuthenticatorActivity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -34,14 +34,14 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import static com.unboundid.util.StaticUtils.*;
+import de.tubs.ibr.android.ldap.R;
 import de.tubs.ibr.android.ldap.provider.*;
-import de.tubs.ibr.android.ldap.sync.R;
 
 /**
  * This class provides an Android activity that may be used to define a new
  * directory server.
  */
-public final class AddServer extends Activity implements OnClickListener,
+public final class AddServer extends AccountAuthenticatorActivity implements OnClickListener,
     ServerTestInvoker {
   /**
    * The name of the field used to define the server ID.

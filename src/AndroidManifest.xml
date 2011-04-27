@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="de.tubs.ibr.android.ldap.sync"
       android:versionCode="1"
-      android:versionName="1.0">
+      android:versionName="1.0" package="de.tubs.ibr.android.ldap">
     <uses-sdk android:minSdkVersion="8" />
     <uses-permission android:name="android.permission.READ_CONTACTS"></uses-permission>
     <uses-permission android:name="android.permission.WRITE_CONTACTS"></uses-permission>
@@ -10,16 +9,15 @@
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS"></uses-permission>
     <uses-permission android:name="android.permission.READ_SYNC_STATS"></uses-permission>
     <uses-permission android:name="android.permission.WRITE_SETTINGS"></uses-permission>
+    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"></uses-permission>
 
     <application android:icon="@drawable/icon" android:label="@string/app_name" android:debuggable="true">
-        <activity android:name=".ViewLDAPContacts"
-                  android:label="@string/app_name">
+        <activity android:label="@string/app_name" android:name=".sync.ViewLDAPContacts">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name="LDAPSyncService" android:exported="true">
+        <service android:exported="true" android:name=".sync.LDAPSyncService">
             <meta-data
                 android:name="android.provider.CONTACTS_STRUCTURE"
                 android:resource="@xml/contacts" /><intent-filter>
@@ -27,13 +25,17 @@
             </intent-filter>
             <meta-data android:resource="@xml/syncadapter" android:name="android.content.SyncAdapter"></meta-data>
         </service>
-        <provider android:authorities="@string/ldap_provider_authority" android:writePermission="@string/LDAP_write_Permission" android:syncable="true" android:readPermission="@string/LDAP_read_Permission" android:multiprocess="false" android:name="de.tubs.ibr.android.ldap.provider.LDAPContentProvider"></provider>
-        <service android:name="de.tubs.ibr.android.ldap.auth.AuthenticationService" android:exported="true">
+        <provider android:authorities="@string/ldap_provider_authority" android:writePermission="@string/LDAP_write_Permission" android:syncable="true" android:readPermission="@string/LDAP_read_Permission" android:multiprocess="false" android:name=".provider.LDAPContentProvider"></provider>
+        <service android:exported="true" android:permission="android.permission.AUTHENTICATE_ACCOUNTS" android:name=".auth.AccountAuthenticationService">
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator"></action>
             </intent-filter>
             <meta-data android:resource="@xml/authenticator" android:name="android.accounts.AccountAuthenticator"></meta-data>
         </service>
-
+        <activity android:name=".auth.AddServer">
+            <intent-filter>
+                <action android:name="de.tubs.ibr.android.ldap.auth.AuthenticatorActivity"></action>
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

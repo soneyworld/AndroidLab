@@ -27,7 +27,7 @@ import java.util.LinkedList;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.Entry;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
-import de.tubs.ibr.android.ldap.sync.R;
+import de.tubs.ibr.android.ldap.R;
 
 import static com.unboundid.util.StaticUtils.*;
 

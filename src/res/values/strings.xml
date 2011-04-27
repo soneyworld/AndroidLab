@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="hello">ViewLDAPContacts:</string>
-	<string name="app_name">OpenLDAPContactSync</string>
+	<string name="app_name">LDAPSync</string>
 	<string name="ldap_provider_authority">de.tubs.ibr.android.ldap</string>
 	<string name="LDAP_read_Permission">android.permission.READ_CONTACTS</string>
 	<string name="LDAP_write_Permission">android.permission.WRITE_EXTERNAL_STORAGE</string>
