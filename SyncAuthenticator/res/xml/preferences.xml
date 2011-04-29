@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+        <PreferenceCategory
+                android:title="General sync settings">
+                <CheckBoxPreference
+                        android:title="Background data"
+                        android:defaultValue="false"
+                        android:summary="Applications can sync, send and receive data at every time"
+                        android:key="backGroundDataPref" />
+                <CheckBoxPreference
+                        android:title="Auto-sync"
+                        android:defaultValue="false"
+                        android:summary="Applications sync data automatically"
+                        android:key="syncPref" />
+        </PreferenceCategory>
+        <PreferenceCategory
+                android:title="Additional Settings">
+    			<PreferenceScreen
+            			android:key="serverSettings"
+            			android:title="Server Settings">
+                <EditTextPreference
+                        android:name="Server ID"
+                        android:summary="Edit the server ID"
+                        android:title="Server ID"
+                        android:key="serverIDPref" />
+                <EditTextPreference
+                        android:name="Server address"
+                        android:summary="Edit server address"
+                        android:title="Server address"
+                        android:key="serverAddressPref" />
+                <EditTextPreference
+                        android:summary="Edit the server port"
+                        android:title="Server port"
+                        android:key="serverPortPref" android:name="Server port"/>
+                <ListPreference 
+                		android:key="securityTypePref" 
+                		android:summary="Edit security type" 
+                		android:entries="@array/securityOptions" android:entryValues="@array/securityOptions" android:title="Security type"/>
+                <EditTextPreference
+                        android:name="Bind DN"
+                        android:summary="Edit the bind DN"
+                        android:title="Bind DN"
+                        android:key="bindDNPref" />
+                <EditTextPreference
+                        android:name="Bind Password"
+                        android:summary="Edit the bind Password"
+                        android:title="Bind Password"
+                        android:key="bindPasswordPref" />
+                <EditTextPreference
+                        android:name="Base DN"
+                        android:summary="Edit the base DN"
+                        android:title="Base DN"
+                        android:key="baseDNPref" />      
+    			</PreferenceScreen>
+        </PreferenceCategory>
+</PreferenceScreen>

@@ -2,3 +2,6 @@
 /src/gen/
 test/bin/
 test/gen/
+*.psd
+*.src
+*.DS_Store

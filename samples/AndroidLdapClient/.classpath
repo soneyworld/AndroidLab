@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
+	<classpathentry kind="lib" path="/Users/christophergerloff/Documents/unboundid-ldapsdk-2.1.0-se/unboundid-ldapsdk-se.jar"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
-	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
-	<classpathentry kind="lib" path="/home/till/workspace/AndroidLab/libs/unboundid/unboundid-ldapsdk-se.jar" sourcepath="/home/till/Downloads/unboundid-ldapsdk-1.1.6-se/src.zip"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

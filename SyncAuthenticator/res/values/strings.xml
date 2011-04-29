@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">Hello World, SyncAuthenticatorActivity!</string>
+    <string name="app_name">Sync Authenticator</string>
+    <string name="ACCOUNT_TYPE">com.syncauthenticator</string>
+    <string name="layout_define_server_label_id">Server ID (Uniquely identifies this server)</string>
+    <string name="layout_define_server_label_host">Directory Server Address (IP address or hostname)</string>
+    <string name="layout_define_server_label_port">Directory Server Port (1 - 65535)</string>
+    <string name="layout_define_server_label_security_type">Communication Security Type</string>
+    <string name="layout_define_server_label_bind_dn">Bind DN (leave empty for anonymous)</string>
+    <string name="layout_define_server_label_bind_pw">Bind Password (leave empty for anonymous)</string>
+    <string name="layout_define_server_label_base_dn">Base DN (leave empty for entire server)</string>
+    <string name="layout_define_server_button_label_test">Test Settings</string>
+    <string name="layout_define_server_button_label_save">Save Settings</string>
+    <string-array name="securityOptions">
+        <item>SSL</item>
+        <item>bla</item>
+    </string-array>
+</resources>
