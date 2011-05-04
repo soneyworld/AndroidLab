@@ -44,7 +44,7 @@ class Authenticator extends AbstractAccountAuthenticator {
   public Bundle addAccount(AccountAuthenticatorResponse response,
       String accountType, String authTokenType, String[] requiredFeatures,
       Bundle options) {
-    final Intent intent = new Intent(mContext, AuthenticatorActivity.class);
+    final Intent intent = new Intent(mContext, AddServer.class);
     intent.setAction("de.tubs.ibr.android.ldap.auth.AddServer.LOGIN");
     intent
         .putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response);
