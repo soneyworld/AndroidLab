@@ -151,7 +151,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
      */
     protected void finishConfirmCredentials(boolean result) {
         Log.i(TAG, "finishConfirmCredentials()");
-        final Account account = new Account(mUsername, "de.tubs.ibr.android.ldap.sync");
+        final Account account = new Account(mUsername, "de.tubs.ibr.android.ldap");
         mAccountManager.setPassword(account, mPassword);
         final Intent intent = new Intent();
         intent.putExtra(AccountManager.KEY_BOOLEAN_RESULT, result);
@@ -172,7 +172,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity {
 
     protected void finishLogin() {
         Log.i(TAG, "finishLogin()");
-        final Account account = new Account(mUsername, "de.tubs.ibr.android.ldap.sync");
+        final Account account = new Account(mUsername, "de.tubs.ibr.android.ldap");
 
         if (mRequestNewAccount) {
             mAccountManager.addAccountExplicitly(account, mPassword, null);
