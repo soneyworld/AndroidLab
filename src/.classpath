@@ -3,6 +3,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
-	<classpathentry kind="lib" path="/Users/christophergerloff/Documents/unboundid-ldapsdk-2.1.0-se/unboundid-ldapsdk-se.jar"/>
+	<classpathentry kind="lib" path="lib/unboundid-ldapsdk-se.jar" sourcepath="lib/src.zip"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
