@@ -679,6 +679,9 @@
     <string name="label">SamplesyncAdapter</string>
     <string name="ACCOUNT_TYPE">de.tubs.ibr.ldap</string>
     <string name="addserver_activity_title">Einen neuer Server anlegen</string>
-  
+    <string-array name="securityOptions">
+      <item>SSH</item>
+      <item>Bla</item>
+    </string-array> 
 
 </resources>
