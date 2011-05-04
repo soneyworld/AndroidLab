@@ -117,14 +117,6 @@ public final class AddServer extends AccountAuthenticatorActivity implements OnC
     if (state != null) {
       restoreState(state);
     }
-  }
-
-  /**
-   * Performs all necessary processing when this activity is started or resumed.
-   */
-  @Override()
-  protected void onResume() {
-    super.onResume();
     setContentView(R.layout.layout_define_server);
     setTitle(R.string.activity_label);
     // Populate the server ID.
@@ -170,6 +162,15 @@ public final class AddServer extends AccountAuthenticatorActivity implements OnC
 
     final Button saveButton = (Button) findViewById(R.id.layout_define_server_button_server_save);
     saveButton.setOnClickListener(this);
+
+  }
+
+  /**
+   * Performs all necessary processing when this activity is started or resumed.
+   */
+  @Override()
+  protected void onResume() {
+    super.onResume();
   }
 
   /**

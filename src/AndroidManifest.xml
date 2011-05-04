@@ -33,15 +33,11 @@
             <meta-data android:name="android.accounts.AccountAuthenticator"
              android:resource="@xml/authenticator" />
         </service>
-        <activity android:name=".auth.AddServer">
-            <intent-filter>
-                <action android:name="de.tubs.ibr.android.ldap.auth.AuthenticatorActivity"></action>
-            </intent-filter>
-        </activity>
-        <activity android:name=".auth.AuthenticatorActivity">
-            <intent-filter>
-                <action android:name="de.tubs.ibr.android.ldap.auth.AuthenticatorActivity"></action>
-            </intent-filter>
-        </activity>
+<activity android:name=".auth.AddServer">
+    <intent-filter>
+        <action android:name="de.tubs.ibr.android.ldap.auth.AddServer"></action>
+    </intent-filter>
+</activity>
+
     </application>
 </manifest>
