@@ -41,8 +41,8 @@ import de.tubs.ibr.android.ldap.provider.*;
  * This class provides an Android activity that may be used to define a new
  * directory server.
  */
-public final class AddServer extends AccountAuthenticatorActivity implements OnClickListener,
-    ServerTestInvoker {
+public final class AddServer extends AccountAuthenticatorActivity implements
+    OnClickListener, ServerTestInvoker {
   /**
    * The name of the field used to define the server ID.
    */
@@ -77,6 +77,8 @@ public final class AddServer extends AccountAuthenticatorActivity implements OnC
    * The name of the field used to define the base DN.
    */
   public static final String BUNDLE_FIELD_BASE_DN = "ADD_SERVER_BASE_DN";
+
+  public static final String INTENT_EXTRA_TITLE = "TITLE";
 
   // Indicates whether to use SSL.
   private boolean useSSL = false;
@@ -113,12 +115,26 @@ public final class AddServer extends AccountAuthenticatorActivity implements OnC
    */
   @Override()
   protected void onCreate(final Bundle state) {
-    super.onCreate(state); 
+    super.onCreate(state);
     if (state != null) {
       restoreState(state);
     }
     setContentView(R.layout.layout_define_server);
-    setTitle(R.string.activity_label);
+    Object title = getIntent().getExtras().get(INTENT_EXTRA_TITLE);
+    if (title == null) {
+      setTitle(R.string.activity_label);
+    } else {
+      try {
+        setTitle((Integer) title);
+      } catch (Exception e) {
+        try {
+          setTitle((String) title);
+        } catch (Exception e1) {
+          setTitle(R.string.activity_label);
+        }
+      }
+    }
+
     // Populate the server ID.
     final EditText idField = (EditText) findViewById(R.id.layout_define_server_field_id);
     idField.setText(id);
@@ -255,8 +271,8 @@ public final class AddServer extends AccountAuthenticatorActivity implements OnC
     bindPW = bindPWField.getText().toString();
     final EditText baseField = (EditText) findViewById(R.id.layout_define_server_field_base);
     baseDN = baseField.getText().toString();
-    return new ServerInstance(serverID,
-        host, port, useSSL, useStartTLS, bindDN, bindPW, baseDN);
+    return new ServerInstance(serverID, host, port, useSSL, useStartTLS,
+        bindDN, bindPW, baseDN);
   }
 
   /**

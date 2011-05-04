@@ -16,6 +16,7 @@
 
 package de.tubs.ibr.android.ldap.auth;
 
+import de.tubs.ibr.android.ldap.R;
 import android.accounts.AbstractAccountAuthenticator;
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorResponse;
@@ -45,9 +46,10 @@ class Authenticator extends AbstractAccountAuthenticator {
       String accountType, String authTokenType, String[] requiredFeatures,
       Bundle options) {
     final Intent intent = new Intent(mContext, AddServer.class);
-    intent.setAction("de.tubs.ibr.android.ldap.auth.AddServer.LOGIN");
+    intent.setAction("de.tubs.ibr.android.ldap.auth.AddServer.ADD");
     intent
         .putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response);
+    intent.putExtra(AddServer.INTENT_EXTRA_TITLE,R.string.addserver_activity_title);
     final Bundle bundle = new Bundle();
     bundle.putParcelable(AccountManager.KEY_INTENT, intent);
     return bundle;
