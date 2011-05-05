@@ -49,7 +49,7 @@ class Authenticator extends AbstractAccountAuthenticator {
     intent.setAction("de.tubs.ibr.android.ldap.auth.AddServer.ADD");
     intent
         .putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response);
-    intent.putExtra(AddServer.INTENT_EXTRA_TITLE,R.string.addserver_activity_title);
+    intent.putExtra(AddServer.INTENT_EXTRA_TITLE, R.string.add_server_activity_title);
     final Bundle bundle = new Bundle();
     bundle.putParcelable(AccountManager.KEY_INTENT, intent);
     return bundle;
