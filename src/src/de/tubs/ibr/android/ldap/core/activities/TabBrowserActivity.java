@@ -19,7 +19,7 @@ public class TabBrowserActivity extends TabActivity {
 
     AccountManager accManager = AccountManager.get(this);
     Account[] accArray = accManager
-        .getAccountsByType("de.tubs.ibr.android.ldap");
+        .getAccountsByType(this.getString(R.string.ACCOUNT_TYPE));
 
     if (accArray.length < 1) {
       Intent intent = new Intent(this, AddServer.class);

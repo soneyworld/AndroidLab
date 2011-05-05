@@ -5,8 +5,8 @@
                   android:title="General Settings" />
           <PreferenceScreen
               android:key="account_settings"
-              android:title="Account Settings" android:summary="Sync and account settings">
+              android:title="LDAP Settings" android:summary="Server account settings">
               <intent
-                  android:action="de.tubs.ibr.android.ldap.auth.AddServer.ACCOUNT_SETUP" android:targetPackage="de.tubs.ibr.android.ldap" android:targetClass="de.tubs.ibr.android.ldap.auth.AddServer"/>
+                  android:action="@string/MODIFY_ACCOUNT_ACTION" android:targetPackage="de.tubs.ibr.android.ldap" android:targetClass="de.tubs.ibr.android.ldap.auth.AddServer"/>
           </PreferenceScreen>
       </PreferenceScreen>

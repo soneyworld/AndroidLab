@@ -20,21 +20,10 @@
  */
 package de.tubs.ibr.android.ldap.auth;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.InputStreamReader;
-import java.io.IOException;
 import java.io.Serializable;
-import java.util.LinkedList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import javax.net.SocketFactory;
-import android.content.Context;
+import android.os.Bundle;
 import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.ExtendedResult;
 import com.unboundid.ldap.sdk.LDAPConnection;
@@ -55,11 +44,6 @@ import de.tubs.ibr.android.ldap.R;
  * persistent storage.
  */
 public final class ServerInstance implements Serializable {
-  /**
-   * The name of the file containing information about the defined instances.
-   */
-  private static final String INSTANCE_FILE_NAME = "INSTANCES";
-
   /**
    * The serial version UID for this serializable class.
    */
@@ -88,6 +72,26 @@ public final class ServerInstance implements Serializable {
 
   // The unique identifier assigned to this server.
   private final String id;
+
+  /**
+   * Creates a new server instance with the provided information in the bundle.
+   * 
+   * @param b
+   *          The Bundle with all necessary informations for the server instance
+   */
+  public ServerInstance(final Bundle b) {
+    this.id = b.getString("id");
+    this.host = b.getString("host");
+    this.port = b.getInt("port");
+    this.useSSL = b.getBoolean("useSSL");
+    this.useStartTLS = b.getBoolean("useStartTLS");
+
+    this.bindDN = (b.getString("bindDN") == null)
+        || (b.getString("bindDN").length() == 0) ? null : b.getString("bindDN");
+    this.bindPW = (b.getString("bindPW") == null)
+        || (b.getString("bindPW").length() == 0) ? null : b.getString("bindPW");
+    this.baseDN = b.getString("baseDN") == null ? "" : b.getString("baseDN");
+  }
 
   /**
    * Creates a new server instance with the provided information.
@@ -368,176 +372,6 @@ public final class ServerInstance implements Serializable {
   }
 
   /**
-   * Encodes the information in this instance to a string.
-   * 
-   * @return A string representation of this encoded instance.
-   */
-  private String encode() {
-    final StringBuilder buffer = new StringBuilder();
-    buffer.append(id);
-    buffer.append('\t');
-    buffer.append(host);
-    buffer.append('\t');
-    buffer.append(port);
-    buffer.append('\t');
-    buffer.append(useSSL);
-    buffer.append('\t');
-    buffer.append(useStartTLS);
-    buffer.append('\t');
-
-    if (bindDN != null) {
-      buffer.append(bindDN);
-    }
-    buffer.append('\t');
-
-    if (bindPW != null) {
-      buffer.append(bindPW);
-    }
-    buffer.append('\t');
-
-    if (baseDN != null) {
-      buffer.append(baseDN);
-    }
-
-    return buffer.toString();
-  }
-
-  /**
-   * Decodes the provided string to an instance.
-   * 
-   * @param s
-   *          The string to be decoded.
-   * @return The decoded instance.
-   */
-  private static ServerInstance decode(final String s) {
-    int start = 0;
-    final String[] tokens = new String[8];
-    for (int i = 0; i < (tokens.length - 1); i++) {
-      final int tabPos = s.indexOf('\t', start);
-      tokens[i] = s.substring(start, tabPos);
-      start = tabPos + 1;
-    }
-
-    tokens[tokens.length - 1] = s.substring(start);
-
-    final String id = tokens[0];
-    final String host = tokens[1];
-    final int port = Integer.parseInt(tokens[2]);
-    final boolean useSSL = Boolean.valueOf(tokens[3]);
-    final boolean useStartTLS = Boolean.valueOf(tokens[4]);
-    final String bindDN = tokens[5];
-    final String bindPW = tokens[6];
-    final String baseDN = tokens[7];
-
-    return new ServerInstance(id, host, port, useSSL, useStartTLS, bindDN,
-        bindPW, baseDN);
-  }
-
-  /**
-   * Retrieves a map of all defined server instances, mapped from the instance
-   * ID to the instance object.
-   * 
-   * @param context
-   *          The application context. It must not be {@code null}.
-   * @return A map of all defined server instances.
-   * @throws IOException
-   *           If a problem occurs while reading information about the defined
-   *           instances.
-   */
-  public static Map<String, ServerInstance> getInstances(final Context context)
-      throws IOException {
-    final LinkedHashMap<String, ServerInstance> instances = new LinkedHashMap<String, ServerInstance>(
-        1);
-
-    BufferedReader reader = null;
-    try {
-      try {
-        reader = new BufferedReader(new InputStreamReader(
-            context.openFileInput(INSTANCE_FILE_NAME)), 1024);
-      } catch (final FileNotFoundException fnfe) {
-
-        // This is fine -- no instances have been defined yet.
-        return Collections.unmodifiableMap(instances);
-      }
-
-      while (true) {
-        final String line = reader.readLine();
-        if (line == null) {
-          break;
-        }
-        if (line.length() == 0) {
-          continue;
-        }
-        final ServerInstance i = decode(line);
-        instances.put(i.getID(), i);
-      }
-
-      return Collections.unmodifiableMap(instances);
-    } finally {
-      if (reader != null) {
-        reader.close();
-      }
-    }
-  }
-
-  /**
-   * Saves the provided list of instances, overwriting any existing instance
-   * information.
-   * 
-   * @param context
-   *          The application context. It must not be {@code null}.
-   * @param instances
-   *          The set of instances to be saved. If it is {@code null} or empty,
-   *          then any existing instance information will be removed.
-   * @throws IOException
-   *           If a problem occurs while writing the information about the
-   *           defined instances.
-   */
-  public static void saveInstances(final Context context,
-      final Map<String, ServerInstance> instances) throws IOException {
-    if (instances == null) {
-      saveInstances(context, (List<ServerInstance>) null);
-      return;
-    }
-
-    final LinkedList<ServerInstance> instanceList = new LinkedList<ServerInstance>(
-        instances.values());
-    saveInstances(context, instanceList);
-  }
-
-  /**
-   * Saves the provided list of instances, overwriting any existing instance
-   * information.
-   * 
-   * @param context
-   *          The application context. It must not be {@code null}.
-   * @param instances
-   *          The list of instances to be saved. If it is {@code null} or empty,
-   *          then any existing instance information will be removed.
-   * @throws IOException
-   *           If a problem occurs while writing the information about the
-   *           defined instances.
-   */
-  public static void saveInstances(final Context context,
-      final List<ServerInstance> instances) throws IOException {
-    final File instanceFile = context.getFileStreamPath(INSTANCE_FILE_NAME);
-    final File tmpFile = new File(instanceFile.getAbsolutePath() + ".tmp");
-    if ((instances == null) || instances.isEmpty()) {
-      return;
-    }
-    final BufferedWriter writer = new BufferedWriter(new FileWriter(tmpFile),
-        1024);
-    try {
-      for (final ServerInstance i : instances) {
-        writer.write(i.encode());
-        writer.newLine();
-      }
-    } finally {
-      writer.close();
-    }
-  }
-
-  /**
    * Retrieves a string representation of this server instance.
    * 
    * @return A string representation of this server instance.
@@ -573,5 +407,18 @@ public final class ServerInstance implements Serializable {
     buffer.append("\", baseDN=\"");
     buffer.append(baseDN);
     buffer.append("\")");
+  }
+  
+  public Bundle createBundle(){
+    Bundle b = new Bundle();
+    b.putCharSequence("id", this.id);
+    b.putCharSequence("host", this.host);
+    b.putInt("port", this.port);
+    b.putBoolean("useSSL", this.useSSL);
+    b.putBoolean("useStartTLS", this.useStartTLS);
+    b.putCharSequence("bindDN", this.bindDN);
+    b.putCharSequence("bindPW", this.bindPW);
+    b.putCharSequence("baseDN", this.baseDN);
+    return b;
   }
 }

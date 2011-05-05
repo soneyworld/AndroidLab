@@ -20,10 +20,12 @@
  */
 package de.tubs.ibr.android.ldap.auth;
 
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import android.accounts.Account;
 import android.accounts.AccountAuthenticatorActivity;
+import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -80,8 +82,19 @@ public final class AddServer extends AccountAuthenticatorActivity implements
   public static final String BUNDLE_FIELD_BASE_DN = "ADD_SERVER_BASE_DN";
 
   public static final String INTENT_EXTRA_TITLE = "TITLE";
-  
+
   public static final int INTENT_REQUEST_NEWACCOUNT = 1;
+
+  /**
+   * If the Activity is started with the MODIFICATION Action, this var should be
+   * true, else false
+   */
+  private boolean modifymode = false;
+
+  /**
+   * Account, which should be shown and modified
+   */
+  private Account account = null;
 
   // Indicates whether to use SSL.
   private boolean useSSL = false;
@@ -137,7 +150,42 @@ public final class AddServer extends AccountAuthenticatorActivity implements
         }
       }
     }
+    if (this.getIntent().getAction()
+        .equals(getString(R.string.MODIFY_ACCOUNT_ACTION))) {
+      Bundle b = this.getIntent().getExtras();
+      Set<String> keys = b.keySet();
+      for (String key : keys) {
+        if (b.get(key).getClass().equals(Account.class)) {
+          Account acc = (Account) b.get(key);
+          AccountManager accManager = AccountManager.get(this);
+          this.id = accManager.getUserData(acc, "id");
+          this.bindDN = accManager.getUserData(acc, "bindDN");
+          this.baseDN = accManager.getUserData(acc, "baseDN");
+          this.host = accManager.getUserData(acc, "host");
+          try {
+            this.port = Integer.parseInt(accManager.getUserData(acc, "port"));
+          } catch (Exception e) {
+            this.port = 389;
+          }
+          try {
+            this.useSSL = Boolean.parseBoolean(accManager.getUserData(acc,
+                "useSSL"));
+          } catch (Exception e) {
+            this.useSSL = false;
+          }
+          try {
+            this.useStartTLS = Boolean.parseBoolean(accManager.getUserData(acc,
+                "useStartTLS"));
+          } catch (Exception e) {
+            this.useStartTLS = false;
+          }
+          this.modifymode = true;
+          this.account = acc;
+          break;
+        }
+      }
 
+    }
     // Populate the server ID.
     final EditText idField = (EditText) findViewById(R.id.layout_define_server_field_id);
     idField.setText(id);
@@ -352,20 +400,39 @@ public final class AddServer extends AccountAuthenticatorActivity implements
     if (acceptable) {
       final String instanceID = instance.getID();
       try {
-        final LinkedHashMap<String, ServerInstance> instanceMap = new LinkedHashMap<String, ServerInstance>(
-            ServerInstance.getInstances(this));
-        if (instanceMap.containsKey(instanceID)) {
-          acceptable = false;
-          reasons.add(getString(
-              R.string.add_server_err_server_id_already_in_use, instanceID));
-        } else {
-          instanceMap.put(instanceID, instance);
-          ServerInstance.saveInstances(this, instanceMap);
+        AccountManager accManager = AccountManager.get(this);
+        Account[] accArray = accManager.getAccountsByType(this
+            .getString(R.string.ACCOUNT_TYPE));
+        if (!this.modifymode) {
+          if (accArray.length > 0) {
+            for (Account account : accArray) {
+              if (accManager.getUserData(account, "id")
+                  .equals(instance.getID())) {
+                acceptable = false;
+                reasons.add(getString(
+                    R.string.add_server_err_server_id_already_in_use,
+                    instanceID));
+                break;
+              }
+            }
+          }
         }
         if (acceptable) {
+          if (this.modifymode) {
+            // TODO Hier muss noch das Update integriert werden, bzw. geklärt
+            // werden, wie es funktioniert
+            // accManager.updateCredentials(account, null,
+            // instance.createBundle(), this.getParent(), null, null);
+          } else {
+            Account acc = new Account(instance.getID(),
+                this.getString(R.string.ACCOUNT_TYPE));
+            accManager.addAccountExplicitly(acc, instance.getBindPassword(),
+                instance.createBundle());
+          }
           setResult(Activity.RESULT_OK);
           finish();
           return;
+
         }
       } catch (Exception e) {
         reasons.add(getExceptionMessage(e));

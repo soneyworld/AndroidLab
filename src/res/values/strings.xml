@@ -682,6 +682,7 @@
     <string-array name="securityOptions">
       <item>SSH</item>
       <item>Bla</item>
-    </string-array> 
+    </string-array>
+    <string name="MODIFY_ACCOUNT_ACTION">de.tubs.ibr.android.ldap.auth.AddServer.ACCOUNT_SETUP</string> 
 
 </resources>
