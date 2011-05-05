@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import android.accounts.AccountAuthenticatorActivity;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -79,6 +80,8 @@ public final class AddServer extends AccountAuthenticatorActivity implements
   public static final String BUNDLE_FIELD_BASE_DN = "ADD_SERVER_BASE_DN";
 
   public static final String INTENT_EXTRA_TITLE = "TITLE";
+  
+  public static final int INTENT_REQUEST_NEWACCOUNT = 1;
 
   // Indicates whether to use SSL.
   private boolean useSSL = false;
@@ -360,6 +363,7 @@ public final class AddServer extends AccountAuthenticatorActivity implements
           ServerInstance.saveInstances(this, instanceMap);
         }
         if (acceptable) {
+          setResult(Activity.RESULT_OK);
           finish();
           return;
         }
