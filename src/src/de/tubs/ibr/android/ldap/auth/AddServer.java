@@ -91,11 +91,6 @@ public final class AddServer extends AccountAuthenticatorActivity implements
    */
   private boolean modifymode = false;
 
-  /**
-   * Account, which should be shown and modified
-   */
-  private Account account = null;
-
   // Indicates whether to use SSL.
   private boolean useSSL = false;
 
@@ -135,6 +130,14 @@ public final class AddServer extends AccountAuthenticatorActivity implements
     if (state != null) {
       restoreState(state);
     }
+  }
+
+  /**
+   * Performs all necessary processing when this activity is started or resumed.
+   */
+  @Override()
+  protected void onResume() {
+    super.onResume();
     setContentView(R.layout.layout_define_server);
     Object title = getIntent().getExtras().get(INTENT_EXTRA_TITLE);
     if (title == null) {
@@ -180,7 +183,6 @@ public final class AddServer extends AccountAuthenticatorActivity implements
             this.useStartTLS = false;
           }
           this.modifymode = true;
-          this.account = acc;
           break;
         }
       }
@@ -189,6 +191,9 @@ public final class AddServer extends AccountAuthenticatorActivity implements
     // Populate the server ID.
     final EditText idField = (EditText) findViewById(R.id.layout_define_server_field_id);
     idField.setText(id);
+    if (this.modifymode) {
+      idField.setEnabled(false);
+    }
     // Populate the server address.
     final EditText hostField = (EditText) findViewById(R.id.layout_define_server_field_host);
     hostField.setText(host);
@@ -230,14 +235,6 @@ public final class AddServer extends AccountAuthenticatorActivity implements
     final Button saveButton = (Button) findViewById(R.id.layout_define_server_button_server_save);
     saveButton.setOnClickListener(this);
 
-  }
-
-  /**
-   * Performs all necessary processing when this activity is started or resumed.
-   */
-  @Override()
-  protected void onResume() {
-    super.onResume();
   }
 
   /**
@@ -418,18 +415,24 @@ public final class AddServer extends AccountAuthenticatorActivity implements
           }
         }
         if (acceptable) {
+          final Intent intent = new Intent();
+          intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, this.id);
+          intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE,
+              getString(R.string.ACCOUNT_TYPE));
+          intent.putExtra(AccountManager.KEY_PASSWORD, this.bindPW);
           if (this.modifymode) {
             // TODO Hier muss noch das Update integriert werden, bzw. geklärt
             // werden, wie es funktioniert
-            // accManager.updateCredentials(account, null,
-            // instance.createBundle(), this.getParent(), null, null);
+            Bundle b = instance.createBundle();
+            setAccountAuthenticatorResult(b);
+
           } else {
             Account acc = new Account(instance.getID(),
                 this.getString(R.string.ACCOUNT_TYPE));
             accManager.addAccountExplicitly(acc, instance.getBindPassword(),
                 instance.createBundle());
           }
-          setResult(Activity.RESULT_OK);
+          setResult(Activity.RESULT_OK, intent);
           finish();
           return;
 
