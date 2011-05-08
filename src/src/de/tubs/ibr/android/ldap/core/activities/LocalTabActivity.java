@@ -16,15 +16,6 @@ public class LocalTabActivity extends Activity {
     setContentView(R.layout.localtab);
 
     /* First Tab Content */
-    Button prefBtn = (Button) findViewById(R.id.prefButton);
-
-    prefBtn.setOnClickListener(new OnClickListener() {
-
-      public void onClick(View v) {
-        Intent settingsActivity = new Intent(getBaseContext(),
-            PrefActivity.class);
-        startActivity(settingsActivity);
-      }
-    });
+    
   }
 }
