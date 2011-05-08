@@ -19,7 +19,6 @@ public class TabBrowserActivity extends TabActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    showTabView();
 
     AccountManager accManager = AccountManager.get(this);
     Account[] accArray = accManager.getAccountsByType(this
