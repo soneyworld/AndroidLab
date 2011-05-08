@@ -153,8 +153,10 @@ public final class AddServer extends AccountAuthenticatorActivity implements
         }
       }
     }
-    if (this.getIntent().getAction()
-        .equals(getString(R.string.MODIFY_ACCOUNT_ACTION))) {
+
+    if (this.getIntent().getAction() != null
+        && this.getIntent().getAction()
+            .equals(getString(R.string.MODIFY_ACCOUNT_ACTION))) {
       Bundle b = this.getIntent().getExtras();
       Set<String> keys = b.keySet();
       for (String key : keys) {
