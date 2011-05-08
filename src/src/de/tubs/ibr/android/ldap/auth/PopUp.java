@@ -20,8 +20,6 @@
  */
 package de.tubs.ibr.android.ldap.auth;
 
-
-
 import de.tubs.ibr.android.ldap.R;
 import android.app.Activity;
 import android.content.Intent;
@@ -31,21 +29,15 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 
-
 /**
  * This class provides an Android activity that may be used to display a message
  * in a pop-up dialog.
  */
-public final class PopUp
-       extends Activity
-       implements OnClickListener
-{
+public final class PopUp extends Activity implements OnClickListener {
   /**
    * The name of the field used to define the title for the pop-up dialog.
    */
   public static final String BUNDLE_FIELD_TITLE = "POP_UP_TITLE";
-
-
 
   /**
    * The name of the field used to define the text for the pop-up dialog.
@@ -56,49 +48,42 @@ public final class PopUp
    * Performs all necessary processing when this activity is started or resumed.
    */
   @Override()
-  protected void onResume()
-  {
+  protected void onResume() {
     super.onResume();
 
     setContentView(R.layout.layout_popup);
-
 
     // Set the appropriate content for this dialog.
     final Intent intent = getIntent();
     final Bundle extras = intent.getExtras();
 
     String title = extras.getString(BUNDLE_FIELD_TITLE);
-    if (title == null)
-    {
+    if (title == null) {
       title = "";
     }
     setTitle(title);
 
-    String text  = extras.getString(BUNDLE_FIELD_TEXT);
-    if (text == null)
-    {
+    String text = extras.getString(BUNDLE_FIELD_TEXT);
+    if (text == null) {
       text = "";
     }
 
     final TextView v = (TextView) findViewById(R.id.layout_popup_text);
     v.setText(text);
 
-
     // Add an on-click listener for the OK button.
     final Button okButton = (Button) findViewById(R.id.layout_popup_button_ok);
     okButton.setOnClickListener(this);
   }
 
-
-
   /**
    * Takes any appropriate action after a button has been clicked.
-   *
-   * @param  view  The view for the button that was clicked.
+   * 
+   * @param view
+   *          The view for the button that was clicked.
    */
-  public void onClick(final View view)
-  {
-    // There is only one button to click, and it's the OK button.  Close this
+  public void onClick(final View view) {
+    // There is only one button to click, and it's the OK button. Close this
     // pop-up.
     finish();
   }

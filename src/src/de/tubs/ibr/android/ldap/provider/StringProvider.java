@@ -20,34 +20,30 @@
  */
 package de.tubs.ibr.android.ldap.provider;
 
-
-
 /**
  * This interface defines a set of methods that should be implemented by any
  * class which has the ability to retrieve the string for a given identifier.
  */
-public interface StringProvider
-{
+public interface StringProvider {
   /**
    * Retrieves the string for the given identifier.
-   *
-   * @param  id  The identifier for the string to retrieve.  It must be one of
-   *             the identifiers in the {@link R.string} class.
-   *
-   * @return  The string for the given identifier.
+   * 
+   * @param id
+   *          The identifier for the string to retrieve. It must be one of the
+   *          identifiers in the {@link R.string} class.
+   * @return The string for the given identifier.
    */
   String getString(final int id);
 
-
-
   /**
    * Retrieves the string for the given identifier.
-   *
-   * @param  id    The identifier for the string to retrieve.  It must be one of
-   *               the identifiers in the {@link R.string} class.
-   * @param  args  The objects to use as arguments to include the string.
-   *
-   * @return  The string for the given identifier.
+   * 
+   * @param id
+   *          The identifier for the string to retrieve. It must be one of the
+   *          identifiers in the {@link R.string} class.
+   * @param args
+   *          The objects to use as arguments to include the string.
+   * @return The string for the given identifier.
    */
   String getString(final int id, final Object... args);
 }

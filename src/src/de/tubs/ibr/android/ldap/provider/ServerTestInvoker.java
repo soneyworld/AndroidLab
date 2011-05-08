@@ -20,25 +20,20 @@
  */
 package de.tubs.ibr.android.ldap.provider;
 
-
-
 import java.util.LinkedList;
-
-
 
 /**
  * This interface defines a set of methods that should be implemented by a class
  * which can test the validity of a configured server.
  */
-public interface ServerTestInvoker
-          extends StringProvider
-{
+public interface ServerTestInvoker extends StringProvider {
   /**
    * Indicates that the server test has completed.
-   *
-   * @param  acceptable  Indicates that the instance appears to be acceptable.
-   * @param  reasons     Reasons that the instance was not acceptable.
+   * 
+   * @param acceptable
+   *          Indicates that the instance appears to be acceptable.
+   * @param reasons
+   *          Reasons that the instance was not acceptable.
    */
-  void testCompleted(final boolean acceptable,
-                     final LinkedList<String> reasons);
+  void testCompleted(final boolean acceptable, final LinkedList<String> reasons);
 }

@@ -20,83 +20,64 @@
  */
 package de.tubs.ibr.android.ldap.provider;
 
-
-
 import java.util.LinkedList;
-
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.Entry;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
 import de.tubs.ibr.android.ldap.R;
-
 import static com.unboundid.util.StaticUtils.*;
-
-
 
 /**
  * This class defines a thread that will be used to test the validity of a
  * server instance and the ability to communicate with that server.
  */
-public final class TestServerThread
-      extends Thread
-{
+public final class TestServerThread extends Thread {
   // The instance in which the search is to be performed.
   private final ServerInstance instance;
 
   // The activity that will invoke this test.
   private final ServerTestInvoker invoker;
 
-
-
   /**
    * Creates a new test server thread with the provided information.
-   *
-   * @param  invoker  The activity that will invoke this test.
-   * @param  instance  The instance in which the search is to be performed.
+   * 
+   * @param invoker
+   *          The activity that will invoke this test.
+   * @param instance
+   *          The instance in which the search is to be performed.
    */
   public TestServerThread(final ServerTestInvoker invoker,
-                   final ServerInstance instance)
-  {
-    this.invoker  = invoker;
+      final ServerInstance instance) {
+    this.invoker = invoker;
     this.instance = instance;
   }
-
-
 
   /**
    * Processes the search and returns the result to the caller.
    */
   @Override()
-  public void run()
-  {
+  public void run() {
     final LinkedList<String> reasons = new LinkedList<String>();
     boolean acceptable = instance.isDefinitionValid(invoker, reasons);
-    if (acceptable)
-    {
+    if (acceptable) {
       LDAPConnection conn = null;
-      try
-      {
+      try {
         conn = instance.getConnection(invoker);
 
         final Entry e = conn.getEntry(instance.getBaseDN());
-        if (e == null)
-        {
+        if (e == null) {
           acceptable = false;
-          reasons.add(invoker.getString(
-               R.string.test_server_thread_cannot_get_base,
-               instance.getBaseDN()));
+          reasons
+              .add(invoker.getString(
+                  R.string.test_server_thread_cannot_get_base,
+                  instance.getBaseDN()));
         }
-      }
-      catch (Exception e)
-      {
+      } catch (Exception e) {
 
         acceptable = false;
         reasons.add(getExceptionMessage(e));
-      }
-      finally
-      {
-        if (conn != null)
-        {
+      } finally {
+        if (conn != null) {
           conn.close();
         }
       }

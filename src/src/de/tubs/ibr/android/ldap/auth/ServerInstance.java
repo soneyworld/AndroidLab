@@ -408,8 +408,8 @@ public final class ServerInstance implements Serializable {
     buffer.append(baseDN);
     buffer.append("\")");
   }
-  
-  public Bundle createBundle(){
+
+  public Bundle createBundle() {
     Bundle b = new Bundle();
     b.putCharSequence("id", this.id);
     b.putCharSequence("host", this.host);

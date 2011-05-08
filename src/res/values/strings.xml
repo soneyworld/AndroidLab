@@ -679,10 +679,6 @@
     <string name="label">LDAPSync</string>
     <string name="ACCOUNT_TYPE">de.tubs.ibr.ldap</string>
     <string name="add_server_activity_title">Einen neuer Server anlegen</string>
-    <string-array name="securityOptions">
-      <item>SSH</item>
-      <item>Bla</item>
-    </string-array>
     <string name="MODIFY_ACCOUNT_ACTION">de.tubs.ibr.android.ldap.auth.AddServer.ACCOUNT_SETUP</string> 
 
 </resources>

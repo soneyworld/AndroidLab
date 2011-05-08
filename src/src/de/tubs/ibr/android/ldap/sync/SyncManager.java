@@ -28,6 +28,5 @@ public class SyncManager {
       throws ConflictException {
 
   }
-  
-  
+
 }

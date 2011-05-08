@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-      <PreferenceScreen
-        xmlns:android="http://schemas.android.com/apk/res/android">
-          <PreferenceCategory
-                  android:title="General Settings" />
-          <PreferenceScreen
-              android:key="account_settings"
-              android:title="LDAP Settings" android:summary="Server account settings">
-              <intent
-                  android:action="@string/MODIFY_ACCOUNT_ACTION" android:targetPackage="de.tubs.ibr.android.ldap" android:targetClass="de.tubs.ibr.android.ldap.auth.AddServer"/>
-          </PreferenceScreen>
-      </PreferenceScreen>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+	<PreferenceCategory android:title="General Settings" />
+	<PreferenceScreen android:key="account_settings"
+		android:title="LDAP Settings" android:summary="Server account settings">
+		<intent android:action="@string/MODIFY_ACCOUNT_ACTION"
+			android:targetPackage="de.tubs.ibr.android.ldap" android:targetClass="de.tubs.ibr.android.ldap.auth.AddServer" />
+	</PreferenceScreen>
+	<PreferenceScreen android:key="sync_settings"
+		android:title="Sync settings" android:summary="Server sync settings">
+		<intent android:targetPackage="de.tubs.ibr.android.ldap" android:targetClass="de.tubs.ibr.android.ldap.core.activities.PrefActivity" />
+	</PreferenceScreen>
+</PreferenceScreen>

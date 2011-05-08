@@ -5,9 +5,10 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 
-public class LDAPContentProvider extends ContentProvider{
+public class LDAPContentProvider extends ContentProvider {
   public static final String AUTHORITY = "de.tubs.ibr.android.ldap";
-  public static final Uri AUTHORITY_URI = Uri.parse("content://"+AUTHORITY);
+  public static final Uri AUTHORITY_URI = Uri.parse("content://" + AUTHORITY);
+
   @Override
   public int delete(Uri uri, String selection, String[] selectionArgs) {
     return 0;

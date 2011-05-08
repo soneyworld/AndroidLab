@@ -3,7 +3,7 @@ package de.tubs.ibr.android.ldap.core;
 /**
  * @author Till Lorentzen
  */
-public class Contact{
+public class Contact {
 
   private ContactState state;
   private final Contact syncedContact;
@@ -19,13 +19,14 @@ public class Contact{
     this.syncedContact = null;
     if (this.equals(this.syncedContact)) {
       this.state = ContactState.synced;
-    }else{
+    } else {
       this.state = ContactState.remotechanged;
     }
   }
 
   /**
-   * Creates the last synchronized state of a remote LDAPContact with a given UID
+   * Creates the last synchronized state of a remote LDAPContact with a given
+   * UID
    * 
    * @param ldapuid
    */
@@ -44,9 +45,9 @@ public class Contact{
     // TODO in DB schauen, ob es einen synchronisierten Stand gibt und diesen
     // einfügen, ansonsten null zuweisen
     this.syncedContact = null;
-    if(this.equals(this.syncedContact)){
+    if (this.equals(this.syncedContact)) {
       this.state = ContactState.synced;
-    }else{
+    } else {
       this.state = ContactState.localchanged;
     }
   }
@@ -66,15 +67,15 @@ public class Contact{
   }
 
   public boolean equals(Contact c) {
-    if(c==null){
+    if (c == null) {
       return false;
     }
-    //TODO Inhalte vergleichen und state enumeration auslassen
+    // TODO Inhalte vergleichen und state enumeration auslassen
     return super.equals(c);
   }
 
   public final Contact getSyncedContact() {
     return syncedContact;
   }
-  
+
 }

@@ -14,25 +14,26 @@ public class LDAPTabActivity extends Activity {
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
-  super.onCreate(savedInstanceState);
-  setContentView(R.layout.ldaptab);
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.ldaptab);
 
     /* First Tab Content */
-      Button setFalse = (Button) findViewById(R.id.setFalseButton);
-    
-      setFalse.setOnClickListener(new OnClickListener() {
+    Button setFalse = (Button) findViewById(R.id.setFalseButton);
 
-        public void onClick(View v) {
-          setPrefFalse();
-        }
-      });
+    setFalse.setOnClickListener(new OnClickListener() {
+
+      public void onClick(View v) {
+        setPrefFalse();
+      }
+    });
 
   }
-  
+
   public void setPrefFalse() {
-        SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-        Editor prefEditor = mPrefs.edit();
-        prefEditor.putBoolean("backGroundDataPref", false);
-        prefEditor.commit();
+    SharedPreferences mPrefs = PreferenceManager
+        .getDefaultSharedPreferences(this);
+    Editor prefEditor = mPrefs.edit();
+    prefEditor.putBoolean("backGroundDataPref", false);
+    prefEditor.commit();
   }
 }
