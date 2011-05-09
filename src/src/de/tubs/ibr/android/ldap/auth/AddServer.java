@@ -28,14 +28,17 @@ import android.accounts.AccountAuthenticatorActivity;
 import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Looper;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 import static com.unboundid.util.StaticUtils.*;
 import de.tubs.ibr.android.ldap.R;
 import de.tubs.ibr.android.ldap.provider.*;
@@ -329,20 +332,13 @@ public final class AddServer extends AccountAuthenticatorActivity implements
    * Tests the provided server settings to determine if they are acceptable.
    */
   private void testSettings() {
-    final LinkedList<String> reasons = new LinkedList<String>();
+    // final LinkedList<String> reasons = new LinkedList<String>();
     final ServerInstance instance;
     try {
       instance = createInstance();
     } catch (final NumberFormatException nfe) {
-      reasons.add(getString(R.string.add_server_err_port_not_int));
-      final Intent i = new Intent(this, PopUp.class);
-      i.putExtra(PopUp.BUNDLE_FIELD_TITLE,
-          getString(R.string.add_server_popup_title_failed));
-      i.putExtra(
-          PopUp.BUNDLE_FIELD_TEXT,
-          getString(R.string.add_server_popup_text_failed,
-              listToString(reasons)));
-      startActivity(i);
+      Toast.makeText(this.getApplicationContext(),
+          R.string.add_server_err_port_not_int, Toast.LENGTH_SHORT).show();
       return;
     }
     // Create and start a thread to test the server settings.
@@ -364,12 +360,17 @@ public final class AddServer extends AccountAuthenticatorActivity implements
       final LinkedList<String> reasons) {
     progressDialog.dismiss();
     if (acceptable) {
-      final Intent i = new Intent(this, PopUp.class);
-      i.putExtra(PopUp.BUNDLE_FIELD_TITLE,
-          getString(R.string.add_server_popup_title_success));
-      i.putExtra(PopUp.BUNDLE_FIELD_TEXT,
-          getString(R.string.add_server_popup_text_success));
-      startActivity(i);
+       final Intent i = new Intent(this, PopUp.class);
+       i.putExtra(PopUp.BUNDLE_FIELD_TITLE,
+       getString(R.string.add_server_popup_title_success));
+       i.putExtra(PopUp.BUNDLE_FIELD_TEXT,
+       getString(R.string.add_server_popup_text_success));
+       startActivity(i);
+//      if(Looper.myLooper()==null){
+//        Looper.prepare();
+//      }
+//      Toast.makeText(this, R.string.add_server_popup_text_success,
+//          Toast.LENGTH_SHORT).show();
     } else {
       final Intent i = new Intent(this, PopUp.class);
       i.putExtra(PopUp.BUNDLE_FIELD_TITLE,
