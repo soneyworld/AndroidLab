@@ -1,0 +1,43 @@
+8
+
+dir
+34989
+https://www.ibr.cs.tu-bs.de/svn/loccom/Android%20Labor/ContactExample/res
+https://www.ibr.cs.tu-bs.de/svn
+
+
+
+2011-04-06T06:53:54.612804Z
+34988
+cseitz
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+1cffb75b-d306-6187-5d55-5a277715007a
+
+values
+dir
+
+drawable-hdpi
+dir
+
+drawable-ldpi
+dir
+
+drawable-mdpi
+dir
+
+layout
+dir
+
