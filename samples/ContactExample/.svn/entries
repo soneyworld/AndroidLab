@@ -1,103 +1,0 @@
-8
-
-dir
-34989
-https://www.ibr.cs.tu-bs.de/svn/loccom/Android%20Labor/ContactExample
-https://www.ibr.cs.tu-bs.de/svn
-
-
-
-2011-04-06T06:53:54.612804Z
-34988
-cseitz
-
-
-svn:special svn:externals svn:needs-lock
-
-
-
-
-
-
-
-
-
-
-
-1cffb75b-d306-6187-5d55-5a277715007a
-
-default.properties
-file
-
-
-
-
-2011-04-06T07:16:36.000000Z
-77055d1fa9eecbddd7b18cbb98735c1b
-2011-04-06T06:53:54.612804Z
-34988
-cseitz
-
-.classpath
-file
-
-
-
-
-2011-04-06T07:16:36.000000Z
-8ec20b14df17ef83253beda6c391f516
-2011-04-06T06:53:54.612804Z
-34988
-cseitz
-
-proguard.cfg
-file
-
-
-
-
-2011-04-06T07:16:36.000000Z
-bec1efcef0f2c9b790a863a8a7d4e668
-2011-04-06T06:53:54.612804Z
-34988
-cseitz
-
-assets
-dir
-
-.project
-file
-
-
-
-
-2011-04-06T07:16:36.000000Z
-afa020c299e743adcd1c24803b4e2d68
-2011-04-06T06:53:54.612804Z
-34988
-cseitz
-
-AndroidManifest.xml
-file
-
-
-
-
-2011-04-06T07:16:36.000000Z
-aaa16613961fb3cf32757ac5fd547469
-2011-04-06T06:53:54.612804Z
-34988
-cseitz
-
-src
-dir
-
-bin
-dir
-
-gen
-dir
-
-res
-dir
-
