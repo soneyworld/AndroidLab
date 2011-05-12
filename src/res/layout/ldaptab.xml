@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  android:layout_width="match_parent"
-  android:layout_height="match_parent">
-   		<Button android:text="Set Preference False" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/setFalseButton"></Button>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent" android:layout_height="match_parent"
+	android:orientation="vertical">
+
+		<EditText android:layout_height="wrap_content" android:id="@+id/layout_search_server_field_search_text" android:text="" android:layout_width="match_parent"></EditText>
+		<Button android:layout_height="wrap_content" android:id="@+id/layout_search_server_button_search" android:text="@string/layout_search_server_button_label_search" android:layout_width="match_parent"></Button>
+
+	<ListView android:id="@android:id/list" android:layout_width="match_parent"
+		android:layout_height="match_parent" android:layout_weight="1"
+		android:drawSelectorOnTop="false" />
+
 </LinearLayout>

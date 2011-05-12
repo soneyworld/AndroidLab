@@ -372,6 +372,72 @@ public final class ServerInstance implements Serializable {
   }
 
   /**
+   * Retrieves an LDAP connection that may be used to communicate with the
+   * directory server.
+   * 
+   * @param invoker
+   *          The activity invoking this method.
+   * @return An LDAP connection that may be used to communicate with the
+   *         directory server.
+   * @throws LDAPException
+   *           If a problem occurs while attempting to establish the connection.
+   */
+  public LDAPConnection getConnection() throws LDAPException {
+    SocketFactory socketFactory = null;
+    if (useSSL) {
+      // FIXME -- We should use something more secure than blindly trusting any
+      // certificate.
+      final SSLUtil sslUtil = new SSLUtil(new TrustAllTrustManager());
+      try {
+        socketFactory = sslUtil.createSSLSocketFactory();
+      } catch (Exception e) {
+        throw new LDAPException(ResultCode.LOCAL_ERROR, 
+            "", e);
+      }
+    }
+
+    final LDAPConnectionOptions options = new LDAPConnectionOptions();
+    options.setAutoReconnect(true);
+    options.setConnectTimeoutMillis(30000);
+    options.setFollowReferrals(false);
+    options.setMaxMessageSize(1024 * 1024);
+
+    final LDAPConnection conn = new LDAPConnection(socketFactory, options,
+        host, port);
+
+    if (useStartTLS) {
+      // FIXME -- We should use something more secure than blindly trusting any
+      // certificate.
+      final SSLUtil sslUtil = new SSLUtil(new TrustAllTrustManager());
+      try {
+        final ExtendedResult r = conn
+            .processExtendedOperation(new StartTLSExtendedRequest(sslUtil
+                .createSSLContext()));
+        if (r.getResultCode() != ResultCode.SUCCESS) {
+          throw new LDAPException(r);
+        }
+      } catch (LDAPException le) {
+        conn.close();
+        throw le;
+      } catch (Exception e) {
+        conn.close();
+        throw new LDAPException(ResultCode.CONNECT_ERROR, "", e);
+      }
+    }
+
+    if ((bindDN != null) && (bindPW != null)) {
+      try {
+        conn.bind(bindDN, bindPW);
+      } catch (LDAPException le) {
+        conn.close();
+        throw le;
+      }
+    }
+
+    return conn;
+  }
+
+  /**
    * Retrieves a string representation of this server instance.
    * 
    * @return A string representation of this server instance.

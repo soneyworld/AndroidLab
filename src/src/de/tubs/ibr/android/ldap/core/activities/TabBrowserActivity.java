@@ -45,8 +45,36 @@ public class TabBrowserActivity extends TabActivity {
 
     localTabSpec.setIndicator("Local").setContent(
         new Intent(this, LocalTabActivity.class));
-    ldapTabSpec.setIndicator("LDAP").setContent(
-        new Intent(this, LDAPTabActivity.class));
+    AccountManager accManager = AccountManager.get(this);
+    Account[] accArray = accManager.getAccountsByType(this
+        .getString(R.string.ACCOUNT_TYPE));
+    // TODO Achtung hier muss noch der gewünschte Account auswählbar sein
+    Account a = accArray[0];
+    final Intent ldapintent = new Intent(this, LDAPTabActivity.class);
+    ldapintent.putExtra("id", a.name);
+    ldapintent.putExtra("host", accManager.getUserData(a, "host"));
+    try {
+      ldapintent.putExtra("port",
+          Integer.parseInt(accManager.getUserData(a, "port")));
+    } catch (Exception e) {
+      ldapintent.putExtra("port", 389);
+    }
+    try {
+      ldapintent.putExtra("useSSL",
+          Boolean.parseBoolean(accManager.getUserData(a, "useSSL")));
+    } catch (Exception e) {
+      ldapintent.putExtra("useSSL", false);
+    }
+    try {
+      ldapintent.putExtra("useStartTLS",
+          Boolean.parseBoolean(accManager.getUserData(a, "useStartTLS")));
+    } catch (Exception e) {
+      ldapintent.putExtra("useStartTLS", false);
+    }
+    ldapintent.putExtra("bindDN", accManager.getUserData(a, "bindDN"));
+    ldapintent.putExtra("bindPW", accManager.getUserData(a, "bindPW"));
+    ldapintent.putExtra("baseDN", accManager.getUserData(a, "baseDN"));
+    ldapTabSpec.setIndicator("LDAP").setContent(ldapintent);
 
     tabHost.addTab(localTabSpec);
     tabHost.addTab(ldapTabSpec);

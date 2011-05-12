@@ -553,7 +553,7 @@
   </string>
 
   <string name="search_server_popup_text_invalid_filter">
-    The generated search filter \"%1$s\" is invalid:  %2$s
+    The generated search filter is invalid.
   </string>
 
   <string name="search_server_progress_searching">
