@@ -56,6 +56,7 @@
 			</intent-filter>
 		</activity>
 		<activity android:name=".auth.PopUp"></activity>
+		<activity android:name=".core.activities.ContactViewerActivity"></activity>
 
 	</application>
 </manifest>
