@@ -680,5 +680,6 @@
     <string name="ACCOUNT_TYPE">de.tubs.ibr.ldap</string>
     <string name="add_server_activity_title">Einen neuer Server anlegen</string>
     <string name="MODIFY_ACCOUNT_ACTION">de.tubs.ibr.android.ldap.auth.AddServer.ACCOUNT_SETUP</string> 
-
+    <string name="name">Name</string>
+    <string name="telefon">Telefon</string>
 </resources>
