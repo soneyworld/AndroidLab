@@ -23,6 +23,8 @@ package de.tubs.ibr.android.ldap.auth;
 import java.io.Serializable;
 import java.util.List;
 import javax.net.SocketFactory;
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.os.Bundle;
 import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.ExtendedResult;
@@ -91,6 +93,48 @@ public final class ServerInstance implements Serializable {
     this.bindPW = (b.getString("bindPW") == null)
         || (b.getString("bindPW").length() == 0) ? null : b.getString("bindPW");
     this.baseDN = b.getString("baseDN") == null ? "" : b.getString("baseDN");
+  }
+
+  /**
+   * Creates a new server instance with the provided information in the bundle.
+   * 
+   * @param b
+   *          The Bundle with all necessary informations for the server instance
+   */
+  public ServerInstance(final AccountManager accManager, final Account account) {
+    this.id = account.name;
+    this.host = accManager.getUserData(account, "host");
+    int p = 389;
+    try {
+      p = Integer.parseInt(accManager.getUserData(account, "port"));
+    } catch (Exception e) {
+    } finally {
+      this.port = p;
+    }
+    boolean ssl = false;
+    try {
+      ssl = Boolean.parseBoolean(accManager.getUserData(account, "useSSL"));
+    } catch (Exception e) {
+    } finally {
+      this.useSSL = ssl;
+    }
+    boolean tls = false;
+    try {
+      tls = Boolean
+          .parseBoolean(accManager.getUserData(account, "useStartTLS"));
+    } catch (Exception e) {
+    } finally {
+      this.useStartTLS = tls;
+    }
+    this.bindDN = (accManager.getUserData(account, "bindDN") == null)
+        || (accManager.getUserData(account, "bindDN").length() == 0) ? null
+        : accManager.getUserData(account, "bindDN");
+    this.bindPW = (accManager.getUserData(account, "bindPW") == null)
+        || (accManager.getUserData(account, "bindPW").length() == 0) ? null
+        : accManager.getUserData(account, "bindPW");
+    this.baseDN = accManager.getUserData(account, "baseDN") == null ? ""
+        : accManager.getUserData(account, "baseDN");
+
   }
 
   /**
@@ -391,8 +435,7 @@ public final class ServerInstance implements Serializable {
       try {
         socketFactory = sslUtil.createSSLSocketFactory();
       } catch (Exception e) {
-        throw new LDAPException(ResultCode.LOCAL_ERROR, 
-            "", e);
+        throw new LDAPException(ResultCode.LOCAL_ERROR, "", e);
       }
     }
 
