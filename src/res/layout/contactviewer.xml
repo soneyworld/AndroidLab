@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent" android:orientation="vertical">
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/name" android:text="@string/name"></TextView>
+    <LinearLayout android:id="@+id/linearLayout1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
+        <TextView android:id="@+id/vorname" android:text="TextView" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+        <TextView android:id="@+id/nachname" android:text="TextView" android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingLeft="10px"></TextView>
+    </LinearLayout>
+    <TextView android:text="@string/telefon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/telefon"></TextView>
+    <TextView android:id="@+id/telefonnr" android:text="" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+</LinearLayout>

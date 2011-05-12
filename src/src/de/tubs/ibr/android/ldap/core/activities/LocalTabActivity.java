@@ -1,47 +1,55 @@
 package de.tubs.ibr.android.ldap.core.activities;
 
+import de.tubs.ibr.android.ldap.core.activities.ContactViewerActivity;
 import de.tubs.ibr.android.ldap.R;
 import android.app.Activity;
+import android.app.ListActivity;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.provider.ContactsContract.Contacts;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
+import android.widget.AdapterView.OnItemClickListener;
 
-public class LocalTabActivity extends Activity {
-  private ListView mContactList;
+public class LocalTabActivity extends ListActivity {
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.localtab);
-
-    mContactList = (ListView) findViewById(R.id.contactList);
-
-    populateContactList();
-
+      super.onCreate(savedInstanceState);
+      setContentView(R.layout.localtab);
   }
+  @Override
+  protected void onResume() {
+    super.onResume();
+    ListView contacts = (ListView) findViewById(android.R.id.list);
+    String[] projection = new String[] {Contacts._ID,Contacts.DISPLAY_NAME};
+      Cursor cr = getContentResolver().query(ContactsContract.Contacts.CONTENT_URI, projection, null, null, null);
+      startManagingCursor(cr);
+      int id [] = new int[] {R.id.textView1,R.id.textView2};
+    contacts.setAdapter(new SimpleCursorAdapter(this,R.layout.listviewlayout,cr,projection,id));
+    contacts.setOnItemClickListener(new OnItemClickListener() {
 
-  private void populateContactList() {
-    // Build adapter with contact entries
-    Cursor cursor = getContacts();
-    String[] fields = new String[] { ContactsContract.Data.DISPLAY_NAME };
-    SimpleCursorAdapter adapter = new SimpleCursorAdapter(this,
-        R.layout.contact_entry, cursor, fields,
-        new int[] { R.id.contactEntryText });
-    mContactList.setAdapter(adapter);
+    @Override
+    public void onItemClick(AdapterView<?> arg0, View arg1, int row,
+        long id) {
+      Intent i = new Intent(getBaseContext(),ContactViewerActivity.class);
+      i.putExtra("_id", id);
+      startActivityForResult(i, 0);
+    }
+  });
   }
-
-  private Cursor getContacts() {
-    // Run query
-    Uri uri = ContactsContract.Contacts.CONTENT_URI;
-    String[] projection = new String[] { ContactsContract.Contacts._ID,
-        ContactsContract.Contacts.DISPLAY_NAME };
-    String selection = ContactsContract.Contacts.DISPLAY_NAME;
-    String[] selectionArgs = null;
-    String sortOrder = ContactsContract.Contacts.DISPLAY_NAME;
-
-    return managedQuery(uri, projection, selection, selectionArgs, sortOrder);
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    if (resultCode==Activity.RESULT_OK) {
+      Intent i = new Intent(Intent.ACTION_CALL,Uri.parse("tel:"+data.getExtras().getString("phone")));
+      i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+      startActivity(i);
+    }
   }
 }
