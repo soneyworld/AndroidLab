@@ -2,6 +2,6 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
         <PreferenceCategory
                 android:title="Accounts">
-            <ListPreference android:key="selectedAccount" android:entries="@array/accounts" android:entryValues="@array/accounts" android:title="Selected Account"></ListPreference>
+            <ListPreference android:key="selectedAccount" android:title="Selected Account"></ListPreference>
         </PreferenceCategory>
 </PreferenceScreen>
