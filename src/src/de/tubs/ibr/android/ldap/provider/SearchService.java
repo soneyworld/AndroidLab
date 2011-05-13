@@ -38,7 +38,7 @@ public class SearchService extends Service {
       mCallbackHandler = callback;
     }
 
-    public void setRunnable(final Runnable runnable) {
+    public void setRunnable(Runnable runnable) {
       mRunnable = (SearchResultRunnable) runnable;
     }
 

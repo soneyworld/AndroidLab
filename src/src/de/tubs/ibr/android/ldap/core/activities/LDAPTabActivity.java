@@ -7,7 +7,6 @@ import java.util.LinkedList;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.ResultCode;
-import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import de.tubs.ibr.android.ldap.R;
 import de.tubs.ibr.android.ldap.auth.PopUp;
@@ -40,7 +39,7 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
 
   // The list of entries to process.
   private LinkedList<SearchResultEntry> entries;
-
+  private String[] entryStrings;
   // The server instance to search.
   private ServerInstance instance;
 
@@ -68,8 +67,7 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
     entries = new LinkedList<SearchResultEntry>();
   }
 
-  class ShowResultsRunnable implements Runnable {
-    public SearchResult result;
+  class ShowResultsRunnable extends SearchResultRunnable {
     public Context c;
 
     public ShowResultsRunnable(Context c) {
@@ -125,7 +123,7 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
         entryMap = new HashMap<String, SearchResultEntry>(entries.size());
 
         final StringBuilder buffer = new StringBuilder();
-        final String[] entryStrings = new String[entries.size()];
+        entryStrings = new String[entries.size()];
         for (int i = 0; i < entryStrings.length; i++) {
           final SearchResultEntry e = entries.get(i);
           if (e.hasObjectClass("person")) {
@@ -156,10 +154,6 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
           entryMap.put(entryStrings[i], e);
         }
         Arrays.sort(entryStrings);
-        adapter.clear();
-        for (String entry : entryStrings) {
-          adapter.add(entry);
-        }
         if (progressDialog != null)
           progressDialog.dismiss();
       }
@@ -204,7 +198,7 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
     entryMap = new HashMap<String, SearchResultEntry>(entries.size());
 
     final StringBuilder buffer = new StringBuilder();
-    final String[] entryStrings = new String[entries.size()];
+    entryStrings = new String[entries.size()];
     for (int i = 0; i < entryStrings.length; i++) {
       final SearchResultEntry e = entries.get(i);
       if (e.hasObjectClass("person")) {
@@ -252,8 +246,8 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
 
     // Bind to SearchService
     final Intent intent = new Intent(this, SearchService.class);
-    bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
-
+    getApplicationContext().bindService(intent, mServiceConnection,
+        Context.BIND_AUTO_CREATE);
   }
 
   @Override
@@ -315,9 +309,8 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
           }
         }
         // Bind to SearchService
-        final Intent intent = new Intent(this, SearchService.class);
-        bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
-        
+        // final Intent intent = new Intent(this, SearchService.class);
+        // bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
 
         // Create a progress dialog to display while the search is in progress.
         progressDialog = new ProgressDialog(this);
