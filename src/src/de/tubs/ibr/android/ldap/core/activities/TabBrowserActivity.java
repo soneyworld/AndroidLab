@@ -107,7 +107,7 @@ public class TabBrowserActivity extends TabActivity {
   public boolean onOptionsItemSelected(MenuItem item) {
 
     switch (item.getItemId()) {
-      case R.id.account_preferences:
+      case R.id.choose_account_preferences:
         Intent settingsActivity = new Intent(getBaseContext(),
             PrefActivity.class);
         startActivity(settingsActivity);

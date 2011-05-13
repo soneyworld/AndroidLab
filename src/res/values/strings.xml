@@ -682,4 +682,8 @@
     <string name="MODIFY_ACCOUNT_ACTION">de.tubs.ibr.android.ldap.auth.AddServer.ACCOUNT_SETUP</string> 
     <string name="name">Name</string>
     <string name="telefon">Telefon</string>
+    <array name="accounts">
+    <item>"Account A"</item>
+    <item>"Account B"</item>
+  </array>
 </resources>
