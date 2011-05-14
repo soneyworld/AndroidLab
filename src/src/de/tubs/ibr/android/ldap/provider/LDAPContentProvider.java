@@ -1,6 +1,7 @@
 package de.tubs.ibr.android.ldap.provider;
 
 import java.util.LinkedList;
+import java.util.List;
 import de.tubs.ibr.android.ldap.R;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
 import android.accounts.Account;
@@ -22,6 +23,7 @@ public class LDAPContentProvider extends ContentProvider {
 
   @Override
   public String getType(Uri uri) {
+    
     return null;
   }
 
@@ -30,8 +32,12 @@ public class LDAPContentProvider extends ContentProvider {
     return null;
   }
 
+  /* (non-Javadoc)
+   * @see android.content.ContentProvider#onCreate()
+   */
   @Override
   public boolean onCreate() {
+    // Create ServerInstances for each registered LDAP Account
     AccountManager accManager = AccountManager.get(this.getContext());
     Account[] accounts = accManager.getAccountsByType(this.getContext()
         .getString(R.string.ACCOUNT_TYPE));
@@ -54,4 +60,16 @@ public class LDAPContentProvider extends ContentProvider {
     return 0;
   }
 
+  private ServerInstance getServerInstance(Uri uri){
+    List<String> segments = uri.getPathSegments();
+    if(segments.size()>=1){
+      String id = segments.get(0);
+      for (ServerInstance instance : this.instances) {
+        if(instance.getID().equals(id)){
+          return instance;
+        }
+      }
+    }
+    return null;
+  }
 }
