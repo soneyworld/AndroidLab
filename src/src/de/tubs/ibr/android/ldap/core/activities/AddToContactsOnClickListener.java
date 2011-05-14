@@ -53,6 +53,7 @@ final class AddToContactsOnClickListener extends Application implements
   private final String workAddress;
   private final String workEMail;
   private final String workPhone;
+  private final AccountManager accManager;
 
   /**
    * Creates a new phone number on-click listener that will dial the provided
@@ -63,7 +64,8 @@ final class AddToContactsOnClickListener extends Application implements
    * @param entry
    *          The entry for the user to add.
    */
-  AddToContactsOnClickListener(final Entry entry) {
+  AddToContactsOnClickListener(final Entry entry, AccountManager accManager) {
+    this.accManager = accManager;
     name = entry.getAttributeValue(AttributeMapper.ATTR_FULL_NAME);
     workPhone = entry.getAttributeValue(AttributeMapper.ATTR_PRIMARY_PHONE);
     homePhone = entry.getAttributeValue(AttributeMapper.ATTR_HOME_PHONE);
@@ -84,17 +86,21 @@ final class AddToContactsOnClickListener extends Application implements
    *          The view that was clicked.
    */
   public void onClick(final View view) {
-    AccountManager accManager = AccountManager.get(this);
-    Account[] accounts = accManager.getAccountsByType(this
+    Account[] accounts = accManager.getAccountsByType(view.getContext()
         .getString(R.string.ACCOUNT_TYPE));
     SharedPreferences mPrefs = PreferenceManager
-        .getDefaultSharedPreferences(this);
+        .getDefaultSharedPreferences(view.getContext());
     String accountname = mPrefs.getString("selectedAccount", "");
+    boolean accountfound = false;
     for (Account a : accounts) {
       if (a.name.equals(accountname)) {
         addContactToAccount(a);
+        accountfound = true;
         break;
       }
+    }
+    if (!accountfound && accounts.length > 0) {
+      addContactToAccount(accounts[0]);
     }
   }
 

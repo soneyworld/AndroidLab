@@ -251,9 +251,10 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
     }
 
     // Bind to SearchService
-//    final Intent intent = new Intent(this, SearchService.class);
-//    getApplicationContext().bindService(intent, mServiceConnection,
-//        Context.BIND_AUTO_CREATE);
+    final Intent intent = new Intent(this, SearchService.class);
+    getApplicationContext().bindService(intent, mServiceConnection,
+        Context.BIND_AUTO_CREATE);
+    
   }
 
   @Override

@@ -20,20 +20,31 @@
  */
 package de.tubs.ibr.android.ldap.core.activities;
 
+import java.util.ArrayList;
 import java.util.StringTokenizer;
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.Activity;
+import android.content.ContentProviderOperation;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.provider.ContactsContract;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Entry;
 import de.tubs.ibr.android.ldap.R;
 import de.tubs.ibr.android.ldap.provider.StringProvider;
+import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 import static com.unboundid.util.StaticUtils.*;
 import static de.tubs.ibr.android.ldap.sync.AttributeMapper.*;
 
@@ -41,7 +52,7 @@ import static de.tubs.ibr.android.ldap.sync.AttributeMapper.*;
  * This class provides an Android activity that may be used to view a search
  * result entry and handle the user clicking on various types of attributes.
  */
-public final class ViewEntry extends Activity implements StringProvider {
+public final class ViewEntry extends Activity implements StringProvider , OnClickListener{
   /**
    * The name of the field used to define the instance to be searched.
    */
@@ -212,8 +223,7 @@ public final class ViewEntry extends Activity implements StringProvider {
       addToContactsButton.setLayoutParams(new LinearLayout.LayoutParams(
           ViewGroup.LayoutParams.WRAP_CONTENT,
           ViewGroup.LayoutParams.WRAP_CONTENT));
-      addToContactsButton.setOnClickListener(new AddToContactsOnClickListener(
-          entry));
+      addToContactsButton.setOnClickListener(this);
       l.addView(addToContactsButton);
 
       layout.addView(l);
@@ -519,4 +529,174 @@ public final class ViewEntry extends Activity implements StringProvider {
 
     state.putSerializable(BUNDLE_FIELD_ENTRY, entry);
   }
+
+  @Override
+  public void onClick(View v) {
+    AccountManager accManager = AccountManager.get(this);
+    Account[] accounts = accManager.getAccountsByType(getString(R.string.ACCOUNT_TYPE));
+    SharedPreferences mPrefs = PreferenceManager
+        .getDefaultSharedPreferences(this);
+    String accountname = mPrefs.getString("selectedAccount", "");
+    boolean accountfound = false;
+    for (Account a : accounts) {
+      if (a.name.equals(accountname)) {
+        addContactToAccount(a);
+        accountfound = true;
+        break;
+      }
+    }
+    if (!accountfound && accounts.length > 0) {
+      addContactToAccount(accounts[0]);
+    }
+  }
+  
+  /**
+   * @param account
+   */
+  private void addContactToAccount(Account account) {
+    String name = entry.getAttributeValue(AttributeMapper.ATTR_FULL_NAME);
+    String workPhone = entry.getAttributeValue(AttributeMapper.ATTR_PRIMARY_PHONE);
+    String homePhone = entry.getAttributeValue(AttributeMapper.ATTR_HOME_PHONE);
+    String mobile = entry.getAttributeValue(AttributeMapper.ATTR_MOBILE_PHONE);
+    String pager = entry.getAttributeValue(AttributeMapper.ATTR_PAGER);
+    String fax = entry.getAttributeValue(AttributeMapper.ATTR_FAX);
+    String workEMail = entry.getAttributeValue(AttributeMapper.ATTR_PRIMARY_MAIL);
+    String homeEMail = entry.getAttributeValue(AttributeMapper.ATTR_ALTERNATE_MAIL);
+    String workAddress = entry.getAttributeValue(AttributeMapper.ATTR_PRIMARY_ADDRESS);
+    String homeAddress = entry.getAttributeValue(AttributeMapper.ATTR_HOME_ADDRESS);
+
+    // Prepare contact creation request
+    ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
+    ops.add(ContentProviderOperation
+        .newInsert(ContactsContract.RawContacts.CONTENT_URI)
+        .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, account.type)
+        .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, account.name)
+        .build());
+    ops.add(ContentProviderOperation
+        .newInsert(ContactsContract.Data.CONTENT_URI)
+        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+        .withValue(ContactsContract.Data.MIMETYPE,
+            ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+        .withValue(
+            ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name)
+        .build());
+    if (workPhone != null) {
+      ops.add(addPhoneNumber(workPhone,
+          ContactsContract.CommonDataKinds.Phone.TYPE_WORK));
+    }
+    if (homePhone != null) {
+      ops.add(addPhoneNumber(homePhone,
+          ContactsContract.CommonDataKinds.Phone.TYPE_HOME));
+    }
+    if (mobile != null) {
+      ops.add(addPhoneNumber(mobile,
+          ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE));
+    }
+    if (pager != null) {
+      ops.add(addPhoneNumber(pager,
+          ContactsContract.CommonDataKinds.Phone.TYPE_PAGER));
+    }
+    if (fax != null) {
+      ops.add(addPhoneNumber(fax,
+          ContactsContract.CommonDataKinds.Phone.TYPE_FAX_WORK));
+    }
+    if (workEMail != null) {
+      ops.add(addEMailAddress(workEMail,
+          ContactsContract.CommonDataKinds.Email.TYPE_WORK));
+    }
+    if (homeEMail != null) {
+      ops.add(addEMailAddress(homeEMail,
+          ContactsContract.CommonDataKinds.Email.TYPE_HOME));
+    }
+    if (workAddress != null) {
+      ops.add(addPostalAddress(workAddress,
+          ContactsContract.CommonDataKinds.Email.TYPE_WORK));
+    }
+    if (homeAddress != null) {
+      ops.add(addPostalAddress(homeAddress,
+          ContactsContract.CommonDataKinds.StructuredPostal.TYPE_HOME));
+    }
+    // Ask the Contact provider to create a new contact
+    try {
+      getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+      finish();
+    } catch (Exception e) {
+      Toast.makeText(this, "Error on saving Contact", Toast.LENGTH_SHORT);
+    }
+  }
+
+  /**
+   * Adds the provided phone number to the contact.
+   * 
+   * @param number
+   *          The number to add.
+   * @param type
+   *          The type of number to add.
+   * @param uri
+   *          The base URI for the contact.
+   * @return a addPhoneNumber Operation
+   */
+  private ContentProviderOperation addPhoneNumber(final String number,
+      final int type) {
+    return ContentProviderOperation
+        .newInsert(ContactsContract.Data.CONTENT_URI)
+        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+        .withValue(ContactsContract.Data.MIMETYPE,
+            ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
+        .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, number)
+        .withValue(ContactsContract.CommonDataKinds.Phone.TYPE, type).build();
+  }
+
+  /**
+   * Adds the provided e-mail address to the contact.
+   * 
+   * @param address
+   *          The e-mail address to add.
+   * @param type
+   *          The type of address to add.
+   * @param uri
+   *          The base URI for the contact.
+   * @return a addEMailAdress Operation
+   */
+  private ContentProviderOperation addEMailAddress(final String address,
+      final int type) {
+    return ContentProviderOperation
+        .newInsert(ContactsContract.Data.CONTENT_URI)
+        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+        .withValue(ContactsContract.Data.MIMETYPE,
+            ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
+        .withValue(ContactsContract.CommonDataKinds.Email.DATA, address)
+        .withValue(ContactsContract.CommonDataKinds.Email.TYPE, type).build();
+  }
+
+  /**
+   * Adds the provided postal address to the contact.
+   * 
+   * @param address
+   *          The postal address to add.
+   * @param type
+   *          The type of address to add.
+   * @return a addPostalAdress Operation
+   */
+  private ContentProviderOperation addPostalAddress(final String address,
+      final int type) {
+    final StringBuilder addr = new StringBuilder();
+    final StringTokenizer tokenizer = new StringTokenizer(address, "$");
+    while (tokenizer.hasMoreTokens()) {
+      addr.append(tokenizer.nextToken().trim());
+      if (tokenizer.hasMoreTokens()) {
+        addr.append(EOL);
+      }
+    }
+    return ContentProviderOperation
+        .newInsert(ContactsContract.Data.CONTENT_URI)
+        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+        .withValue(ContactsContract.Data.MIMETYPE,
+            ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_ITEM_TYPE)
+        .withValue(ContactsContract.CommonDataKinds.StructuredPostal.TYPE, type)
+        .withValue(
+            ContactsContract.CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS,
+            addr.toString()).build();
+  }
+
 }
