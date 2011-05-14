@@ -254,7 +254,7 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
     final Intent intent = new Intent(this, SearchService.class);
     getApplicationContext().bindService(intent, mServiceConnection,
         Context.BIND_AUTO_CREATE);
-    
+
   }
 
   @Override
@@ -315,19 +315,20 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
             break;
           }
         }
-        // Bind to SearchService
-        final Intent intent = new Intent(this, SearchService.class);
-        getApplicationContext().bindService(intent, mServiceConnection,
-            Context.BIND_AUTO_CREATE);
+        // Search by SearchService
+        if (mBinder != null && mBinder.isBinderAlive()) {
+          mBinder.search(instance, filter);
 
-        // Create a progress dialog to display while the search is in progress.
-        progressDialog = new ProgressDialog(this);
-        progressDialog
-            .setTitle(getString(R.string.search_server_progress_searching));
-        progressDialog.setIndeterminate(true);
-        progressDialog.setCancelable(true);
-        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        progressDialog.show();
+          // Create a progress dialog to display while the search is in
+          // progress.
+          progressDialog = new ProgressDialog(this);
+          progressDialog
+              .setTitle(getString(R.string.search_server_progress_searching));
+          progressDialog.setIndeterminate(true);
+          progressDialog.setCancelable(true);
+          progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+          progressDialog.show();
+        }
         break;
       default:
         break;
