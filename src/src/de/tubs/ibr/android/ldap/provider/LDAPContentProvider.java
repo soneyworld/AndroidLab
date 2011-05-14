@@ -72,4 +72,8 @@ public class LDAPContentProvider extends ContentProvider {
     }
     return null;
   }
+  
+  private String createBaseDN(Uri uri){
+    return null;
+  }
 }

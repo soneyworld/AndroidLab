@@ -154,6 +154,11 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
           entryMap.put(entryStrings[i], e);
         }
         Arrays.sort(entryStrings);
+
+        adapter = new ArrayAdapter<String>(c,
+            android.R.layout.simple_list_item_1, entryStrings);
+        setListAdapter(adapter);
+
         if (progressDialog != null)
           progressDialog.dismiss();
       }
@@ -190,6 +195,7 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
     super.onResume();
     instance = new ServerInstance(this.getIntent().getExtras());
     setContentView(R.layout.ldaptab);
+    mContext = this;
     // Add an on-click listener to the search button.
     final Button searchButton = (Button) findViewById(R.id.layout_search_server_button_search);
     searchButton.setOnClickListener(this);
@@ -245,9 +251,9 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
     }
 
     // Bind to SearchService
-    final Intent intent = new Intent(this, SearchService.class);
-    getApplicationContext().bindService(intent, mServiceConnection,
-        Context.BIND_AUTO_CREATE);
+//    final Intent intent = new Intent(this, SearchService.class);
+//    getApplicationContext().bindService(intent, mServiceConnection,
+//        Context.BIND_AUTO_CREATE);
   }
 
   @Override
@@ -309,8 +315,9 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
           }
         }
         // Bind to SearchService
-        // final Intent intent = new Intent(this, SearchService.class);
-        // bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
+        final Intent intent = new Intent(this, SearchService.class);
+        getApplicationContext().bindService(intent, mServiceConnection,
+            Context.BIND_AUTO_CREATE);
 
         // Create a progress dialog to display while the search is in progress.
         progressDialog = new ProgressDialog(this);
