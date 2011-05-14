@@ -20,8 +20,6 @@
 		android:debuggable="true">
 		<activity android:label="@string/app_name" android:name=".sync.ViewLDAPContacts"></activity>
 		<service android:exported="true" android:name=".sync.LDAPSyncService">
-			<meta-data android:name="android.provider.CONTACTS_STRUCTURE"
-				android:resource="@xml/contacts" />
 			<intent-filter>
 				<action android:name="android.content.SyncAdapter"></action>
 			</intent-filter>
