@@ -10,12 +10,12 @@
 %\setbeamertemplate{itemize items}[square]
 \setbeamertemplate{itemize items}[tusquare]
 
-\title{Ein Beamertheme für das neue Corporate Design}
-\subtitle{Beispiel und Anleitung} 
-\author[Jens Brandt]{\underline{Jens Brandt}, ggf. weitere Autoren}
+\title{Labor Android Programmierung - 1. Review}
+\subtitle{LDAP Contact Sync} 
+\author{Till Lorentzen und Christopher Gerloff}
 \institute[TU Braunschweig, IBR]{Technische Universität Braunschweig, IBR}
 
-\date{Name der Konferenz oder einfach nur ein Datum}
+\date{\today}
 
 \instlogo{ibr_deu}
 %\titlegraphic{iz}
@@ -29,56 +29,61 @@
 
 \setbeamercolor{frametitle}{fg=white,bg=tu-red}
 \frame{
-        \frametitle{Outline}
+        \frametitle{Einleitung}
         \tableofcontents
         }
 \setbeamercolor{frametitle}{fg=black,bg=tu-grey}
 
 
-\section{Introduction}
+\section{Einleitung}
 
 \frame{
- \frametitle{Introduction} 
- \begin{block}{Scope}
+ \frametitle{Einleitung} 
+ \begin{block}{Idee}
  \begin{itemize}
-     \item A new theme for beamer
+     \item Kontaktsynchronisation mit LDAP Verzeichnissen
  \end{itemize}
  \end{block}
- \begin{block}{Problem}
+ \begin{block}{Aufgaben}
     \begin{itemize}
-        \item How to emulate the original layout?
+        \item Gibt es funktionierende LDAP Bibliotheken fuer Java/Android?
+        \item Wie soll die Anwendung strukturiert sein?
+        \item Welche Funktionen soll die Anwendung bereitstellen?
+        \item Wie Importieren/Exportieren/Synchronisieren wir die Kontaktdaten?
+        \item Design der grafischen Oberflaeche
+        \item Aufsetzen eines LDAP Servers zum Testen
     \end{itemize}
- \end{block}
- \begin{block}{Approach}
-     \begin{itemize}
-         \item Create a beamertheme that is better than the PPT template ;-)
-     \end{itemize}
  \end{block}
 }
 
-\section{Theme}
+\section{Stand der Dinge}
 
 \frame{
-	\frametitle{Dateien}
-	\begin{itemize}
-		\item {\tt beameroutlinetheme.sty}: Das Beamer Theme
-		\item {\tt tu-logo-new.pdf}: Das neue TU Logo als Vektorgrafik
-		\item {\tt altbau.jpg}: Foto des Altbaus für die Titelfolie (Default)
-		\item {\tt iz.jpg}: Foto des Informatikzentrums für die Titelfolie
-	\end{itemize}
+	\frametitle{Stand der Dinge}
+	
+ 	  \begin{block}{Bisherige Ergebnisse}
+   	      \begin{itemize}
+                  \item Zwei LDAP Bibliotheken fuer Java
+                    \begin{itemize}
+                      \item JOpenLDAP
+                      \item LDAP SDK von UnboundID
+                    \end{itemize}
+                  \item Struktur der Anwendung ist festgelegt
+                  \item Primaere Funktionen sind definiert
+                  \item Importieren/Exportieren/Synchronisieren in Arbeit
+                  \item Prototyp der grafischen Oberflaeche erstellt
+                  \item LDAP Server noch nicht aufgsetzt
+                   \begin{itemize}
+                      \item Testen der Verbindung bisher mit oeffentlichen LDAP Verzeichnissen
+                    \end{itemize}
+                \end{itemize}
+           \end{block}
 }
 
 \begin{frame}[fragile]
-	\frametitle{Benutzung}
-	Theme einstellen:
-	\begin{verbatim}
-		\useoutertheme[relax,section]{tubs}
-	\end{verbatim}
-	\begin{block}{Optionen}
-	\begin{itemize}
-		\item relax: verkleinert den weißen unteren Rand im Vergleich zur PPT Vorlage
-		\item section: zeigt die section Überschriften am oberen Rand der Frames an
-	\end{itemize}
+	\frametitle{Grafische Oberflaeche}
+	\begin{block}{Hauptaktivitaet}
+
 	\end{block}
 \end{frame}
 
@@ -209,7 +214,7 @@
 	Andernfalls siehe nächste Folie ...
 \end{frame}
 
-\section{Conclusion}
+\section{Ausblick}
 
 \frame{
     \begin{center}
