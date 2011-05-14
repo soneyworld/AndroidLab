@@ -84,6 +84,7 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
             Toast.makeText(c,
                 R.string.search_server_popup_text_size_limit_exceeded,
                 Toast.LENGTH_SHORT).show();
+            showEntries();            
             break;
           case ResultCode.TIME_LIMIT_EXCEEDED_INT_VALUE:
             Toast.makeText(c,
@@ -108,6 +109,11 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
         return;
       }
 
+      showEntries();
+
+    }
+
+    private void showEntries() {
       final int entryCount = result.getEntryCount();
       if (entryCount == 0) {
         entries.clear();
@@ -162,7 +168,6 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
         if (progressDialog != null)
           progressDialog.dismiss();
       }
-
     }
 
   }
