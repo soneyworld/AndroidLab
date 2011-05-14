@@ -1,0 +1,227 @@
+\documentclass[hyperref={bookmarksopen=false}]{beamer} 
+
+\usepackage[english]{babel}
+\usepackage{pgf,pgfarrows,pgfnodes,pgfautomata,pgfheaps,pgfshade}
+\usepackage[latin1]{inputenc}
+
+\useoutertheme[section]{tubs}
+
+%\setbeamertemplate{itemize items}[ball]
+%\setbeamertemplate{itemize items}[square]
+\setbeamertemplate{itemize items}[tusquare]
+
+\title{Labor Android Programmierung - 1. Review}
+\subtitle{LDAP Contact Sync} 
+\author{Till Lorentzen und Christopher Gerloff}
+\institute[TU Braunschweig, IBR]{Technische Universität Braunschweig, IBR}
+
+\date{\today}
+
+\instlogo{ibr_deu}
+%\titlegraphic{iz}
+\titlegraphic{iz_corner}
+
+
+
+\begin{document}
+
+\frame[plain]{\titlepage} 
+
+\setbeamercolor{frametitle}{fg=white,bg=tu-red}
+\frame{
+        \frametitle{Einleitung}
+        \tableofcontents
+        }
+\setbeamercolor{frametitle}{fg=black,bg=tu-grey}
+
+
+\section{Einleitung}
+
+\frame{
+ \frametitle{Einleitung} 
+ \begin{block}{Idee}
+ \begin{itemize}
+     \item Kontaktsynchronisation mit LDAP Verzeichnissen
+ \end{itemize}
+ \end{block}
+ \begin{block}{Aufgaben}
+    \begin{itemize}
+        \item Gibt es funktionierende LDAP Bibliotheken fuer Java/Android?
+        \item Wie soll die Anwendung strukturiert sein?
+        \item Welche Funktionen soll die Anwendung bereitstellen?
+        \item Wie Importieren/Exportieren/Synchronisieren wir die Kontaktdaten?
+        \item Design der grafischen Oberflaeche
+        \item Aufsetzen eines LDAP Servers zum Testen
+    \end{itemize}
+ \end{block}
+}
+
+\section{Stand der Dinge}
+
+\frame{
+	\frametitle{Stand der Dinge}
+	
+ 	  \begin{block}{Bisherige Ergebnisse}
+   	      \begin{itemize}
+                  \item Zwei LDAP Bibliotheken fuer Java
+                    \begin{itemize}
+                      \item JOpenLDAP
+                      \item LDAP SDK von UnboundID
+                    \end{itemize}
+                  \item Struktur der Anwendung ist festgelegt
+                  \item Primaere Funktionen sind definiert
+                  \item Importieren/Exportieren/Synchronisieren in Arbeit
+                  \item Prototyp der grafischen Oberflaeche erstellt
+                  \item LDAP Server noch nicht aufgsetzt
+                   \begin{itemize}
+                      \item Testen der Verbindung bisher mit oeffentlichen LDAP Verzeichnissen
+                    \end{itemize}
+                \end{itemize}
+           \end{block}
+}
+
+\begin{frame}[fragile]
+	\frametitle{Grafische Oberflaeche}
+	\begin{block}{Hauptaktivitaet}
+
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Besondere Folien}
+	\begin{block}{Titelfolie}
+	\begin{verbatim}
+		\frame[plain]{\titlepage} 
+	\end{verbatim}
+	\end{block}
+	\begin{block}{Outline}
+	\begin{verbatim}
+		\setbeamercolor{frametitle}{fg=white,bg=tu-red}
+		\frame{
+        			\frametitle{Outline}
+        			\tableofcontents
+		}
+		\setbeamercolor{frametitle}{fg=black,bg=tu-grey}
+	\end{verbatim}
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Itemize}
+	\begin{block}{Default}\vspace*{-3mm}
+	\begin{verbatim}
+		\setbeamertemplate{itemize items}[tusquare]
+	\end{verbatim}\vspace*{-3mm}
+	\begin{itemize}
+		\item Erste Ebene
+		\begin{itemize}
+			\item Zweite Ebene
+			\begin{itemize}
+				\item Dritte Ebene
+			\end{itemize}
+		\end{itemize}	
+	\end{itemize}
+	\end{block}
+	\begin{block}{Alternativ}\vspace*{-3mm}
+	\begin{verbatim}
+		\setbeamertemplate{itemize items}[ball]
+	\end{verbatim}\vspace*{-3mm}
+	\setbeamertemplate{itemize items}[ball]
+	\begin{itemize}
+		\item Erste Ebene
+		\begin{itemize}
+			\item Zweite Ebene
+			\begin{itemize}
+				\item Dritte Ebene
+			\end{itemize}
+		\end{itemize}	
+	\end{itemize}
+	\end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+	\frametitle{Itemize (cont.)}
+	\begin{block}{Oder auch}\vspace*{-3mm}
+	\begin{verbatim}
+		\setbeamertemplate{itemize items}[square]
+	\end{verbatim}\vspace*{-3mm}
+	\setbeamertemplate{itemize items}[square]
+	\begin{itemize}
+		\item Erste Ebene
+		\begin{itemize}
+			\item Zweite Ebene
+			\begin{itemize}
+				\item Dritte Ebene
+			\end{itemize}
+		\end{itemize}	
+	\end{itemize}
+	\end{block}
+	Der Aufzählungstyp kann einmalig zu Beginn oder an beliebiger Stelle gesetzt werden. Somit ist auch ein Wechsel des Typs innerhalb der Präsentation möglich. 
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Enumerate}
+	\begin{block}{Default}
+	\begin{enumerate}
+		\item Erste Ebene
+		\begin{enumerate}
+			\item Zweite Ebene
+			\begin{enumerate}
+				\item Dritte Ebene
+			\end{enumerate}
+		\end{enumerate}
+	\end{enumerate}
+	\end{block}
+	\begin{block}{Alternativ}\vspace*{-3mm}
+	\begin{verbatim}
+		\setbeamertemplate{enumerate items}[ball]
+	\end{verbatim}\vspace*{-3mm}
+	\setbeamertemplate{enumerate items}[ball]
+	\begin{enumerate}
+		\item Erste Ebene
+		\begin{enumerate}
+			\item Zweite Ebene
+			\begin{enumerate}
+				\item Dritte Ebene
+			\end{enumerate}
+		\end{enumerate}
+	\end{enumerate}
+	\end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+	\frametitle{Grafiken}
+	Optional kann ein Instituts- oder Projektlogo angegeben werden, das auf der Titelfolien oben rechts und auf den anderen Folien unten rechts angezeigt wird. 
+	Das Logo wird auf eine feste Höhe skaliert.
+	\begin{verbatim}
+		\instlogo{ibr_deu}
+	\end{verbatim}
+	Ohne weitere Angabe wird auf der Titelfolie das Foto des Altbaus gezeigt. Dieses Foto kann durch eine beliebige Grafik ersetzt werden, die entsprechend skaliert wird. Daher sollte die Grafik ein Seitenverhältnis von  1:3.219 haben,
+	\begin{verbatim}
+		\titlegraphic{iz}
+	\end{verbatim}
+	In beiden Fällen kann der Dateiname mit oder ohne Endung angegeben werden. 
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Besonderheiten}
+	Der graue Kasten am oberen Rand wird nur erzeugt, wenn ein Titel für den Frame angegeben wurde.	
+	\begin{verbatim}
+		\frametitle{Titel}
+	\end{verbatim}
+	Andernfalls siehe nächste Folie ...
+\end{frame}
+
+\section{Ausblick}
+
+\frame{
+    \begin{center}
+   		{\textbf{\LARGE Questions?}} \\[5mm]
+		Jens Brandt\\[0mm]
+		\tt{brandt@ibr.cs.tu-bs.de}
+    \end{center}
+    }
+        
+\end{document}   

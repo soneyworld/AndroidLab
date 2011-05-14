@@ -29,7 +29,7 @@ public class ContactViewerActivity extends Activity {
     switch (item.getItemId()) {
     case R.id.OK:
       Intent i = new Intent();
-      i.putExtra("phone", ((TextView)findViewById(R.id.telefonnr)).getText());
+      i.putExtra("phone", ((TextView)findViewById(R.id.telefonnrLocal)).getText());
       setResult(Activity.RESULT_OK,i);
       finish();
       break;
@@ -45,7 +45,7 @@ public class ContactViewerActivity extends Activity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.contactviewer);
+    setContentView(R.layout.contactviewerlocal);
     long id = getIntent().getExtras().getLong("_id");
     String[] projection = new String[] {Contacts._ID,Contacts.HAS_PHONE_NUMBER};
         Cursor cr = managedQuery(ContactsContract.Contacts.CONTENT_URI, projection, Contacts._ID + "= ?", new String[]{String.valueOf(id)}, null);
@@ -61,9 +61,9 @@ public class ContactViewerActivity extends Activity {
                 new String[]{String.valueOf(id)},null);
                 
             if (name.moveToFirst()) {
-              TextView vorname = (TextView) findViewById(R.id.vorname);
+              TextView vorname = (TextView) findViewById(R.id.vornameLocal);
               vorname.setText(name.getString(name.getColumnIndex(StructuredName.GIVEN_NAME)));
-              TextView nachname = (TextView) findViewById(R.id.nachname);
+              TextView nachname = (TextView) findViewById(R.id.nachnameLocal);
               nachname.setText(name.getString(name.getColumnIndex(StructuredName.FAMILY_NAME)));
             }
             if (cr.getString(cr.getColumnIndex(Contacts.HAS_PHONE_NUMBER)).equalsIgnoreCase("1")) {
@@ -76,7 +76,7 @@ public class ContactViewerActivity extends Activity {
                 , null);
               phone.moveToFirst();
               number = phone.getString(phone.getColumnIndex(Phone.NUMBER));
-              TextView nr = (TextView) findViewById(R.id.telefonnr);
+              TextView nr = (TextView) findViewById(R.id.telefonnrLocal);
               nr.setText(number);
             }
           } while (cr.moveToNext());

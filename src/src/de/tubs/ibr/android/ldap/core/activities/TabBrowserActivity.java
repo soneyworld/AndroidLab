@@ -7,14 +7,18 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.TabActivity;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
 
-public class TabBrowserActivity extends TabActivity {
+public class TabBrowserActivity extends TabActivity implements
+    OnSharedPreferenceChangeListener {
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -30,6 +34,9 @@ public class TabBrowserActivity extends TabActivity {
       startActivityForResult(intent, AddServer.INTENT_REQUEST_NEWACCOUNT);
     } else {
       showTabView();
+      SharedPreferences mPrefs = PreferenceManager
+          .getDefaultSharedPreferences(this);
+      mPrefs.registerOnSharedPreferenceChangeListener(this);
     }
 
   }
@@ -41,15 +48,32 @@ public class TabBrowserActivity extends TabActivity {
     TabHost tabHost = (TabHost) findViewById(android.R.id.tabhost);
 
     TabSpec localTabSpec = tabHost.newTabSpec("tid1");
-    TabSpec ldapTabSpec = tabHost.newTabSpec("tid1");
-
     localTabSpec.setIndicator("Local").setContent(
         new Intent(this, LocalTabActivity.class));
+    tabHost.addTab(localTabSpec);
+
+    TabSpec ldapTabSpec = tabHost.newTabSpec("tid1");
+
     AccountManager accManager = AccountManager.get(this);
-    Account[] accArray = accManager.getAccountsByType(this
+    Account[] accounts = accManager.getAccountsByType(this
         .getString(R.string.ACCOUNT_TYPE));
-    // TODO Achtung hier muss noch der gewünschte Account auswählbar sein
-    Account a = accArray[0];
+    SharedPreferences mPrefs = PreferenceManager
+        .getDefaultSharedPreferences(this);
+    String accountname = mPrefs.getString("selectedAccount", "");
+    boolean isFoundOnPref = false;
+    for (Account a : accounts) {
+      if (a.name.equals(accountname)) {
+        addSelectedAccountTab(a, accManager, ldapTabSpec, tabHost);
+        isFoundOnPref = true;
+        break;
+      }
+    }
+    if (!isFoundOnPref)
+      addSelectedAccountTab(accounts[0], accManager, ldapTabSpec, tabHost);
+  }
+
+  private void addSelectedAccountTab(Account a, AccountManager accManager,
+      TabSpec ldapTabSpec, TabHost tabHost) {
     final Intent ldapintent = new Intent(this, LDAPTabActivity.class);
     ldapintent.putExtra("id", a.name);
     ldapintent.putExtra("host", accManager.getUserData(a, "host"));
@@ -75,9 +99,8 @@ public class TabBrowserActivity extends TabActivity {
     ldapintent.putExtra("bindPW", accManager.getUserData(a, "bindPW"));
     ldapintent.putExtra("baseDN", accManager.getUserData(a, "baseDN"));
     ldapTabSpec.setIndicator("LDAP").setContent(ldapintent);
-
-    tabHost.addTab(localTabSpec);
     tabHost.addTab(ldapTabSpec);
+
   }
 
   @Override
@@ -107,7 +130,7 @@ public class TabBrowserActivity extends TabActivity {
   public boolean onOptionsItemSelected(MenuItem item) {
 
     switch (item.getItemId()) {
-      case R.id.account_preferences:
+      case R.id.choose_account_preferences:
         Intent settingsActivity = new Intent(getBaseContext(),
             PrefActivity.class);
         startActivity(settingsActivity);
@@ -116,6 +139,12 @@ public class TabBrowserActivity extends TabActivity {
         break;
     }
     return false;
+  }
+
+  @Override
+  public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
+      String key) {
+    showTabView();
   }
 
 }

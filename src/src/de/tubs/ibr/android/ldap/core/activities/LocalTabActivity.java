@@ -27,11 +27,11 @@ public class LocalTabActivity extends ListActivity {
   protected void onResume() {
     super.onResume();
     ListView contacts = (ListView) findViewById(android.R.id.list);
-    String[] projection = new String[] {Contacts._ID,Contacts.DISPLAY_NAME};
+    String[] projection = new String[] {Contacts.DISPLAY_NAME, Contacts._ID};
       Cursor cr = getContentResolver().query(ContactsContract.Contacts.CONTENT_URI, projection, null, null, null);
       startManagingCursor(cr);
-      int id [] = new int[] {R.id.textView1,R.id.textView2};
-    contacts.setAdapter(new SimpleCursorAdapter(this,R.layout.listviewlayout,cr,projection,id));
+      int id [] = new int[] {android.R.id.text1};
+    contacts.setAdapter(new SimpleCursorAdapter(this,android.R.layout.simple_list_item_1,cr,projection,id));
     contacts.setOnItemClickListener(new OnItemClickListener() {
 
     @Override

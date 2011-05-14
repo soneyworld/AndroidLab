@@ -7,16 +7,19 @@ import java.util.LinkedList;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.ResultCode;
-import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import de.tubs.ibr.android.ldap.R;
 import de.tubs.ibr.android.ldap.auth.PopUp;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.Looper;
+import android.os.Handler;
+import android.os.IBinder;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -30,13 +33,13 @@ import android.widget.AdapterView.OnItemLongClickListener;
 import de.tubs.ibr.android.ldap.provider.*;
 
 public class LDAPTabActivity extends ListActivity implements OnClickListener,
-    OnItemClickListener, OnItemLongClickListener, SearchServerInterface {
+    OnItemClickListener, OnItemLongClickListener {
   // A map of the entry strings to their corresponding names.
   private HashMap<String, SearchResultEntry> entryMap;
 
   // The list of entries to process.
   private LinkedList<SearchResultEntry> entries;
-
+  private String[] entryStrings;
   // The server instance to search.
   private ServerInstance instance;
 
@@ -48,6 +51,14 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
 
   private ArrayAdapter<String> adapter;
 
+  private SearchService.SearchBinder mBinder;
+
+  private final Handler messageHandler = new Handler();
+
+  private Context mContext;
+
+  private Filter filter;
+
   /**
    * Creates a new instance of this class.
    */
@@ -55,6 +66,116 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
     entryMap = new HashMap<String, SearchResultEntry>(0);
     entries = new LinkedList<SearchResultEntry>();
   }
+
+  class ShowResultsRunnable extends SearchResultRunnable {
+    public Context c;
+
+    public ShowResultsRunnable(Context c) {
+      this.c = c;
+    }
+
+    @Override
+    public void run() {
+      // Looper.prepare();
+      final ResultCode resultCode = result.getResultCode();
+      if (resultCode != ResultCode.SUCCESS) {
+        switch (resultCode.intValue()) {
+          case ResultCode.SIZE_LIMIT_EXCEEDED_INT_VALUE:
+            Toast.makeText(c,
+                R.string.search_server_popup_text_size_limit_exceeded,
+                Toast.LENGTH_SHORT).show();
+            break;
+          case ResultCode.TIME_LIMIT_EXCEEDED_INT_VALUE:
+            Toast.makeText(c,
+                R.string.search_server_popup_text_time_limit_exceeded,
+                Toast.LENGTH_SHORT).show();
+            break;
+          default:
+            final Intent i = new Intent(c, PopUp.class);
+            i.putExtra(PopUp.BUNDLE_FIELD_TITLE,
+                getString(R.string.search_server_popup_title_search_error));
+            i.putExtra(
+                PopUp.BUNDLE_FIELD_TEXT,
+                getString(R.string.search_server_popup_text_search_error,
+                    result.getDiagnosticMessage(), result.getResultCode()
+                        .getName()));
+            startActivity(i);
+            break;
+        }
+        if (progressDialog != null)
+          progressDialog.dismiss();
+
+        return;
+      }
+
+      final int entryCount = result.getEntryCount();
+      if (entryCount == 0) {
+        entries.clear();
+        if (progressDialog != null)
+          progressDialog.dismiss();
+
+        Toast.makeText(c,
+            R.string.search_server_popup_text_no_entries_returned,
+            Toast.LENGTH_SHORT);
+      } else {
+        entries.clear();
+        entries.addAll(result.getSearchEntries());
+        entryMap = new HashMap<String, SearchResultEntry>(entries.size());
+
+        final StringBuilder buffer = new StringBuilder();
+        entryStrings = new String[entries.size()];
+        for (int i = 0; i < entryStrings.length; i++) {
+          final SearchResultEntry e = entries.get(i);
+          if (e.hasObjectClass("person")) {
+            final String name = e.getAttributeValue("cn");
+            if (name == null) {
+              entryStrings[i] = e.getDN();
+            } else {
+              buffer.setLength(0);
+              buffer.append(name);
+
+              final String phone = e.getAttributeValue("telephoneNumber");
+              if (phone != null) {
+                buffer.append(EOL);
+                buffer.append(phone);
+              }
+
+              final String mail = e.getAttributeValue("mail");
+              if (mail != null) {
+                buffer.append(EOL);
+                buffer.append(mail);
+              }
+
+              entryStrings[i] = buffer.toString();
+            }
+          } else {
+            entryStrings[i] = e.getDN();
+          }
+          entryMap.put(entryStrings[i], e);
+        }
+        Arrays.sort(entryStrings);
+        if (progressDialog != null)
+          progressDialog.dismiss();
+      }
+
+    }
+
+  }
+
+  private ServiceConnection mServiceConnection = new ServiceConnection() {
+
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+    }
+
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder service) {
+      mBinder = (SearchService.SearchBinder) service;
+      mBinder.setActivityCallBackHandler(messageHandler);
+      mBinder.setRunnable(new ShowResultsRunnable(mContext));
+      mBinder.search(instance, filter);
+    }
+  };
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -77,7 +198,7 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
     entryMap = new HashMap<String, SearchResultEntry>(entries.size());
 
     final StringBuilder buffer = new StringBuilder();
-    final String[] entryStrings = new String[entries.size()];
+    entryStrings = new String[entries.size()];
     for (int i = 0; i < entryStrings.length; i++) {
       final SearchResultEntry e = entries.get(i);
       if (e.hasObjectClass("person")) {
@@ -117,19 +238,16 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
 
     getListView().setOnItemClickListener(this);
     getListView().setOnItemLongClickListener(this);
-    Filter filter;
 
     try {
       filter = Filter.create("(cn=*)");
     } catch (LDAPException le2) {
-      Toast.makeText(this, R.string.search_server_popup_text_invalid_filter,
-          Toast.LENGTH_LONG).show();
-      return;
     }
 
-    // Create a thread to process the search.
-    final SearchThread searchThread = new SearchThread(this, instance, filter);
-    searchThread.start();
+    // Bind to SearchService
+    final Intent intent = new Intent(this, SearchService.class);
+    getApplicationContext().bindService(intent, mServiceConnection,
+        Context.BIND_AUTO_CREATE);
   }
 
   @Override
@@ -178,7 +296,6 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
         // it.
 
         // Make sure that the filter is valid.
-        Filter filter;
         try {
           filter = Filter.create(searchText);
         } catch (LDAPException le) {
@@ -191,10 +308,9 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
             break;
           }
         }
-        // Create a thread to process the search.
-        final SearchThread searchThread = new SearchThread(this, instance,
-            filter);
-        searchThread.start();
+        // Bind to SearchService
+        // final Intent intent = new Intent(this, SearchService.class);
+        // bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
 
         // Create a progress dialog to display while the search is in progress.
         progressDialog = new ProgressDialog(this);
@@ -209,55 +325,4 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
         break;
     }
   }
-
-  @Override
-  public void searchDone(SearchResult result) {
-    Looper.prepare();
-    final ResultCode resultCode = result.getResultCode();
-    if (resultCode != ResultCode.SUCCESS) {
-      switch (resultCode.intValue()) {
-        case ResultCode.SIZE_LIMIT_EXCEEDED_INT_VALUE:
-          Toast.makeText(this,
-              R.string.search_server_popup_text_size_limit_exceeded,
-              Toast.LENGTH_SHORT).show();
-          break;
-        case ResultCode.TIME_LIMIT_EXCEEDED_INT_VALUE:
-          Toast.makeText(this,
-              R.string.search_server_popup_text_time_limit_exceeded,
-              Toast.LENGTH_SHORT).show();
-          break;
-        default:
-          final Intent i = new Intent(this, PopUp.class);
-          i.putExtra(PopUp.BUNDLE_FIELD_TITLE,
-              getString(R.string.search_server_popup_title_search_error));
-          i.putExtra(
-              PopUp.BUNDLE_FIELD_TEXT,
-              getString(R.string.search_server_popup_text_search_error, result
-                  .getDiagnosticMessage(), result.getResultCode().getName()));
-          startActivity(i);
-          break;
-      }
-      if (progressDialog != null)
-        progressDialog.dismiss();
-
-      return;
-    }
-
-    final int entryCount = result.getEntryCount();
-    if (entryCount == 0) {
-      entries.clear();
-      if (progressDialog != null)
-        progressDialog.dismiss();
-
-      Toast.makeText(this,
-          R.string.search_server_popup_text_no_entries_returned,
-          Toast.LENGTH_SHORT);
-    } else {
-      entries.clear();
-      entries.addAll(result.getSearchEntries());
-      if (progressDialog != null)
-        progressDialog.dismiss();
-    }
-  }
-
 }

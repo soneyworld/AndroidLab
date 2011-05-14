@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent" android:orientation="vertical">
+    <Button android:text="Import" android:id="@+id/exportButtonLDAP" android:layout_width="wrap_content" android:layout_height="wrap_content"></Button>
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/name" android:text="@string/name"></TextView>
+    <LinearLayout android:id="@+id/linearLayout1LDAP" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
+        <TextView android:id="@+id/vornameLDAP" android:text="TextView" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="22sp"></TextView>
+        <TextView android:id="@+id/nachnameLDAP" android:text="TextView" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="22sp"></TextView>
+    </LinearLayout>
+    <TextView android:text="@string/telefon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/telefonLDAP"></TextView>
+    <TextView android:id="@+id/telefonnrLDAP" android:text="" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="22sp"></TextView>
+</LinearLayout>
