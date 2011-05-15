@@ -85,31 +85,37 @@
  \frametitle{Wichtige Komponenten} 
  \begin{block}{AccountManager}
  \begin{itemize}
-     \item Bla
+   \item Speichert alle LDAP Accounts, mit denen synchronisiert werden soll
+   \item Android übernimmt die Speicherung
  \end{itemize}
  \end{block}
- \begin{block}{SyncAdapter}
+    \begin{block}{AccountAuthenticator}
     \begin{itemize}
-        \item Bla
-    \end{itemize}
- \end{block}
-  \begin{block}{RawContacts}
-    \begin{itemize}
-        \item Bla
+      \item Schnittstelle um einen Account hinzuzufügen 
+      \item Ruft die AddServer Activity aus den Einstellungen auf
+      \item Speichert die Eingaben als Account ab
     \end{itemize}
  \end{block}
 }
 
 \frame{
  \frametitle{Wichtige Komponenten} 
-    \begin{block}{AccountAuthenticator}
+\begin{block}{RawContacts}
     \begin{itemize}
-        \item Bla
+        \item Kontaktdaten werden pro Account gespeichert
+	\item Sichtbarkeit im Kontaktbuch je nach Wunsch 
     \end{itemize}
  \end{block}
+ \begin{block}{SyncAdapter}
+    \begin{itemize}
+        \item Schnittstelle für Android zur Synchronisation
+    \end{itemize}
+ \end{block}
+
    \begin{block}{ContentProvider}
     \begin{itemize}
-        \item Bla
+        \item Stellt die Verbindung zu den LDAP Servern her
+	\item Gibt den Mime Type zurück, den der gefundene Datensatz hat
     \end{itemize}
  \end{block}
 }
