@@ -25,6 +25,7 @@ import java.util.List;
 import javax.net.SocketFactory;
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.content.Context;
 import android.os.Bundle;
 import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.ExtendedResult;
@@ -36,7 +37,6 @@ import com.unboundid.ldap.sdk.extensions.StartTLSExtendedRequest;
 import com.unboundid.util.ssl.SSLUtil;
 import com.unboundid.util.ssl.TrustAllTrustManager;
 import static com.unboundid.util.StaticUtils.*;
-import de.tubs.ibr.android.ldap.provider.*;
 import de.tubs.ibr.android.ldap.R;
 
 /**
@@ -284,8 +284,8 @@ public final class ServerInstance implements Serializable {
    * @return {@code true} if the fields of this server instance appear to be
    *         acceptable, or {@code false} if not.
    */
-  public boolean isDefinitionValid(final StringProvider invoker,
-      final List<String> unacceptableReasons) {
+  public boolean isDefinitionValid(final List<String> unacceptableReasons,
+      final Context invoker) {
     boolean valid = true;
     if ((id == null) || (id.length() == 0)) {
       valid = false;
@@ -356,7 +356,7 @@ public final class ServerInstance implements Serializable {
    * @throws LDAPException
    *           If a problem occurs while attempting to establish the connection.
    */
-  public LDAPConnection getConnection(final StringProvider invoker)
+  public LDAPConnection getConnection(final Context invoker)
       throws LDAPException {
     SocketFactory socketFactory = null;
     if (useSSL) {

@@ -28,8 +28,13 @@ import android.accounts.AccountAuthenticatorActivity;
 import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
@@ -46,7 +51,7 @@ import de.tubs.ibr.android.ldap.provider.*;
  * directory server.
  */
 public final class AddServer extends AccountAuthenticatorActivity implements
-    OnClickListener, ServerTestInvoker {
+    OnClickListener{
   /**
    * The name of the field used to define the server ID.
    */
@@ -118,7 +123,49 @@ public final class AddServer extends AccountAuthenticatorActivity implements
 
   // The server ID.
   private String id = "";
+  
+  private TestServerService.TestServerBinder mBinder;
+  
+  private final Handler messageHandler = new Handler();
+  
+  private Context mContext;
 
+  private ServiceConnection mServiceConnection = new ServiceConnection() {
+
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+    }
+
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder service) {
+      mBinder = (TestServerService.TestServerBinder) service;
+      mBinder.setActivityCallBackHandler(messageHandler);
+      mBinder.setRunnable(new TestServerResultsRunnable(mContext));
+    }
+  };
+  
+  
+  class TestServerResultsRunnable extends TestServerRunnable {
+
+    public TestServerResultsRunnable(Context c) {
+      this.context = c;
+    }
+
+    @Override
+    public void run() {
+      progressDialog.dismiss();
+      if(this.acceptable){
+        Toast.makeText(context, R.string.add_server_popup_text_success, Toast.LENGTH_SHORT).show();
+      }else{
+        StringBuffer s = new StringBuffer();
+        for (String reason : this.reasons) {
+          s.append(reason).append(EOL);
+        }
+        Toast.makeText(context, s.toString(), Toast.LENGTH_LONG).show();
+      }
+    }
+  }
+    
   /**
    * Performs all necessary processing when this activity is created.
    * 
@@ -140,6 +187,7 @@ public final class AddServer extends AccountAuthenticatorActivity implements
   protected void onResume() {
     super.onResume();
     setContentView(R.layout.layout_define_server);
+    mContext = this;
     Object title = getIntent().getExtras().get(INTENT_EXTRA_TITLE);
     if (title == null) {
       setTitle(R.string.activity_label);
@@ -237,6 +285,10 @@ public final class AddServer extends AccountAuthenticatorActivity implements
 
     final Button saveButton = (Button) findViewById(R.id.layout_define_server_button_server_save);
     saveButton.setOnClickListener(this);
+    
+    final Intent intent = new Intent(this, TestServerService.class);
+    getApplicationContext().bindService(intent, mServiceConnection,
+        Context.BIND_AUTO_CREATE);
 
   }
 
@@ -340,45 +392,16 @@ public final class AddServer extends AccountAuthenticatorActivity implements
       return;
     }
     // Create and start a thread to test the server settings.
-    final TestServerThread testThread = new TestServerThread(this, instance);
-    testThread.start();
+    if (mBinder != null && mBinder.isBinderAlive()) {
+      mBinder.test(instance);
+    }
     // Create a progress dialog to display while the search is in progress.
     progressDialog = new ProgressDialog(this);
     progressDialog.setTitle(getString(R.string.add_server_progress_text));
     progressDialog.setIndeterminate(true);
-    progressDialog.setCancelable(false);
+    progressDialog.setCancelable(true);
     progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
     progressDialog.show();
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public void testCompleted(final boolean acceptable,
-      final LinkedList<String> reasons) {
-    progressDialog.dismiss();
-    if (acceptable) {
-       final Intent i = new Intent(this, PopUp.class);
-       i.putExtra(PopUp.BUNDLE_FIELD_TITLE,
-       getString(R.string.add_server_popup_title_success));
-       i.putExtra(PopUp.BUNDLE_FIELD_TEXT,
-       getString(R.string.add_server_popup_text_success));
-       startActivity(i);
-//      if(Looper.myLooper()==null){
-//        Looper.prepare();
-//      }
-//      Toast.makeText(this, R.string.add_server_popup_text_success,
-//          Toast.LENGTH_SHORT).show();
-    } else {
-      final Intent i = new Intent(this, PopUp.class);
-      i.putExtra(PopUp.BUNDLE_FIELD_TITLE,
-          getString(R.string.add_server_popup_title_failed));
-      i.putExtra(
-          PopUp.BUNDLE_FIELD_TEXT,
-          getString(R.string.add_server_popup_text_failed,
-              listToString(reasons)));
-      startActivity(i);
-    }
   }
 
   /**
@@ -390,7 +413,7 @@ public final class AddServer extends AccountAuthenticatorActivity implements
     ServerInstance instance = null;
     try {
       instance = createInstance();
-      acceptable = instance.isDefinitionValid(this, reasons);
+      acceptable = instance.isDefinitionValid(reasons,this);
     } catch (final NumberFormatException nfe) {
       acceptable = false;
       reasons.add(getString(R.string.add_server_err_port_not_int));
