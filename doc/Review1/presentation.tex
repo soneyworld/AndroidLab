@@ -3,6 +3,7 @@
 \usepackage[english]{babel}
 \usepackage{pgf,pgfarrows,pgfnodes,pgfautomata,pgfheaps,pgfshade}
 \usepackage[latin1]{inputenc}
+\usepackage{graphicx}
 
 \useoutertheme[section]{tubs}
 
@@ -82,146 +83,90 @@
 
 \begin{frame}[fragile]
 	\frametitle{Grafische Oberflaeche}
-	\begin{block}{Hauptaktivitaet}
-
+	\begin{block}{Hauptbildschirm}
+	\hspace{0.5 cm}
+	\includegraphics[scale=0.3]{LocalTabView.png}
+	\vspace{1 cm}
+	\includegraphics[scale=0.3]{LocalTabView_MenuOpen.png}
+	\vspace{1 cm}
+	\includegraphics[scale=0.3]{LDAPTabView.png}
 	\end{block}
 \end{frame}
 
 \begin{frame}[fragile]
-	\frametitle{Besondere Folien}
-	\begin{block}{Titelfolie}
-	\begin{verbatim}
-		\frame[plain]{\titlepage} 
-	\end{verbatim}
-	\end{block}
-	\begin{block}{Outline}
-	\begin{verbatim}
-		\setbeamercolor{frametitle}{fg=white,bg=tu-red}
-		\frame{
-        			\frametitle{Outline}
-        			\tableofcontents
-		}
-		\setbeamercolor{frametitle}{fg=black,bg=tu-grey}
-	\end{verbatim}
+	\frametitle{Grafische Oberflaeche}
+	\begin{block}{Kontoverwaltung}
+	\hspace{0.5 cm}
+	\includegraphics[scale=0.3]{Add_Account_AccountsandSync.png}
+	\vspace{1 cm}
+	\includegraphics[scale=0.3]{Add_Account1.png}
+	\vspace{1 cm}
+	\includegraphics[scale=0.3]{Add_Account2.png}
 	\end{block}
 \end{frame}
 
 \begin{frame}[fragile]
-	\frametitle{Itemize}
-	\begin{block}{Default}\vspace*{-3mm}
-	\begin{verbatim}
-		\setbeamertemplate{itemize items}[tusquare]
-	\end{verbatim}\vspace*{-3mm}
-	\begin{itemize}
-		\item Erste Ebene
-		\begin{itemize}
-			\item Zweite Ebene
-			\begin{itemize}
-				\item Dritte Ebene
-			\end{itemize}
-		\end{itemize}	
-	\end{itemize}
+	\frametitle{Grafische Oberflaeche}
+	\begin{block}{Integrierte Erweiterungen}
+	\hspace{0.5 cm}
+	\includegraphics[scale=0.3]{createContact_chooseAccount.png}
+	\vspace{1 cm}
+	\includegraphics[scale=0.3]{Accounts_Sync.png}
 	\end{block}
-	\begin{block}{Alternativ}\vspace*{-3mm}
-	\begin{verbatim}
-		\setbeamertemplate{itemize items}[ball]
-	\end{verbatim}\vspace*{-3mm}
-	\setbeamertemplate{itemize items}[ball]
-	\begin{itemize}
-		\item Erste Ebene
-		\begin{itemize}
-			\item Zweite Ebene
-			\begin{itemize}
-				\item Dritte Ebene
-			\end{itemize}
-		\end{itemize}	
-	\end{itemize}
-	\end{block}
-\end{frame}
-
-
-\begin{frame}[fragile]
-	\frametitle{Itemize (cont.)}
-	\begin{block}{Oder auch}\vspace*{-3mm}
-	\begin{verbatim}
-		\setbeamertemplate{itemize items}[square]
-	\end{verbatim}\vspace*{-3mm}
-	\setbeamertemplate{itemize items}[square]
-	\begin{itemize}
-		\item Erste Ebene
-		\begin{itemize}
-			\item Zweite Ebene
-			\begin{itemize}
-				\item Dritte Ebene
-			\end{itemize}
-		\end{itemize}	
-	\end{itemize}
-	\end{block}
-	Der Aufzählungstyp kann einmalig zu Beginn oder an beliebiger Stelle gesetzt werden. Somit ist auch ein Wechsel des Typs innerhalb der Präsentation möglich. 
 \end{frame}
 
 \begin{frame}[fragile]
-	\frametitle{Enumerate}
-	\begin{block}{Default}
-	\begin{enumerate}
-		\item Erste Ebene
-		\begin{enumerate}
-			\item Zweite Ebene
-			\begin{enumerate}
-				\item Dritte Ebene
-			\end{enumerate}
-		\end{enumerate}
-	\end{enumerate}
-	\end{block}
-	\begin{block}{Alternativ}\vspace*{-3mm}
-	\begin{verbatim}
-		\setbeamertemplate{enumerate items}[ball]
-	\end{verbatim}\vspace*{-3mm}
-	\setbeamertemplate{enumerate items}[ball]
-	\begin{enumerate}
-		\item Erste Ebene
-		\begin{enumerate}
-			\item Zweite Ebene
-			\begin{enumerate}
-				\item Dritte Ebene
-			\end{enumerate}
-		\end{enumerate}
-	\end{enumerate}
+	\frametitle{Grafische Oberflaeche}
+	\begin{block}{Sonstiges}
+	\hspace{0.5 cm}
+	\includegraphics[scale=0.3]{choose_active_Account_for_TabView.png}
+	\vspace{1 cm}
+	\includegraphics[scale=0.3]{specific_Account_Settings.png}
 	\end{block}
 \end{frame}
 
+\frame{
+ \frametitle{Wichtige Komponenten} 
+ \begin{block}{AccountManager}
+ \begin{itemize}
+     \item Bla
+ \end{itemize}
+ \end{block}
+ \begin{block}{SyncAdapter}
+    \begin{itemize}
+        \item Bla
+    \end{itemize}
+ \end{block}
+  \begin{block}{RawContacts}
+    \begin{itemize}
+        \item Bla
+    \end{itemize}
+ \end{block}
+}
 
-\begin{frame}[fragile]
-	\frametitle{Grafiken}
-	Optional kann ein Instituts- oder Projektlogo angegeben werden, das auf der Titelfolien oben rechts und auf den anderen Folien unten rechts angezeigt wird. 
-	Das Logo wird auf eine feste Höhe skaliert.
-	\begin{verbatim}
-		\instlogo{ibr_deu}
-	\end{verbatim}
-	Ohne weitere Angabe wird auf der Titelfolie das Foto des Altbaus gezeigt. Dieses Foto kann durch eine beliebige Grafik ersetzt werden, die entsprechend skaliert wird. Daher sollte die Grafik ein Seitenverhältnis von  1:3.219 haben,
-	\begin{verbatim}
-		\titlegraphic{iz}
-	\end{verbatim}
-	In beiden Fällen kann der Dateiname mit oder ohne Endung angegeben werden. 
-\end{frame}
-
-\begin{frame}[fragile]
-	\frametitle{Besonderheiten}
-	Der graue Kasten am oberen Rand wird nur erzeugt, wenn ein Titel für den Frame angegeben wurde.	
-	\begin{verbatim}
-		\frametitle{Titel}
-	\end{verbatim}
-	Andernfalls siehe nächste Folie ...
-\end{frame}
+\frame{
+ \frametitle{Wichtige Komponenten} 
+    \begin{block}{AccountAuthenticator}
+    \begin{itemize}
+        \item Bla
+    \end{itemize}
+ \end{block}
+   \begin{block}{ContentProvider}
+    \begin{itemize}
+        \item Bla
+    \end{itemize}
+ \end{block}
+}
 
 \section{Ausblick}
 
 \frame{
-    \begin{center}
-   		{\textbf{\LARGE Questions?}} \\[5mm]
-		Jens Brandt\\[0mm]
-		\tt{brandt@ibr.cs.tu-bs.de}
-    \end{center}
-    }
-        
+ \frametitle{Ausblick} 
+ \begin{block}{To Do}
+ \begin{itemize}
+     \item Bla
+ \end{itemize}
+ \end{block}
+}
+
 \end{document}   
