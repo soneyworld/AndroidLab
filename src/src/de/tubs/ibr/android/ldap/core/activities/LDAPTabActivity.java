@@ -84,7 +84,7 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
             Toast.makeText(c,
                 R.string.search_server_popup_text_size_limit_exceeded,
                 Toast.LENGTH_SHORT).show();
-            showEntries();            
+            showEntries();
             break;
           case ResultCode.TIME_LIMIT_EXCEEDED_INT_VALUE:
             Toast.makeText(c,
@@ -312,6 +312,10 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
           filter = Filter.create(searchText);
         } catch (LDAPException le) {
           try {
+            // If no searchtext is available, search for all entries
+            if (searchText.length() == 0) {
+              searchText = "*";
+            }
             filter = Filter.create("(cn=" + searchText + ')');
           } catch (LDAPException le2) {
             Toast.makeText(this,
