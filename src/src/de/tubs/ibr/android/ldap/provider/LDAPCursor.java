@@ -1,5 +1,8 @@
 package de.tubs.ibr.android.ldap.provider;
 
+import com.unboundid.ldap.sdk.LDAPConnection;
+import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.SearchScope;
 import android.content.ContentResolver;
 import android.database.CharArrayBuffer;
 import android.database.ContentObserver;
@@ -9,11 +12,24 @@ import android.net.Uri;
 import android.os.Bundle;
 
 public class LDAPCursor implements Cursor {
+  private final String filter;
+  private final String baseDN;
+  private LDAPConnection connection;
+  private final SearchScope scope;
+  private final String[] attributes;
+
+  public LDAPCursor(LDAPConnection conn, final String baseDN,
+      final SearchScope scope, final String filter, final String... attributes) {
+    this.filter = filter;
+    this.scope = scope;
+    this.baseDN = baseDN;
+    this.connection = conn;
+    this.attributes = attributes;
+  }
 
   @Override
   public void close() {
-    // TODO Auto-generated method stub
-
+    connection.close();
   }
 
   @Override
@@ -24,8 +40,7 @@ public class LDAPCursor implements Cursor {
 
   @Override
   public void deactivate() {
-    // TODO Auto-generated method stub
-
+    connection.close();
   }
 
   @Override
@@ -139,8 +154,7 @@ public class LDAPCursor implements Cursor {
 
   @Override
   public boolean isClosed() {
-    // TODO Auto-generated method stub
-    return false;
+    return !connection.isConnected();
   }
 
   @Override
@@ -211,8 +225,12 @@ public class LDAPCursor implements Cursor {
 
   @Override
   public boolean requery() {
-    // TODO Auto-generated method stub
-    return false;
+    try {
+      connection.reconnect();
+    } catch (LDAPException e) {
+      return false;
+    }
+    return true;
   }
 
   @Override

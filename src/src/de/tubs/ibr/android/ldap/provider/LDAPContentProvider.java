@@ -5,13 +5,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import com.unboundid.ldap.sdk.Attribute;
+import com.unboundid.ldap.sdk.DeleteRequest;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ResultCode;
-import com.unboundid.ldap.sdk.SearchResult;
-import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import de.tubs.ibr.android.ldap.R;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
@@ -39,6 +38,18 @@ public class LDAPContentProvider extends ContentProvider implements
 
   @Override
   public int delete(Uri uri, String selection, String[] selectionArgs) {
+    ServerInstance instance = getServerInstance(uri);
+    if (instance != null) {
+      try {
+        LDAPConnection conn = instance.getConnection();
+        DeleteRequest deleteRequest = new DeleteRequest(selection);
+        conn.delete(deleteRequest);
+      } catch (LDAPException e) {
+        return 0;
+      }
+    } else {
+      throw new IllegalArgumentException("No matching ServerInstance found");
+    }
     return 0;
   }
 
@@ -103,20 +114,13 @@ public class LDAPContentProvider extends ContentProvider implements
       LDAPConnection connection;
       try {
         connection = i.getConnection();
-        //TODO Change Example Code to usable and searching Code
-        SearchResult searchResult = connection.search("dc=example,dc=com",
-            SearchScope.SUB, "(uid=john.doe)");
-        System.out.println(searchResult.getEntryCount() + " entries returned.");
-        for (SearchResultEntry e : searchResult.getSearchEntries()) {
-          System.out.println(e.toLDIFString());
-          System.out.println();
-        }
+        return new LDAPCursor(connection, "", SearchScope.SUB, "");
       } catch (LDAPException e1) {
         // TODO Auto-generated catch block
         e1.printStackTrace();
       }
     }
-    return new LDAPCursor();
+    return null;
   }
 
   @Override
