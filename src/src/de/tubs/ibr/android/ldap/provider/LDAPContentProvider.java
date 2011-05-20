@@ -114,7 +114,7 @@ public class LDAPContentProvider extends ContentProvider implements
       LDAPConnection connection;
       try {
         connection = i.getConnection();
-        return new LDAPCursor(connection, "", SearchScope.SUB, "");
+        return new LDAPCursor(connection, i.getBaseDN(), SearchScope.SUB, "");
       } catch (LDAPException e1) {
         // TODO Auto-generated catch block
         e1.printStackTrace();

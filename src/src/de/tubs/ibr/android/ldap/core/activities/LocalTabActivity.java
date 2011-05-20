@@ -50,6 +50,7 @@ public class LocalTabActivity extends ListActivity {
       Intent i = new Intent(Intent.ACTION_CALL,Uri.parse("tel:"+data.getExtras().getString("phone")));
       i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
       startActivity(i);
+      
     }
   }
 }
