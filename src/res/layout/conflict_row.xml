@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent" android:layout_height="match_parent"
+	android:gravity="center_horizontal">
+	<RadioGroup android:layout_width="fill_parent"
+		android:layout_height="wrap_content" android:id="@+id/Group1"
+		android:orientation="horizontal" android:gravity="center_horizontal">
+		<RadioButton android:id="@+id/selector1"
+			android:layout_width="wrap_content" android:layout_height="wrap_content"
+			android:layout_alignParentRight="true" android:layout_centerVertical="true" />
+		<EditText android:id="@+id/value1" android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:layout_centerVertical="true"
+			android:textSize="12sp" android:text="Test1" />
+		<EditText android:id="@+id/value2" android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:layout_centerVertical="true"
+			android:textSize="12sp" android:text="Test2" />
+		<RadioButton android:id="@+id/selector2"
+			android:layout_width="wrap_content" android:layout_height="wrap_content"
+			android:layout_alignParentRight="true" android:layout_centerVertical="true" />
+	</RadioGroup>
+</LinearLayout>

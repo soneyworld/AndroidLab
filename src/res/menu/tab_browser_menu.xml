@@ -2,4 +2,5 @@
 <menu
   xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:title="Choose account" android:id="@+id/choose_account_preferences"></item>
+    <item android:title="Conflict View Test" android:id="@+id/test_conflict_view"></item>
 </menu>

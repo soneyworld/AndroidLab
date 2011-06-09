@@ -58,6 +58,7 @@
 		<service android:name=".provider.SearchService"></service>
 		<activity android:name=".core.activities.ViewEntry"></activity>
 		<service android:name=".provider.TestServerService"></service>
+		<activity android:name=".core.activities.ConflictActivity"></activity>
 
 	</application>
 </manifest>

@@ -135,6 +135,10 @@ public class TabBrowserActivity extends TabActivity implements
             PrefActivity.class);
         startActivity(settingsActivity);
         break;
+      case R.id.test_conflict_view:
+        Intent conflictView = new Intent(getBaseContext(), ConflictActivity.class);
+        startActivity(conflictView);
+        break;
       default:
         break;
     }
