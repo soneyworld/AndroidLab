@@ -51,7 +51,7 @@ import de.tubs.ibr.android.ldap.provider.*;
  * directory server.
  */
 public final class AddServer extends AccountAuthenticatorActivity implements
-    OnClickListener{
+    OnClickListener {
   /**
    * The name of the field used to define the server ID.
    */
@@ -123,11 +123,11 @@ public final class AddServer extends AccountAuthenticatorActivity implements
 
   // The server ID.
   private String id = "";
-  
+
   private TestServerService.TestServerBinder mBinder;
-  
+
   private final Handler messageHandler = new Handler();
-  
+
   private Context mContext;
 
   private ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -143,8 +143,7 @@ public final class AddServer extends AccountAuthenticatorActivity implements
       mBinder.setRunnable(new TestServerResultsRunnable(mContext));
     }
   };
-  
-  
+
   class TestServerResultsRunnable extends TestServerRunnable {
 
     public TestServerResultsRunnable(Context c) {
@@ -154,9 +153,10 @@ public final class AddServer extends AccountAuthenticatorActivity implements
     @Override
     public void run() {
       progressDialog.dismiss();
-      if(this.acceptable){
-        Toast.makeText(context, R.string.add_server_popup_text_success, Toast.LENGTH_SHORT).show();
-      }else{
+      if (this.acceptable) {
+        Toast.makeText(context, R.string.add_server_popup_text_success,
+            Toast.LENGTH_SHORT).show();
+      } else {
         StringBuffer s = new StringBuffer();
         for (String reason : this.reasons) {
           s.append(reason).append(EOL);
@@ -165,7 +165,7 @@ public final class AddServer extends AccountAuthenticatorActivity implements
       }
     }
   }
-    
+
   /**
    * Performs all necessary processing when this activity is created.
    * 
@@ -242,9 +242,6 @@ public final class AddServer extends AccountAuthenticatorActivity implements
     // Populate the server ID.
     final EditText idField = (EditText) findViewById(R.id.layout_define_server_field_id);
     idField.setText(id);
-    if (this.modifymode) {
-      idField.setEnabled(false);
-    }
     // Populate the server address.
     final EditText hostField = (EditText) findViewById(R.id.layout_define_server_field_host);
     hostField.setText(host);
@@ -285,7 +282,19 @@ public final class AddServer extends AccountAuthenticatorActivity implements
 
     final Button saveButton = (Button) findViewById(R.id.layout_define_server_button_server_save);
     saveButton.setOnClickListener(this);
-    
+    // Modification is not Implemented yet, so all the fields of this view
+    // except the testButton should be disabled. It should be reenabled, if
+    // modification is implemented
+    if (this.modifymode) {
+      idField.setEnabled(false);
+      hostField.setEnabled(false);
+      portField.setEnabled(false);
+      secSpinner.setEnabled(false);
+      bindDNField.setEnabled(false);
+      bindPWField.setEnabled(false);
+      baseDNField.setEnabled(false);
+      saveButton.setEnabled(false);
+    }
     final Intent intent = new Intent(this, TestServerService.class);
     getApplicationContext().bindService(intent, mServiceConnection,
         Context.BIND_AUTO_CREATE);
@@ -413,7 +422,7 @@ public final class AddServer extends AccountAuthenticatorActivity implements
     ServerInstance instance = null;
     try {
       instance = createInstance();
-      acceptable = instance.isDefinitionValid(reasons,this);
+      acceptable = instance.isDefinitionValid(reasons, this);
     } catch (final NumberFormatException nfe) {
       acceptable = false;
       reasons.add(getString(R.string.add_server_err_port_not_int));
