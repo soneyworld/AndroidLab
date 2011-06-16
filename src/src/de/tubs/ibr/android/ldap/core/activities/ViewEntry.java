@@ -571,6 +571,7 @@ public final class ViewEntry extends Activity implements StringProvider , OnClic
         .newInsert(ContactsContract.RawContacts.CONTENT_URI)
         .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, account.type)
         .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, account.name)
+        .withValue(ContactsContract.RawContacts.SOURCE_ID, entry.getAttributeValue("uuid"))
         .build());
     ops.add(ContentProviderOperation
         .newInsert(ContactsContract.Data.CONTENT_URI)

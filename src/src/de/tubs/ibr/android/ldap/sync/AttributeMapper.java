@@ -87,6 +87,11 @@ public final class AttributeMapper {
    * The name of the attribute that holds the user's title.
    */
   public static final String ATTR_TITLE = "title";
+  
+  /**
+   * The name of the attribute that holds the user's id.
+   */
+  public static final String ATTR_UID = "uid";
 
 
   // The map of lowercase attribute names to the numeric identifiers for display
