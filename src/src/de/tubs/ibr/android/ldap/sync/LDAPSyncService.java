@@ -94,33 +94,33 @@ public class LDAPSyncService extends Service {
       }
     }
     
-    for (final SearchResultEntry user : ldapresult.getSearchEntries()) {
-      userId = user.getUserId();
-      // Check to see if the contact needs to be inserted or updated
-      rawContactId = lookupRawContact(resolver, userId);
-      if (rawContactId != 0) {
-        if (!user.isDeleted()) {
-          // update contact
-          updateContact(context, resolver, account, user, rawContactId,
-              batchOperation);
-        } else {
-          // delete contact
-          deleteContact(context, rawContactId, batchOperation);
-        }
-      } else {
-        // add new contact
-        Log.d(TAG, "In addContact");
-        if (!user.isDeleted()) {
-          addContact(context, account, user, batchOperation);
-        }
-      }
-      // A sync adapter should batch operations on multiple contacts,
-      // because it will make a dramatic performance difference.
-      if (batchOperation.size() >= 50) {
-        batchOperation.execute();
-      }
-    }
-    batchOperation.execute();
+//    for (final SearchResultEntry user : ldapresult.getSearchEntries()) {
+//      userId = user.getUserId();
+//      // Check to see if the contact needs to be inserted or updated
+//      rawContactId = lookupRawContact(resolver, userId);
+//      if (rawContactId != 0) {
+//        if (!user.isDeleted()) {
+//          // update contact
+//          updateContact(context, resolver, account, user, rawContactId,
+//              batchOperation);
+//        } else {
+//          // delete contact
+//          deleteContact(context, rawContactId, batchOperation);
+//        }
+//      } else {
+//        // add new contact
+//        Log.d(TAG, "In addContact");
+//        if (!user.isDeleted()) {
+//          addContact(context, account, user, batchOperation);
+//        }
+//      }
+//      // A sync adapter should batch operations on multiple contacts,
+//      // because it will make a dramatic performance difference.
+//      if (batchOperation.size() >= 50) {
+//        batchOperation.execute();
+//      }
+//    }
+//    batchOperation.execute();
     // TODO use LDAP Content Provider to search for contacts, which has to be
     // synchronized
     // ArrayList<ContentProviderOperation> operationList = new
