@@ -1,4 +1,4 @@
-package de.tubs.ibr.android.ldap.core.activities;
+package de.tubs.ibr.android.ldap.core;
 
 import static com.unboundid.util.StaticUtils.EOL;
 import java.util.StringTokenizer;
@@ -6,7 +6,6 @@ import android.accounts.Account;
 import android.content.ContentProviderOperation;
 import android.provider.ContactsContract;
 import com.unboundid.ldap.sdk.Entry;
-import de.tubs.ibr.android.ldap.core.BatchOperation;
 import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 
 public class ContactManager {
@@ -29,7 +28,7 @@ public class ContactManager {
         .newInsert(ContactsContract.RawContacts.CONTENT_URI)
         .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, account.type)
         .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, account.name)
-        .withValue(ContactsContract.RawContacts.SOURCE_ID, entry.getAttributeValue("uuid"))
+        .withValue(ContactsContract.RawContacts.SOURCE_ID, sourceId)
         .build());
     batch.add(ContentProviderOperation
         .newInsert(ContactsContract.Data.CONTENT_URI)

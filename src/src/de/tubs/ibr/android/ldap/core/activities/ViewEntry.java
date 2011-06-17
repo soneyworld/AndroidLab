@@ -41,6 +41,7 @@ import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Entry;
 import de.tubs.ibr.android.ldap.R;
 import de.tubs.ibr.android.ldap.core.BatchOperation;
+import de.tubs.ibr.android.ldap.core.ContactManager;
 import de.tubs.ibr.android.ldap.provider.StringProvider;
 import static com.unboundid.util.StaticUtils.*;
 import static de.tubs.ibr.android.ldap.sync.AttributeMapper.*;
