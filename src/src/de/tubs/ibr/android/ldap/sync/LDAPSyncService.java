@@ -2,6 +2,7 @@ package de.tubs.ibr.android.ldap.sync;
 
 //import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
@@ -12,6 +13,7 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
 import de.tubs.ibr.android.ldap.core.BatchOperation;
+import de.tubs.ibr.android.ldap.core.ContactManager;
 import de.tubs.ibr.android.ldap.provider.LDAPService;
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -59,19 +61,21 @@ public class LDAPSyncService extends Service {
   protected static void performSync(Context context, Account account,
       Bundle extras, String authority, ContentProviderClient provider,
       SyncResult syncResult) throws OperationCanceledException {
-    HashMap<String, Long> localContacts = new HashMap<String, Long>();
+    HashMap<String, Integer> localContacts = new HashMap<String, Integer>();
     mContentResolver = context.getContentResolver();
     // Load the local Last.fm contacts
     Uri rawContactUri = RawContacts.CONTENT_URI.buildUpon()
         .appendQueryParameter(RawContacts.ACCOUNT_NAME, account.name)
         .appendQueryParameter(RawContacts.ACCOUNT_TYPE, account.type).build();
     Cursor c1 = mContentResolver.query(rawContactUri, new String[] {
-        BaseColumns._ID, RawContacts.SYNC1 }, null, null, null);
+        BaseColumns._ID, RawContacts.SOURCE_ID }, null, null, null);
     while (c1.moveToNext()) {
-      localContacts.put(c1.getString(1), c1.getLong(0));
+      localContacts.put(c1.getString(1), c1.getInt(0));
     }
+    boolean error = false;
     long userId;
-    long rawContactId = 0;
+    String ldapuid;
+    int rawContactId = 0;
     final ContentResolver resolver = context.getContentResolver();
     final BatchOperation batchOperation = new BatchOperation(context, resolver);
     LDAPConnection conn = null;
@@ -87,40 +91,44 @@ public class LDAPSyncService extends Service {
       request.setTimeLimitSeconds(300);
       ldapresult = conn.search(request);
     } catch (LDAPSearchException lse) {
+      error = true;
     } catch (LDAPException le) {
+      error = true;
     } finally {
       if (conn != null) {
         conn.close();
       }
+      if(error){
+        return;
+      }
     }
-    
-//    for (final SearchResultEntry user : ldapresult.getSearchEntries()) {
-//      userId = user.getUserId();
-//      // Check to see if the contact needs to be inserted or updated
-//      rawContactId = lookupRawContact(resolver, userId);
-//      if (rawContactId != 0) {
-//        if (!user.isDeleted()) {
-//          // update contact
-//          updateContact(context, resolver, account, user, rawContactId,
-//              batchOperation);
-//        } else {
-//          // delete contact
-//          deleteContact(context, rawContactId, batchOperation);
-//        }
-//      } else {
-//        // add new contact
-//        Log.d(TAG, "In addContact");
-//        if (!user.isDeleted()) {
-//          addContact(context, account, user, batchOperation);
-//        }
-//      }
-//      // A sync adapter should batch operations on multiple contacts,
-//      // because it will make a dramatic performance difference.
-//      if (batchOperation.size() >= 50) {
-//        batchOperation.execute();
-//      }
-//    }
-//    batchOperation.execute();
+    // Alle LDAP Kontakte überprüfen, ob diese lokal importiert werden müssen,
+    // oder ob es bereits welche gibt und diese aktualisiert werden müssen.
+    for (final SearchResultEntry user : ldapresult.getSearchEntries()) {
+      ldapuid = user.getAttributeValue(AttributeMapper.ATTR_UID);
+      // Check to see if the contact needs to be inserted or updated
+      if (localContacts.containsKey(ldapuid)) {
+        rawContactId = localContacts.get(ldapuid);
+        // update contact
+        ContactManager.updateLDAPContact(rawContactId, account, user,
+            batchOperation);
+        localContacts.remove(ldapuid);
+      } else {
+        // add remote contact to local
+        ContactManager.addLDAPContactToAccount(user, account, batchOperation);
+      }
+    }
+    // Falls es noch lokale Kontakte gibt, die entfernt nicht mehr vorhanden
+    // sind, sollen diese aus dem Kontaktbuch gelöscht werden.
+    if (!localContacts.isEmpty()) {
+      for (Entry<String, Integer> deletelocal : localContacts.entrySet()) {
+        ContactManager
+            .deleteLDAPContact(deletelocal.getValue(), batchOperation);
+      }
+    }
+    // A sync adapter should batch operations on multiple contacts,
+    // because it will make a dramatic performance difference.
+    batchOperation.execute();
     // TODO use LDAP Content Provider to search for contacts, which has to be
     // synchronized
     // ArrayList<ContentProviderOperation> operationList = new
