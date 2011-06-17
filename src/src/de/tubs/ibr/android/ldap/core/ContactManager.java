@@ -81,7 +81,7 @@ public class ContactManager {
   public static void deleteLDAPContact(BatchOperation batch){
     
   }
-  public static void updateLDAPContact(BatchOperation batch){
+  public static void updateLDAPContact(long id, BatchOperation batch){
     
   }
   
