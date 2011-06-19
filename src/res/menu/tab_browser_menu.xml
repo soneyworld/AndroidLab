@@ -3,4 +3,5 @@
   xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:title="Choose account" android:id="@+id/choose_account_preferences"></item>
     <item android:title="Conflict View Test" android:id="@+id/test_conflict_view"></item>
+    <item android:title="Add contact" android:id="@+id/add_contact"></item>
 </menu>

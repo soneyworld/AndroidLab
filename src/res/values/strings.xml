@@ -682,6 +682,9 @@
     <string name="MODIFY_ACCOUNT_ACTION">de.tubs.ibr.android.ldap.auth.AddServer.ACCOUNT_SETUP</string> 
     <string name="name">Name</string>
     <string name="telefon">Telefon</string>
+    <string name="undefinedTypeLabel">(Undefined)</string>
+    <string name="selectLabel">Select label</string>
+    <string name="contactCreationFailure">Contact creation failed, check logs.</string>
     <array name="accounts">
     <item>"Account A"</item>
     <item>"Account B"</item>
