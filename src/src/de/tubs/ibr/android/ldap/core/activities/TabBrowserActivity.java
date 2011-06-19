@@ -139,6 +139,10 @@ public class TabBrowserActivity extends TabActivity implements
         Intent conflictView = new Intent(getBaseContext(), ConflictActivity.class);
         startActivity(conflictView);
         break;
+      case R.id.add_contact:
+        Intent addContactView = new Intent(getBaseContext(), ContactAdder.class);
+        startActivity(addContactView);
+        break;
       default:
         break;
     }
