@@ -158,7 +158,7 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
         // Get values from UI
         String firstname = mContactFirstnameEditText.getText().toString();
         String name = mContactNameEditText.getText().toString();
-        String displayname = firstname + name;
+        String displayname = firstname + " " + name;
         String phone = mContactPhoneEditText.getText().toString();
         String email = mContactEmailEditText.getText().toString();
         int phoneType = mContactPhoneTypes.get(
@@ -180,6 +180,12 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
             .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
             .withValue(ContactsContract.Data.MIMETYPE,
                     ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+            .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, displayname)
+            .build());
+        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+            .withValue(ContactsContract.Data.MIMETYPE,
+                    ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
             .withValue(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME, firstname)
             .build());
         ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
@@ -188,12 +194,7 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
                         ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
                 .withValue(ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME, name)
                 .build());
-        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-            .withValue(ContactsContract.Data.MIMETYPE,
-                    ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
-            .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, displayname)
-            .build());
+        
         ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
                 .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
                 .withValue(ContactsContract.Data.MIMETYPE,
