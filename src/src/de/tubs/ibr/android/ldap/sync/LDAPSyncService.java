@@ -110,7 +110,7 @@ public class LDAPSyncService extends Service {
       if (localContacts.containsKey(ldapuid)) {
         rawContactId = localContacts.get(ldapuid);
         // update contact
-        ContactManager.updateLDAPContact(rawContactId, account, user,
+        ContactManager.updateLDAPContact(rawContactId, context, account, user,
             batchOperation);
         localContacts.remove(ldapuid);
       } else {

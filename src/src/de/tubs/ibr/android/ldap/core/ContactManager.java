@@ -4,7 +4,12 @@ import static com.unboundid.util.StaticUtils.EOL;
 import java.util.StringTokenizer;
 import android.accounts.Account;
 import android.content.ContentProviderOperation;
+import android.content.ContentUris;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
 import android.provider.ContactsContract;
+import android.provider.ContactsContract.RawContactsEntity;
 import com.unboundid.ldap.sdk.Entry;
 import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 
@@ -93,8 +98,27 @@ public class ContactManager {
 
   }
 
-  public static void updateLDAPContact(int id, Account account, Entry entry,
-      BatchOperation batch) {
+  public static void updateLDAPContact(int id, Context context,
+      Account account, Entry entry, BatchOperation batch) {
+//    Uri entityUri = ContentUris.withAppendedId(RawContactsEntity.CONTENT_URI,
+//        id);
+//    Cursor c = context.getContentResolver().query(
+//        entityUri,
+//        new String[] { RawContactsEntity.CONTACT_ID, RawContactsEntity.DATA_ID,
+//            RawContactsEntity.MIMETYPE, RawContactsEntity.DATA1 }, null, null,
+//        null);
+//    try {
+//      while (c.moveToNext()) {
+//        String sourceId = c.getString(0);
+//        if (!c.isNull(1)) {
+//          String mimeType = c.getString(2);
+//          String data = c.getString(3);
+//        }
+//      }
+//    } finally {
+//      c.close();
+//    }
+
     // String name = entry.getAttributeValue(AttributeMapper.ATTR_FULL_NAME);
     // String workPhone = entry
     // .getAttributeValue(AttributeMapper.ATTR_PRIMARY_PHONE);
