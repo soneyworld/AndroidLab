@@ -689,4 +689,16 @@
     <item>"Account A"</item>
     <item>"Account B"</item>
   </array>
+    <array name="telefonnrTypeItems">
+        <item>Home</item>
+        <item>Work</item>
+        <item>Mobile</item>
+        <item>Other</item>
+    </array>
+    <array name="emailTypeItems">
+        <item>Home</item>
+        <item>Work</item>
+        <item>Mobile</item>
+        <item>Other</item>
+    </array>
 </resources>
