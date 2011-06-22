@@ -1,0 +1,12 @@
+dn: uid=mmustermann,ou=People,dc=debuntu,dc=local
+uid: mmustermann
+cn: Max Mustermann
+sn: Mustermann
+givenName: Max
+displayName: Max Mustermann
+mail: max@mustermann.de
+telephoneNumer: 1234/45678
+userPassword: jn2b3400923b4
+objectClass: inetOrgPerson
+objectClass: top
+objectClass: person

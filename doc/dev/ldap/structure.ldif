@@ -1,0 +1,7 @@
+dn: ou=People,dc=debuntu,dc=local
+ou: People
+objectClass: organizationalUnit
+
+dn: ou=private_People,dc=debuntu,dc=local
+ou: private_People
+objectClass: organizationalUnit
