@@ -15,13 +15,20 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
-import android.widget.TextView;
-import android.widget.Toast;
 
 public class ContactViewerActivity extends Activity {
+  
+  String firstname;
+  String lastname;
+  String phonenumber;
+  String phonetype;
+  String mailaddress;
+  String mailtype;
 
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
@@ -57,6 +64,7 @@ public class ContactViewerActivity extends Activity {
 
     Spinner addrtype = (Spinner) findViewById(R.id.telefonnrLocalTypeSpinner);
     Spinner phonetype = (Spinner) findViewById(R.id.emailLocalTypeSpinner);
+    Button saveChanges = (Button) findViewById(R.id.contactSaveChangesButton);
     ArrayAdapter<CharSequence> adapteraddr = ArrayAdapter.createFromResource(
         this, R.array.emailTypeItems, android.R.layout.simple_spinner_item);
     adapteraddr
@@ -73,6 +81,13 @@ public class ContactViewerActivity extends Activity {
         Contacts.HAS_PHONE_NUMBER };
     Cursor cr = managedQuery(ContactsContract.Contacts.CONTENT_URI, projection,
         Contacts._ID + "= ?", new String[] { String.valueOf(id) }, null);
+
+    saveChanges.setOnClickListener(new View.OnClickListener() {
+      public void onClick(View v) {
+        onSaveChangesButtonClicked();
+      }
+    });
+
     if (cr.moveToFirst()) {
       String number = null;
       int numbertype;
@@ -105,17 +120,14 @@ public class ContactViewerActivity extends Activity {
           addresstype = mail.getInt(mail.getColumnIndex(Email.DATA2));
           EditText addr = (EditText) findViewById(R.id.emailLocal);
           addr.setText(address);
-          
+
           if (addresstype == 1) {
             addrtype.setSelection(0);
-          }
-          else if (addresstype == 2) {
+          } else if (addresstype == 2) {
             addrtype.setSelection(1);
-          }
-          else if (addresstype == 4) {
+          } else if (addresstype == 4) {
             addrtype.setSelection(2);
-          }
-          else {
+          } else {
             addrtype.setSelection(3);
           }
 
@@ -133,22 +145,39 @@ public class ContactViewerActivity extends Activity {
           numbertype = phone.getInt(phone.getColumnIndex(Phone.DATA2));
           EditText nr = (EditText) findViewById(R.id.telefonnrLocal);
           nr.setText(number);
-          
+
           if (numbertype == 1) {
             phonetype.setSelection(0);
-          }
-          else if (numbertype == 3) {
+          } else if (numbertype == 3) {
             phonetype.setSelection(1);
-          }
-          else if (numbertype == 2) {
+          } else if (numbertype == 2) {
             phonetype.setSelection(2);
-          }
-          else {
+          } else {
             phonetype.setSelection(3);
           }
         }
       } while (cr.moveToNext());
     }
 
+  }
+
+  private void onSaveChangesButtonClicked() {
+    Log.v("TAG", "Save button clicked");
+    EditText firstnameField = (EditText) findViewById(R.id.firstnameLocal);
+    EditText lastnameField = (EditText) findViewById(R.id.lastnameLocal);
+    EditText phonenumberField = (EditText) findViewById(R.id.telefonnrLocal);
+    Spinner phonetypeField = (Spinner) findViewById(R.id.telefonnrLocalTypeSpinner);
+    EditText mailaddressField = (EditText) findViewById(R.id.emailLocal);
+    Spinner mailtypeField = (Spinner) findViewById(R.id.emailLocalTypeSpinner);
+    
+    firstname = firstnameField.getText().toString();
+    lastname = lastnameField.getText().toString();
+    phonenumber = phonenumberField.getText().toString();
+    phonetype = phonetypeField.getSelectedItem().toString();
+    mailaddress = mailaddressField.getText().toString();
+    mailtype = mailtypeField.getSelectedItem().toString();
+    
+    
+    //TODO
   }
 }
