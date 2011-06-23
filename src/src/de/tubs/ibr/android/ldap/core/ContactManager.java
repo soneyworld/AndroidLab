@@ -30,7 +30,6 @@ public class ContactManager {
     if (!isSyncable) {
       return;
     }
-
     String name = entry.getAttributeValue(AttributeMapper.ATTR_FULL_NAME);
     String workPhone = entry
         .getAttributeValue(AttributeMapper.ATTR_PRIMARY_PHONE);
@@ -132,7 +131,13 @@ public class ContactManager {
   }
 
   public static void deleteLDAPContact(long id, BatchOperation batch) {
-
+    int rawContactInsertIndex = batch.size();
+    Uri contentAsSyncAdapter = ContactsContract.RawContacts.CONTENT_URI
+        .buildUpon()
+        .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
+        .build();
+    batch.add(ContentProviderOperation.newDelete(contentAsSyncAdapter)
+        .withValue(ContactsContract.RawContacts._ID, id).build());
   }
 
   public static void updateLDAPContact(int id, Context context,
