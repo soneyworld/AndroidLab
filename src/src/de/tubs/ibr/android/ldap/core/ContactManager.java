@@ -6,12 +6,13 @@ import android.accounts.Account;
 import android.content.ContentProviderOperation;
 import android.content.ContentUris;
 import android.content.Context;
+import android.provider.ContactsContract.RawContacts.Entity;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
+import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.RawContactsEntity;
 import com.unboundid.ldap.sdk.Entry;
-import com.unboundid.ldif.LDIFReader;
 import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 
 public class ContactManager {
@@ -23,12 +24,10 @@ public class ContactManager {
   public static void importLDAPContact(Entry entry, Account account,
       BatchOperation batch) {
     int rawContactInsertIndex = batch.size();
-    String ldif = entry.toLDIFString();
-    System.out.println(ldif);
     String[] classes = entry.getAttributeValues("objectClass");
     for (String string : classes) {
-      if(string.equalsIgnoreCase("inetOrgPerson")){
-        System.out.println(string); 
+      if (string.equalsIgnoreCase("inetOrgPerson")) {
+        System.out.println(string);
       }
     }
     String sourceId = entry.getAttributeValue(AttributeMapper.ATTR_UID);
@@ -47,11 +46,23 @@ public class ContactManager {
         .getAttributeValue(AttributeMapper.ATTR_PRIMARY_ADDRESS);
     String homeAddress = entry
         .getAttributeValue(AttributeMapper.ATTR_HOME_ADDRESS);
+    // List all LDAP ObjectClasses
+    String objectClass = "";
+    for (String objectClazz : entry.getAttributeValues("objectClass")) {
+      objectClass = objectClass + "\n" + objectClazz;
+    }
+    Uri contentAsSyncAdapter = ContactsContract.RawContacts.CONTENT_URI.buildUpon().appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true").build();
     batch.add(ContentProviderOperation
-        .newInsert(ContactsContract.RawContacts.CONTENT_URI)
+        .newInsert(contentAsSyncAdapter)
         .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, account.type)
         .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, account.name)
-        .withValue(ContactsContract.RawContacts.SOURCE_ID, sourceId).build());
+        .withValue(ContactsContract.RawContacts.SOURCE_ID, sourceId)
+        .withValue(ContactsContract.RawContacts.SYNC1, "inSync")
+        .withValue(ContactsContract.RawContacts.SYNC2, "")
+        .withValue(ContactsContract.RawContacts.SYNC3,
+            entry.getDN() + objectClass)
+        .withValue(ContactsContract.RawContacts.SYNC4, entry.toLDIFString())
+        .build());
     batch.add(ContentProviderOperation
         .newInsert(ContactsContract.Data.CONTENT_URI)
         .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID,
@@ -109,24 +120,27 @@ public class ContactManager {
 
   public static void updateLDAPContact(int id, Context context,
       Account account, Entry entry, BatchOperation batch) {
-//    Uri entityUri = ContentUris.withAppendedId(RawContactsEntity.CONTENT_URI,
-//        id);
-//    Cursor c = context.getContentResolver().query(
-//        entityUri,
-//        new String[] { RawContactsEntity.CONTACT_ID, RawContactsEntity.DATA_ID,
-//            RawContactsEntity.MIMETYPE, RawContactsEntity.DATA1 }, null, null,
-//        null);
-//    try {
-//      while (c.moveToNext()) {
-//        String sourceId = c.getString(0);
-//        if (!c.isNull(1)) {
-//          String mimeType = c.getString(2);
-//          String data = c.getString(3);
-//        }
-//      }
-//    } finally {
-//      c.close();
-//    }
+    if (entry.getAttribute(AttributeMapper.ATTR_UID) == null) {
+      return;
+    }
+    Uri rawContactUri = ContentUris.withAppendedId(RawContacts.CONTENT_URI, id);
+    Uri entityUri = Uri.withAppendedPath(rawContactUri,
+        Entity.CONTENT_DIRECTORY);
+    Cursor c = context.getContentResolver().query(
+        entityUri,
+        new String[] { RawContacts.SOURCE_ID, Entity.DATA_ID, Entity.MIMETYPE,
+            Entity.DATA1 }, null, null, null);
+    try {
+      while (c.moveToNext()) {
+        String sourceId = c.getString(0);
+        if (!c.isNull(1)) {
+          String mimeType = c.getString(2);
+          String data = c.getString(3);
+        }
+      }
+    } finally {
+      c.close();
+    }
 
     // String name = entry.getAttributeValue(AttributeMapper.ATTR_FULL_NAME);
     // String workPhone = entry
