@@ -1,4 +1,4 @@
-dn: uid=mmustermann,ou=People,dc=debuntu,dc=local
+dn: uid=mmustermann,ou=public_people,ou=people,dc=tubs,dc=ibr,dc=android
 uid: mmustermann
 cn: Max Mustermann
 sn: Mustermann

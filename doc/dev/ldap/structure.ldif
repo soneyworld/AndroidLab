@@ -1,7 +1,11 @@
-dn: ou=People,dc=debuntu,dc=local
-ou: People
+dn: ou=people,dc=tubs,dc=ibr,dc=android
+ou: people
 objectClass: organizationalUnit
 
-dn: ou=private_People,dc=debuntu,dc=local
-ou: private_People
+dn: ou=private_people,ou=people,dc=tubs,dc=ibr,dc=android
+ou: private_people
+objectClass: organizationalUnit
+
+dn: ou=public_people,ou=people,dc=tubs,dc=ibr,dc=android
+ou: public_people
 objectClass: organizationalUnit
