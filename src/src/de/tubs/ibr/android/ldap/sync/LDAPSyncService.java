@@ -70,7 +70,10 @@ public class LDAPSyncService extends Service {
     Cursor c1 = mContentResolver.query(rawContactUri, new String[] {
         BaseColumns._ID, RawContacts.SOURCE_ID }, null, null, null);
     while (c1.moveToNext()) {
-      localContacts.put(c1.getString(1), c1.getInt(0));
+      final String sourceid = c1.getString(1);
+      if (sourceid != null && !sourceid.equalsIgnoreCase("")) {
+        localContacts.put(c1.getString(1), c1.getInt(0));
+      }
     }
     boolean error = false;
     long userId;
@@ -98,7 +101,7 @@ public class LDAPSyncService extends Service {
       if (conn != null) {
         conn.close();
       }
-      if(error){
+      if (error) {
         return;
       }
     }
