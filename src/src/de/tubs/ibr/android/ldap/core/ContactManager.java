@@ -18,19 +18,19 @@ import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 public class ContactManager {
   public static void addLDAPContactToAccount(Entry entry, Account account,
       BatchOperation batch) {
-    importLDAPContact(entry, account, batch);
-  }
-
-  public static void importLDAPContact(Entry entry, Account account,
-      BatchOperation batch) {
     int rawContactInsertIndex = batch.size();
-    String[] classes = entry.getAttributeValues("objectClass");
-    for (String string : classes) {
-      if (string.equalsIgnoreCase("inetOrgPerson")) {
-        System.out.println(string);
+    // Check if the Entry is a Person and can be synchronized
+    boolean isSyncable = false;
+    String sourceId = entry.getAttributeValue(AttributeMapper.ATTR_UID);
+    for (String string : entry.getAttributeValues("objectClass")) {
+      if (string.equalsIgnoreCase("inetOrgPerson") && sourceId != null) {
+        isSyncable = true;
       }
     }
-    String sourceId = entry.getAttributeValue(AttributeMapper.ATTR_UID);
+    if (!isSyncable) {
+      return;
+    }
+
     String name = entry.getAttributeValue(AttributeMapper.ATTR_FULL_NAME);
     String workPhone = entry
         .getAttributeValue(AttributeMapper.ATTR_PRIMARY_PHONE);
@@ -51,7 +51,13 @@ public class ContactManager {
     for (String objectClazz : entry.getAttributeValues("objectClass")) {
       objectClass = objectClass + "\n" + objectClazz;
     }
-    Uri contentAsSyncAdapter = ContactsContract.RawContacts.CONTENT_URI.buildUpon().appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true").build();
+    Uri contentAsSyncAdapter = ContactsContract.RawContacts.CONTENT_URI
+        .buildUpon()
+        .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
+        .build();
+    Uri dataAsSyncAdapter = ContactsContract.Data.CONTENT_URI.buildUpon()
+        .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
+        .build();
     batch.add(ContentProviderOperation
         .newInsert(contentAsSyncAdapter)
         .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, account.type)
@@ -64,7 +70,7 @@ public class ContactManager {
         .withValue(ContactsContract.RawContacts.SYNC4, entry.toLDIFString())
         .build());
     batch.add(ContentProviderOperation
-        .newInsert(ContactsContract.Data.CONTENT_URI)
+        .newInsert(dataAsSyncAdapter)
         .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID,
             rawContactInsertIndex)
         .withValue(ContactsContract.Data.MIMETYPE,
@@ -74,40 +80,51 @@ public class ContactManager {
         .build());
     if (workPhone != null) {
       batch.add(addPhoneNumber(rawContactInsertIndex, workPhone,
-          ContactsContract.CommonDataKinds.Phone.TYPE_WORK));
+          ContactsContract.CommonDataKinds.Phone.TYPE_WORK, dataAsSyncAdapter));
     }
     if (homePhone != null) {
       batch.add(addPhoneNumber(rawContactInsertIndex, homePhone,
-          ContactsContract.CommonDataKinds.Phone.TYPE_HOME));
+          ContactsContract.CommonDataKinds.Phone.TYPE_HOME, dataAsSyncAdapter));
     }
     if (mobile != null) {
-      batch.add(addPhoneNumber(rawContactInsertIndex, mobile,
-          ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE));
+      batch
+          .add(addPhoneNumber(rawContactInsertIndex, mobile,
+              ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE,
+              dataAsSyncAdapter));
     }
     if (pager != null) {
-      batch.add(addPhoneNumber(rawContactInsertIndex, pager,
-          ContactsContract.CommonDataKinds.Phone.TYPE_PAGER));
+      batch
+          .add(addPhoneNumber(rawContactInsertIndex, pager,
+              ContactsContract.CommonDataKinds.Phone.TYPE_PAGER,
+              dataAsSyncAdapter));
     }
     if (fax != null) {
       batch.add(addPhoneNumber(rawContactInsertIndex, fax,
-          ContactsContract.CommonDataKinds.Phone.TYPE_FAX_WORK));
+          ContactsContract.CommonDataKinds.Phone.TYPE_FAX_WORK,
+          dataAsSyncAdapter));
     }
     if (workEMail != null) {
       batch.add(addEMailAddress(rawContactInsertIndex, workEMail,
-          ContactsContract.CommonDataKinds.Email.TYPE_WORK));
+          ContactsContract.CommonDataKinds.Email.TYPE_WORK, dataAsSyncAdapter));
     }
     if (homeEMail != null) {
       batch.add(addEMailAddress(rawContactInsertIndex, homeEMail,
-          ContactsContract.CommonDataKinds.Email.TYPE_HOME));
+          ContactsContract.CommonDataKinds.Email.TYPE_HOME, dataAsSyncAdapter));
     }
     if (workAddress != null) {
       batch.add(addPostalAddress(rawContactInsertIndex, workAddress,
-          ContactsContract.CommonDataKinds.Email.TYPE_WORK));
+          ContactsContract.CommonDataKinds.Email.TYPE_WORK, dataAsSyncAdapter));
     }
     if (homeAddress != null) {
       batch.add(addPostalAddress(rawContactInsertIndex, homeAddress,
-          ContactsContract.CommonDataKinds.StructuredPostal.TYPE_HOME));
+          ContactsContract.CommonDataKinds.StructuredPostal.TYPE_HOME,
+          dataAsSyncAdapter));
     }
+  }
+
+  public static void importLDAPContact(Entry entry, Account account,
+      BatchOperation batch) {
+
   }
 
   public static void exportContactToLDAP(long id, BatchOperation batch) {
@@ -224,9 +241,10 @@ public class ContactManager {
    * @return a addPhoneNumber Operation
    */
   private static ContentProviderOperation addPhoneNumber(
-      final int rawContactInsertIndex, final String number, final int type) {
+      final int rawContactInsertIndex, final String number, final int type,
+      final Uri dataAsSyncAdapter) {
     return ContentProviderOperation
-        .newInsert(ContactsContract.Data.CONTENT_URI)
+        .newInsert(dataAsSyncAdapter)
         .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID,
             rawContactInsertIndex)
         .withValue(ContactsContract.Data.MIMETYPE,
@@ -269,9 +287,10 @@ public class ContactManager {
    * @return a addEMailAdress Operation
    */
   private static ContentProviderOperation addEMailAddress(
-      final int rawContactInsertIndex, final String address, final int type) {
+      final int rawContactInsertIndex, final String address, final int type,
+      final Uri dataAsSyncAdapter) {
     return ContentProviderOperation
-        .newInsert(ContactsContract.Data.CONTENT_URI)
+        .newInsert(dataAsSyncAdapter)
         .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID,
             rawContactInsertIndex)
         .withValue(ContactsContract.Data.MIMETYPE,
@@ -312,7 +331,8 @@ public class ContactManager {
    * @return a addPostalAdress Operation
    */
   private static ContentProviderOperation addPostalAddress(
-      final int rawContactInsertIndex, final String address, final int type) {
+      final int rawContactInsertIndex, final String address, final int type,
+      final Uri dataAsSyncAdapter) {
     final StringBuilder addr = new StringBuilder();
     final StringTokenizer tokenizer = new StringTokenizer(address, "$");
     while (tokenizer.hasMoreTokens()) {
@@ -322,7 +342,7 @@ public class ContactManager {
       }
     }
     return ContentProviderOperation
-        .newInsert(ContactsContract.Data.CONTENT_URI)
+        .newInsert(dataAsSyncAdapter)
         .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID,
             rawContactInsertIndex)
         .withValue(ContactsContract.Data.MIMETYPE,
