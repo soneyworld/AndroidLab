@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.RawContactsEntity;
 import com.unboundid.ldap.sdk.Entry;
+import com.unboundid.ldif.LDIFReader;
 import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 
 public class ContactManager {
@@ -22,6 +23,15 @@ public class ContactManager {
   public static void importLDAPContact(Entry entry, Account account,
       BatchOperation batch) {
     int rawContactInsertIndex = batch.size();
+    String ldif = entry.toLDIFString();
+    System.out.println(ldif);
+    String[] classes = entry.getAttributeValues("objectClass");
+    for (String string : classes) {
+      if(string.equalsIgnoreCase("inetOrgPerson")){
+        System.out.println(string); 
+      }
+    }
+    String sourceId = entry.getAttributeValue(AttributeMapper.ATTR_UID);
     String name = entry.getAttributeValue(AttributeMapper.ATTR_FULL_NAME);
     String workPhone = entry
         .getAttributeValue(AttributeMapper.ATTR_PRIMARY_PHONE);
@@ -37,7 +47,6 @@ public class ContactManager {
         .getAttributeValue(AttributeMapper.ATTR_PRIMARY_ADDRESS);
     String homeAddress = entry
         .getAttributeValue(AttributeMapper.ATTR_HOME_ADDRESS);
-    String sourceId = entry.getAttributeValue(AttributeMapper.ATTR_UID);
     batch.add(ContentProviderOperation
         .newInsert(ContactsContract.RawContacts.CONTENT_URI)
         .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, account.type)
