@@ -14,10 +14,14 @@ import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
@@ -40,6 +44,8 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
     private ArrayList<AccountData> mAccounts;
     private AccountAdapter mAccountAdapter;
     private Spinner mAccountSpinner;
+    private EditText mUserIdEditText;
+    private TextView mUserIdTextView;
     private EditText mContactEmailEditText;
     private ArrayList<Integer> mContactEmailTypes;
     private Spinner mContactEmailTypeSpinner;
@@ -48,6 +54,7 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
     private EditText mContactPhoneEditText;
     private ArrayList<Integer> mContactPhoneTypes;
     private Spinner mContactPhoneTypeSpinner;
+    private CheckBox mSyncCheckBox;
     private Button mContactSaveButton;
     private AccountData mSelectedAccount;
 
@@ -60,15 +67,19 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
         Log.v(TAG, "Activity State: onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.contact_adder);
+        
 
         // Obtain handles to UI objects
         mAccountSpinner = (Spinner) findViewById(R.id.accountSpinner);
+        mUserIdEditText = (EditText) findViewById(R.id.userIdEditText);
+        mUserIdTextView = (TextView) findViewById(R.id.userIdTextView);
         mContactFirstnameEditText = (EditText) findViewById(R.id.contactFirstnameEditText);
         mContactNameEditText = (EditText) findViewById(R.id.contactNameEditText);
         mContactPhoneEditText = (EditText) findViewById(R.id.contactPhoneEditText);
         mContactEmailEditText = (EditText) findViewById(R.id.contactEmailEditText);
         mContactPhoneTypeSpinner = (Spinner) findViewById(R.id.contactPhoneTypeSpinner);
         mContactEmailTypeSpinner = (Spinner) findViewById(R.id.contactEmailTypeSpinner);
+        mSyncCheckBox = (CheckBox) findViewById(R.id.syncCheckBox);
         mContactSaveButton = (Button) findViewById(R.id.contactSaveButton);
 
         // Prepare list of supported account types
@@ -118,6 +129,28 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
         }
         mContactEmailTypeSpinner.setAdapter(adapter);
         mContactEmailTypeSpinner.setPrompt(getString(R.string.selectLabel));
+        
+        //OnCLickListener for the SyncCheckBox
+        mSyncCheckBox.setOnClickListener(new OnClickListener() {
+          public void onClick(View v) {
+              // Perform action on clicks, depending on whether it's now checked
+              if (((CheckBox) v).isChecked()) {
+                mUserIdEditText.setWidth(-2);
+                mUserIdEditText.setHeight(-2);
+                mUserIdTextView.setWidth(-2);
+                mUserIdTextView.setHeight(-2);
+                  
+              } 
+              else {
+                  mUserIdEditText.setText("");
+                  mUserIdEditText.setWidth(0);
+                  mUserIdEditText.setHeight(0);
+                  mUserIdTextView.setWidth(0);
+                  mUserIdTextView.setHeight(0);
+                  
+              }
+          }
+      });
 
         // Prepare the system account manager. On registering the listener below, we also ask for
         // an initial callback to pre-populate the account list.
@@ -159,6 +192,13 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
         String firstname = mContactFirstnameEditText.getText().toString();
         String name = mContactNameEditText.getText().toString();
         String displayname = firstname + " " + name;
+        String syncstatus;
+        if (mSyncCheckBox.isChecked()) {
+          syncstatus = "locally added";
+        }
+        else {
+          syncstatus = "";
+        }
         String phone = mContactPhoneEditText.getText().toString();
         String email = mContactEmailEditText.getText().toString();
         int phoneType = mContactPhoneTypes.get(
@@ -175,12 +215,14 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
         ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
                 .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, mSelectedAccount.getType())
                 .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, mSelectedAccount.getName())
+                .withValue(ContactsContract.RawContacts.SOURCE_ID, mUserIdEditText.getText())
                 .build());
         ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
             .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
             .withValue(ContactsContract.Data.MIMETYPE,
                     ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
             .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, displayname)
+            .withValue(ContactsContract.Data.SYNC1, syncstatus)
             .build());
         ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
             .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)

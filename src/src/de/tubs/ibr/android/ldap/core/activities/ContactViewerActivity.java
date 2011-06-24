@@ -2,6 +2,7 @@ package de.tubs.ibr.android.ldap.core.activities;
 
 import de.tubs.ibr.android.ldap.R;
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -65,11 +66,13 @@ public class ContactViewerActivity extends Activity {
     Spinner addrtype = (Spinner) findViewById(R.id.telefonnrLocalTypeSpinner);
     Spinner phonetype = (Spinner) findViewById(R.id.emailLocalTypeSpinner);
     Button saveChanges = (Button) findViewById(R.id.contactSaveChangesButton);
+    
     ArrayAdapter<CharSequence> adapteraddr = ArrayAdapter.createFromResource(
         this, R.array.emailTypeItems, android.R.layout.simple_spinner_item);
     adapteraddr
         .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
     addrtype.setAdapter(adapteraddr);
+    
     ArrayAdapter<CharSequence> adapterphone = ArrayAdapter.createFromResource(
         this, R.array.telefonnrTypeItems, android.R.layout.simple_spinner_item);
     adapterphone
@@ -163,6 +166,9 @@ public class ContactViewerActivity extends Activity {
 
   private void onSaveChangesButtonClicked() {
     Log.v("TAG", "Save button clicked");
+    
+    ContentValues values = new ContentValues();
+    
     EditText firstnameField = (EditText) findViewById(R.id.firstnameLocal);
     EditText lastnameField = (EditText) findViewById(R.id.lastnameLocal);
     EditText phonenumberField = (EditText) findViewById(R.id.telefonnrLocal);
@@ -176,6 +182,7 @@ public class ContactViewerActivity extends Activity {
     phonetype = phonetypeField.getSelectedItem().toString();
     mailaddress = mailaddressField.getText().toString();
     mailtype = mailtypeField.getSelectedItem().toString();
+    
     
     
     //TODO

@@ -51,6 +51,11 @@ public class TabBrowserActivity extends TabActivity implements
     localTabSpec.setIndicator("Local").setContent(
         new Intent(this, LocalTabActivity.class));
     tabHost.addTab(localTabSpec);
+    
+    TabSpec syncTabSpec = tabHost.newTabSpec("tid1");
+    syncTabSpec.setIndicator("Sync").setContent(
+        new Intent(this, SyncTabActivity.class));
+    tabHost.addTab(syncTabSpec);
 
     TabSpec ldapTabSpec = tabHost.newTabSpec("tid1");
 
