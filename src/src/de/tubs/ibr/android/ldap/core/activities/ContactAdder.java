@@ -50,6 +50,7 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
     private ArrayList<Integer> mContactEmailTypes;
     private Spinner mContactEmailTypeSpinner;
     private EditText mContactFirstnameEditText;
+    private TextView mContactNameTextView;
     private EditText mContactNameEditText;
     private EditText mContactPhoneEditText;
     private ArrayList<Integer> mContactPhoneTypes;
@@ -74,6 +75,7 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
         mUserIdEditText = (EditText) findViewById(R.id.userIdEditText);
         mUserIdTextView = (TextView) findViewById(R.id.userIdTextView);
         mContactFirstnameEditText = (EditText) findViewById(R.id.contactFirstnameEditText);
+        mContactNameTextView = (TextView) findViewById(R.id.nameTextView);
         mContactNameEditText = (EditText) findViewById(R.id.contactNameEditText);
         mContactPhoneEditText = (EditText) findViewById(R.id.contactPhoneEditText);
         mContactEmailEditText = (EditText) findViewById(R.id.contactEmailEditText);
@@ -81,6 +83,7 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
         mContactEmailTypeSpinner = (Spinner) findViewById(R.id.contactEmailTypeSpinner);
         mSyncCheckBox = (CheckBox) findViewById(R.id.syncCheckBox);
         mContactSaveButton = (Button) findViewById(R.id.contactSaveButton);
+        
 
         // Prepare list of supported account types
         // Note: Other types are available in ContactsContract.CommonDataKinds
@@ -101,6 +104,8 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
         mAccounts = new ArrayList<AccountData>();
         mAccountAdapter = new AccountAdapter(this, mAccounts);
         mAccountSpinner.setAdapter(mAccountAdapter);
+        
+        mSyncCheckBox.setChecked(true);
 
         // Populate list of account types for phone
         ArrayAdapter<String> adapter;
@@ -135,19 +140,13 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
           public void onClick(View v) {
               // Perform action on clicks, depending on whether it's now checked
               if (((CheckBox) v).isChecked()) {
-                mUserIdEditText.setWidth(-2);
-                mUserIdEditText.setHeight(-2);
-                mUserIdTextView.setWidth(-2);
-                mUserIdTextView.setHeight(-2);
-                  
+                mUserIdEditText.setEnabled(true);
+                mUserIdTextView.setEnabled(true);   
               } 
               else {
-                  mUserIdEditText.setText("");
-                  mUserIdEditText.setWidth(0);
-                  mUserIdEditText.setHeight(0);
-                  mUserIdTextView.setWidth(0);
-                  mUserIdTextView.setHeight(0);
-                  
+                mUserIdEditText.setText("");
+                mUserIdEditText.setEnabled(false);
+                mUserIdTextView.setEnabled(false);
               }
           }
       });
@@ -189,6 +188,7 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
      */
     protected void createContactEntry() {
         // Get values from UI
+        String userid = mUserIdEditText.getText().toString();
         String firstname = mContactFirstnameEditText.getText().toString();
         String name = mContactNameEditText.getText().toString();
         String displayname = firstname + " " + name;
@@ -198,6 +198,7 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
         }
         else {
           syncstatus = "";
+          userid = "";
         }
         String phone = mContactPhoneEditText.getText().toString();
         String email = mContactEmailEditText.getText().toString();
@@ -215,13 +216,17 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
         ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
                 .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, mSelectedAccount.getType())
                 .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, mSelectedAccount.getName())
-                .withValue(ContactsContract.RawContacts.SOURCE_ID, mUserIdEditText.getText())
+                .withValue(ContactsContract.RawContacts.SOURCE_ID, userid)
                 .build());
         ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
             .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
             .withValue(ContactsContract.Data.MIMETYPE,
                     ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
             .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, displayname)
+            .build());
+        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+            .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
             .withValue(ContactsContract.Data.SYNC1, syncstatus)
             .build());
         ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)

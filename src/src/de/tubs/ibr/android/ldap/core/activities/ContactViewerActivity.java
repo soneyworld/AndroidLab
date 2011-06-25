@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Data;
+import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
@@ -17,62 +18,64 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 public class ContactViewerActivity extends Activity {
-  
+
   String firstname;
   String lastname;
   String phonenumber;
   String phonetype;
   String mailaddress;
   String mailtype;
-
-  @Override
-  public boolean onCreateOptionsMenu(Menu menu) {
-    MenuInflater mi = new MenuInflater(this);
-    mi.inflate(R.menu.contactviewmenu, menu);
-    return true;
-  }
-
-  @Override
-  public boolean onOptionsItemSelected(MenuItem item) {
-    switch (item.getItemId()) {
-      case R.id.OK:
-        Intent i = new Intent();
-        i.putExtra("phone",
-            ((EditText) findViewById(R.id.telefonnrLocal)).getText());
-        setResult(Activity.RESULT_OK, i);
-        finish();
-        break;
-      case R.id.BACK:
-        setResult(Activity.RESULT_CANCELED);
-        finish();
-        break;
-      default:
-        break;
-    }
-    return super.onOptionsItemSelected(item);
-  }
+  String syncstatus;
+  String src_id;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.contactviewerlocal);
+    setContentView(R.layout.contact_adder);
 
-    Spinner addrtype = (Spinner) findViewById(R.id.telefonnrLocalTypeSpinner);
-    Spinner phonetype = (Spinner) findViewById(R.id.emailLocalTypeSpinner);
-    Button saveChanges = (Button) findViewById(R.id.contactSaveChangesButton);
-    
+    Spinner acctype = (Spinner) findViewById(R.id.accountSpinner);
+    TextView acctextview = (TextView) findViewById(R.id.targetAccountTextView);
+    acctype.setVisibility(2);
+    acctextview.setVisibility(2);
+
+    final EditText mUserIdEditText = (EditText) findViewById(R.id.userIdEditText);
+    final TextView mUserIdTextView = (TextView) findViewById(R.id.userIdTextView);
+    Spinner addrtype = (Spinner) findViewById(R.id.contactPhoneTypeSpinner);
+    Spinner phonetype = (Spinner) findViewById(R.id.contactEmailTypeSpinner);
+    Button saveChanges = (Button) findViewById(R.id.contactSaveButton);
+    CheckBox syncCheckBox = (CheckBox) findViewById(R.id.syncCheckBox);
+
+    saveChanges.setText("Save changes");
+
+    syncCheckBox.setOnClickListener(new OnClickListener() {
+      public void onClick(View v) {
+        // Perform action on clicks, depending on whether it's now checked
+        if (((CheckBox) v).isChecked()) {
+          mUserIdEditText.setEnabled(true);
+          mUserIdTextView.setEnabled(true);
+        } else {
+          mUserIdEditText.setText("");
+          mUserIdEditText.setEnabled(false);
+          mUserIdTextView.setEnabled(false);
+        }
+      }
+    });
+
     ArrayAdapter<CharSequence> adapteraddr = ArrayAdapter.createFromResource(
         this, R.array.emailTypeItems, android.R.layout.simple_spinner_item);
     adapteraddr
         .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
     addrtype.setAdapter(adapteraddr);
-    
+
     ArrayAdapter<CharSequence> adapterphone = ArrayAdapter.createFromResource(
         this, R.array.telefonnrTypeItems, android.R.layout.simple_spinner_item);
     adapterphone
@@ -106,12 +109,42 @@ public class ContactViewerActivity extends Activity {
             new String[] { String.valueOf(id) }, null);
 
         if (name.moveToFirst()) {
-          EditText vorname = (EditText) findViewById(R.id.firstnameLocal);
+          EditText vorname = (EditText) findViewById(R.id.contactFirstnameEditText);
           vorname.setText(name.getString(name
               .getColumnIndex(StructuredName.GIVEN_NAME)));
-          EditText nachname = (EditText) findViewById(R.id.lastnameLocal);
+          EditText nachname = (EditText) findViewById(R.id.contactNameEditText);
           nachname.setText(name.getString(name
               .getColumnIndex(StructuredName.FAMILY_NAME)));
+        }
+
+        projection = new String[] { RawContacts.SOURCE_ID };
+
+        Cursor source_id = managedQuery(
+            ContactsContract.RawContacts.CONTENT_URI, projection,
+            RawContacts.SOURCE_ID + "= ?", new String[] { String.valueOf(id) },
+            null);
+        if (source_id.moveToFirst()) {
+          src_id = source_id.getString(source_id.getColumnIndex(RawContacts.SOURCE_ID));
+          mUserIdEditText.setText(src_id);
+        }
+
+        projection = new String[] { Data.SYNC1 };
+        Cursor sync = managedQuery(ContactsContract.Data.CONTENT_URI,
+            projection, Data.CONTACT_ID + "= ?",
+            new String[] { String.valueOf(id) }, null);
+        if (sync.moveToFirst()) {
+          syncstatus = sync.getString(sync.getColumnIndex(Data.SYNC1));
+          if (syncstatus != "") {
+            syncCheckBox.setChecked(true);
+            mUserIdEditText.setEnabled(true);
+            mUserIdTextView.setEnabled(true);
+            mUserIdEditText.setText(src_id);
+          } else {
+            syncCheckBox.setChecked(false);
+            mUserIdEditText.setText("");
+            mUserIdEditText.setEnabled(false);
+            mUserIdTextView.setEnabled(false);
+          }
         }
 
         projection = new String[] { Email.DATA1, Email.DATA2 };
@@ -121,7 +154,7 @@ public class ContactViewerActivity extends Activity {
         if (mail.moveToFirst()) {
           address = mail.getString(mail.getColumnIndex(Email.DATA1));
           addresstype = mail.getInt(mail.getColumnIndex(Email.DATA2));
-          EditText addr = (EditText) findViewById(R.id.emailLocal);
+          EditText addr = (EditText) findViewById(R.id.contactEmailEditText);
           addr.setText(address);
 
           if (addresstype == 1) {
@@ -146,7 +179,7 @@ public class ContactViewerActivity extends Activity {
           phone.moveToFirst();
           number = phone.getString(phone.getColumnIndex(Phone.NUMBER));
           numbertype = phone.getInt(phone.getColumnIndex(Phone.DATA2));
-          EditText nr = (EditText) findViewById(R.id.telefonnrLocal);
+          EditText nr = (EditText) findViewById(R.id.contactPhoneEditText);
           nr.setText(number);
 
           if (numbertype == 1) {
@@ -166,25 +199,23 @@ public class ContactViewerActivity extends Activity {
 
   private void onSaveChangesButtonClicked() {
     Log.v("TAG", "Save button clicked");
-    
+
     ContentValues values = new ContentValues();
-    
-    EditText firstnameField = (EditText) findViewById(R.id.firstnameLocal);
-    EditText lastnameField = (EditText) findViewById(R.id.lastnameLocal);
-    EditText phonenumberField = (EditText) findViewById(R.id.telefonnrLocal);
-    Spinner phonetypeField = (Spinner) findViewById(R.id.telefonnrLocalTypeSpinner);
-    EditText mailaddressField = (EditText) findViewById(R.id.emailLocal);
-    Spinner mailtypeField = (Spinner) findViewById(R.id.emailLocalTypeSpinner);
-    
+
+    EditText firstnameField = (EditText) findViewById(R.id.contactFirstnameEditText);
+    EditText lastnameField = (EditText) findViewById(R.id.contactNameEditText);
+    EditText phonenumberField = (EditText) findViewById(R.id.contactPhoneEditText);
+    Spinner phonetypeField = (Spinner) findViewById(R.id.contactPhoneTypeSpinner);
+    EditText mailaddressField = (EditText) findViewById(R.id.contactEmailEditText);
+    Spinner mailtypeField = (Spinner) findViewById(R.id.contactEmailTypeSpinner);
+
     firstname = firstnameField.getText().toString();
     lastname = lastnameField.getText().toString();
     phonenumber = phonenumberField.getText().toString();
     phonetype = phonetypeField.getSelectedItem().toString();
     mailaddress = mailaddressField.getText().toString();
     mailtype = mailtypeField.getSelectedItem().toString();
-    
-    
-    
-    //TODO
+
+    // TODO
   }
 }

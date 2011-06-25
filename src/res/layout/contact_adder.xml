@@ -6,7 +6,8 @@
     <TableLayout android:layout_width="match_parent"
                  android:layout_height="match_parent">
         <TableRow>
-            <TextView android:layout_width="wrap_content"
+            <TextView android:id="@+id/targetAccountTextView"
+            		  android:layout_width="wrap_content"
                       android:layout_height="wrap_content"
                       android:text="Target account"/>
         </TableRow>
@@ -18,12 +19,14 @@
         </TableRow>
         <TableRow>
             <TextView android:id="@+id/userIdTextView"
+            		  android:visibility="visible"
             		  android:layout_width="wrap_content"
                       android:layout_height="wrap_content"
                       android:text="UserID"/>
         </TableRow>
         <TableRow>
             <EditText android:id="@+id/userIdEditText"
+            		  android:visibility="visible"
                       android:layout_height="wrap_content"
                       android:layout_width="wrap_content"
                       android:layout_weight="1"/>
@@ -40,7 +43,8 @@
                       android:layout_weight="1"/>
         </TableRow>
         <TableRow>
-            <TextView android:layout_width="wrap_content"
+            <TextView android:id="@+id/nameTextView"
+            		  android:layout_width="wrap_content"
                       android:layout_height="wrap_content"
                       android:text="Name"/>
         </TableRow>

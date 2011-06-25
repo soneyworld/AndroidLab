@@ -21,13 +21,13 @@ public class SyncTabActivity extends ListActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
-      setContentView(R.layout.localtab);
+      setContentView(R.layout.synctab);
   }
   @Override
   protected void onResume() {
     super.onResume();
     ListView contacts = (ListView) findViewById(android.R.id.list);
-    String[] projection = new String[] {Contacts.DISPLAY_NAME, Contacts._ID, Contacts.Data.SYNC1};
+    String[] projection = new String[] {Contacts.DISPLAY_NAME, Contacts._ID};
       Cursor cr = getContentResolver().query(ContactsContract.Contacts.CONTENT_URI, projection, null, null, null);
       startManagingCursor(cr);
       int id [] = new int[] {android.R.id.text1};
