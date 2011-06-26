@@ -251,7 +251,6 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
         ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
                 .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, mSelectedAccount.getType())
                 .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, mSelectedAccount.getName())
-                .withValue(ContactsContract.RawContacts.SOURCE_ID, userid)
                 .withValue(ContactsContract.RawContacts.SYNC1, syncstatus)
                 .build());
         ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)

@@ -78,24 +78,37 @@ public class LDAPSyncService extends Service {
     // but not really deleted, so they have to be deleted on the LDAP Server.
     // All Entries listed in this List, will be deleted on the LDAP and locally
     LinkedList<Integer> markedToBeDeleted = new LinkedList<Integer>();
+    LinkedList<Integer> shouldBeAdded = new LinkedList<Integer>();
     HashMap<String, Integer> localContacts = new HashMap<String, Integer>();
+
     mContentResolver = context.getContentResolver();
     // Load the local synced contacts
     Uri rawContactUri = RawContacts.CONTENT_URI.buildUpon()
         .appendQueryParameter(RawContacts.ACCOUNT_NAME, account.name)
         .appendQueryParameter(RawContacts.ACCOUNT_TYPE, account.type).build();
     Cursor c1 = mContentResolver.query(rawContactUri, new String[] {
-        BaseColumns._ID, RawContacts.SOURCE_ID, RawContacts.DELETED }, null,
-        null, null);
+        BaseColumns._ID, RawContacts.SOURCE_ID, RawContacts.DELETED,
+        RawContacts.SYNC1 }, null, null, null);
     while (c1.moveToNext()) {
       final String sourceid = c1.getString(1);
+      // If there is a Source ID in the database, this entry is in sync
       if (sourceid != null && !sourceid.equalsIgnoreCase("")) {
         localContacts.put(c1.getString(1), c1.getInt(0));
+      } else {
+        // if there is no source ID in the database and the status is
+        // "locally added", this contact has to be added and synced with the
+        // LDAP Directory
+        String status = c1.getString(3);
+        if (status != null && status.equalsIgnoreCase("locally added")) {
+          shouldBeAdded.add(c1.getInt(0));
+        }
       }
+      // If this entry is marked as to be deleted, it should be cleaned up later
       if (c1.getInt(2) == 1) {
         markedToBeDeleted.add(c1.getInt(0));
       }
     }
+    // Now search for all entries inside the Database
     boolean error = false;
     long userId;
     String ldapuid;
@@ -110,7 +123,8 @@ public class LDAPSyncService extends Service {
       conn = instance.getConnection();
       final Filter filter = Filter.create("(cn=*)");
       final SearchRequest request = new SearchRequest(instance.getBaseDN(),
-          SearchScope.SUB, filter,SearchRequest.ALL_OPERATIONAL_ATTRIBUTES, SearchRequest.ALL_USER_ATTRIBUTES);
+          SearchScope.SUB, filter, SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
+          SearchRequest.ALL_USER_ATTRIBUTES);
       request.setSizeLimit(1000000);
       request.setTimeLimitSeconds(300);
       ldapresult = conn.search(request);
@@ -158,9 +172,14 @@ public class LDAPSyncService extends Service {
       ContactManager.deleteLDAPContact(i, batchOperation, new ServerInstance(
           accountManager, account), context);
     }
+    // Try to add a local Contact to LDAP
+    for (Integer i: shouldBeAdded){
+      ContactManager.addLocalContactToLDAP(i, batchOperation, new ServerInstance(accountManager,account), context);
+    }
     // A sync adapter should batch operations on multiple contacts,
     // because it will make a dramatic performance difference.
     batchOperation.execute();
+
   }
 
   // private static void addContact(Account account, String name, String uuid) {

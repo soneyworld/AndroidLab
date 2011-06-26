@@ -446,4 +446,11 @@ public class ContactManager {
     
     return "";
   }
+
+  public static void addLocalContactToLDAP(Integer i,
+      BatchOperation batchOperation, ServerInstance serverInstance,
+      Context context) {
+    // TODO Auto-generated method stub
+    
+  }
 }
