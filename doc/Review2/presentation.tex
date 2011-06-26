@@ -99,16 +99,43 @@
 \frame{
 \frametitle{Contact Database}
   \begin{block}{Datenstruktur der Kontakte}
-  \includegraphics[width=0.8\textwidth]{contacts-2.png}\\
-  \tiny{Quelle: http://developer.android.com/resources/articles/contacts.html}
+    \includegraphics[width=0.8\textwidth]{contacts-2.png}\\
+    \tiny{Quelle: http://developer.android.com/resources/articles/contacts.html}
   \end{block}
 
   
 }
 \frame{
 \frametitle{RawContacts}
-  
+  \begin{block}{Synchronisationsfelder in den Kontakten}
+    \begin{itemize}
+      \item ACCOUNT NAME = Account.name
+      \item ACCOUNT TYPE = Account.type
+      \item SOURCE ID = entryUUID
+      \item SYNC1 = Sync Status
+      \item SYNC2 = DN \& LDAPObjectClasses
+      \item SYNC3 = LDAP Fehlermeldungen
+      \item SYNC4 = LDIF der letzten erfolgreichen Synchronisation
+    \end{itemize}
+  \end{block}  
 }
+
+\frame{
+\frametitle{Sync Status}
+  \begin{block}{Mögliche Zustände}
+    \begin{itemize}
+      \item locally added
+      \item locally changed (implizit: DIRTY is true)
+      \item locally deleted (implizit: DELETED is true)
+      \item remote added (muss nicht bedacht werden: funktioniert automatisch)
+      \item remote changed (implizit: diff (LDAP Entry, LDIF in SYNC4) )
+      \item remote deleted (implizit: SOURCEID ist nicht auf dem LDAP \& Status != locally added)
+      \item in sync
+      \item change conflict
+    \end{itemize}
+  \end{block}  
+}
+
 \frame{
 	\frametitle{Grafische Oberfläche}
 	\begin{block}{Hauptbildschirm}
