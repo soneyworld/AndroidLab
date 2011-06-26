@@ -60,6 +60,8 @@ public class ContactManager {
         .getAttributeValue(AttributeMapper.ATTR_PRIMARY_ADDRESS);
     String homeAddress = entry
         .getAttributeValue(AttributeMapper.ATTR_HOME_ADDRESS);
+    String firstname = entry.getAttributeValue(AttributeMapper.ATTR_FIRST_NAME);
+    String lastname = entry.getAttributeValue(AttributeMapper.ATTR_LAST_NAME);
     // List all LDAP ObjectClasses
     String objectClass = "";
     for (String objectClazz : entry.getAttributeValues("objectClass")) {
@@ -91,7 +93,10 @@ public class ContactManager {
             ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
         .withValue(
             ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name)
-        .build());
+        .withValue(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME,
+            firstname)
+        .withValue(ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME,
+            lastname).build());
     if (workPhone != null) {
       batch.add(addPhoneNumber(rawContactInsertIndex, workPhone,
           ContactsContract.CommonDataKinds.Phone.TYPE_WORK, dataAsSyncAdapter));
@@ -160,6 +165,8 @@ public class ContactManager {
         .getAttributeValue(AttributeMapper.ATTR_PRIMARY_ADDRESS);
     String homeAddress = entry
         .getAttributeValue(AttributeMapper.ATTR_HOME_ADDRESS);
+    String firstname = entry.getAttributeValue(AttributeMapper.ATTR_FIRST_NAME);
+    String lastname = entry.getAttributeValue(AttributeMapper.ATTR_LAST_NAME);
     // List all LDAP ObjectClasses
     Uri contentAsSyncAdapter = ContactsContract.RawContacts.CONTENT_URI
         .buildUpon()
@@ -180,7 +187,10 @@ public class ContactManager {
             ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
         .withValue(
             ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name)
-        .build());
+        .withValue(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME,
+            firstname)
+        .withValue(ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME,
+            lastname).build());
     if (workPhone != null) {
       batch.add(addPhoneNumber(rawContactInsertIndex, workPhone,
           ContactsContract.CommonDataKinds.Phone.TYPE_WORK, dataAsSyncAdapter));
@@ -566,10 +576,10 @@ public class ContactManager {
           ldapentry
               .addAttribute(AttributeMapper.ATTR_FULL_NAME, c.getString(1));
           ldapentry.addAttribute("displayName", c.getString(1));
-          ldapentry
-              .addAttribute(AttributeMapper.ATTR_LAST_NAME, c.getString(2));
           ldapentry.addAttribute(AttributeMapper.ATTR_FIRST_NAME,
-              c.getString(3));
+              c.getString(2));
+          ldapentry
+              .addAttribute(AttributeMapper.ATTR_LAST_NAME, c.getString(3));
         }
         if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/im")) {
 
@@ -592,7 +602,7 @@ public class ContactManager {
           }
         }
         if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/photo")) {
-          
+
         }
         if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/phone_v2")) {
           int type = c.getInt(2);
