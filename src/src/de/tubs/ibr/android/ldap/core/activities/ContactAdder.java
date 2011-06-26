@@ -20,8 +20,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
@@ -50,13 +48,13 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
     private ArrayList<Integer> mContactEmailTypes;
     private Spinner mContactEmailTypeSpinner;
     private EditText mContactFirstnameEditText;
-    private TextView mContactNameTextView;
     private EditText mContactNameEditText;
     private EditText mContactPhoneEditText;
     private ArrayList<Integer> mContactPhoneTypes;
     private Spinner mContactPhoneTypeSpinner;
     private CheckBox mSyncCheckBox;
     private Button mContactSaveButton;
+    private Button mContactExportButton;
     private AccountData mSelectedAccount;
 
     /**
@@ -75,7 +73,6 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
         mUserIdEditText = (EditText) findViewById(R.id.userIdEditText);
         mUserIdTextView = (TextView) findViewById(R.id.userIdTextView);
         mContactFirstnameEditText = (EditText) findViewById(R.id.contactFirstnameEditText);
-        mContactNameTextView = (TextView) findViewById(R.id.nameTextView);
         mContactNameEditText = (EditText) findViewById(R.id.contactNameEditText);
         mContactPhoneEditText = (EditText) findViewById(R.id.contactPhoneEditText);
         mContactEmailEditText = (EditText) findViewById(R.id.contactEmailEditText);
@@ -83,6 +80,7 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
         mContactEmailTypeSpinner = (Spinner) findViewById(R.id.contactEmailTypeSpinner);
         mSyncCheckBox = (CheckBox) findViewById(R.id.syncCheckBox);
         mContactSaveButton = (Button) findViewById(R.id.contactSaveButton);
+        mContactExportButton = (Button) findViewById(R.id.contactExportButton);
         
 
         // Prepare list of supported account types
@@ -106,6 +104,7 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
         mAccountSpinner.setAdapter(mAccountAdapter);
         
         mSyncCheckBox.setChecked(true);
+        mContactExportButton.setVisibility(Button.GONE);
 
         // Populate list of account types for phone
         ArrayAdapter<String> adapter;
@@ -189,6 +188,7 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
     protected void createContactEntry() {
         // Get values from UI
         String userid = mUserIdEditText.getText().toString();
+        Log.v(TAG, "UserID: " + userid);
         String firstname = mContactFirstnameEditText.getText().toString();
         String name = mContactNameEditText.getText().toString();
         String displayname = firstname + " " + name;
@@ -200,6 +200,7 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
           syncstatus = "";
           userid = "";
         }
+        Log.v(TAG, "Syncstatus: " + syncstatus);
         String phone = mContactPhoneEditText.getText().toString();
         String email = mContactEmailEditText.getText().toString();
         int phoneType = mContactPhoneTypes.get(

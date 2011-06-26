@@ -2,9 +2,11 @@ package de.tubs.ibr.android.ldap.core.activities;
 
 import de.tubs.ibr.android.ldap.R;
 import android.app.Activity;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Contacts;
@@ -31,9 +33,9 @@ public class ContactViewerActivity extends Activity {
   String firstname;
   String lastname;
   String phonenumber;
-  String phonetype;
+  int phonetype;
   String mailaddress;
-  String mailtype;
+  int mailtype;
   String syncstatus;
   String src_id;
 
@@ -44,14 +46,15 @@ public class ContactViewerActivity extends Activity {
 
     Spinner acctype = (Spinner) findViewById(R.id.accountSpinner);
     TextView acctextview = (TextView) findViewById(R.id.targetAccountTextView);
-    acctype.setVisibility(2);
-    acctextview.setVisibility(2);
+    acctype.setVisibility(Spinner.GONE);
+    acctextview.setVisibility(TextView.GONE);
 
     final EditText mUserIdEditText = (EditText) findViewById(R.id.userIdEditText);
     final TextView mUserIdTextView = (TextView) findViewById(R.id.userIdTextView);
     Spinner addrtype = (Spinner) findViewById(R.id.contactPhoneTypeSpinner);
     Spinner phonetype = (Spinner) findViewById(R.id.contactEmailTypeSpinner);
     Button saveChanges = (Button) findViewById(R.id.contactSaveButton);
+    Button exportContact = (Button) findViewById(R.id.contactExportButton);
     CheckBox syncCheckBox = (CheckBox) findViewById(R.id.syncCheckBox);
 
     saveChanges.setText("Save changes");
@@ -82,7 +85,7 @@ public class ContactViewerActivity extends Activity {
         .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
     phonetype.setAdapter(adapterphone);
 
-    long id = getIntent().getExtras().getLong("_id");
+    final long id = getIntent().getExtras().getLong("_id");
     String[] projection = new String[] { Contacts._ID,
         Contacts.HAS_PHONE_NUMBER };
     Cursor cr = managedQuery(ContactsContract.Contacts.CONTENT_URI, projection,
@@ -90,7 +93,7 @@ public class ContactViewerActivity extends Activity {
 
     saveChanges.setOnClickListener(new View.OnClickListener() {
       public void onClick(View v) {
-        onSaveChangesButtonClicked();
+        onSaveChangesButtonClicked(id);
       }
     });
 
@@ -126,7 +129,10 @@ public class ContactViewerActivity extends Activity {
         if (source_id.moveToFirst()) {
           src_id = source_id.getString(source_id.getColumnIndex(RawContacts.SOURCE_ID));
           mUserIdEditText.setText(src_id);
+          Log.v("ContactViewerActivity", "SOURCE_ID: " + src_id);
         }
+        
+        Log.v("ContactViewerActivity", "SOURCE_ID: " + src_id);
 
         projection = new String[] { Data.SYNC1 };
         Cursor sync = managedQuery(ContactsContract.Data.CONTENT_URI,
@@ -134,6 +140,7 @@ public class ContactViewerActivity extends Activity {
             new String[] { String.valueOf(id) }, null);
         if (sync.moveToFirst()) {
           syncstatus = sync.getString(sync.getColumnIndex(Data.SYNC1));
+          Log.v("ContactViewerActivity", "Syncstatus: " + syncstatus);
           if (syncstatus != "") {
             syncCheckBox.setChecked(true);
             mUserIdEditText.setEnabled(true);
@@ -158,13 +165,13 @@ public class ContactViewerActivity extends Activity {
           addr.setText(address);
 
           if (addresstype == 1) {
-            addrtype.setSelection(0);
-          } else if (addresstype == 2) {
-            addrtype.setSelection(1);
+            addrtype.setSelection(3);
           } else if (addresstype == 4) {
+            addrtype.setSelection(1);
+          } else if (addresstype == 2) {
             addrtype.setSelection(2);
           } else {
-            addrtype.setSelection(3);
+            addrtype.setSelection(0);
           }
 
         }
@@ -183,13 +190,13 @@ public class ContactViewerActivity extends Activity {
           nr.setText(number);
 
           if (numbertype == 1) {
-            phonetype.setSelection(0);
-          } else if (numbertype == 3) {
-            phonetype.setSelection(1);
+            phonetype.setSelection(3);
           } else if (numbertype == 2) {
+            phonetype.setSelection(1);
+          } else if (numbertype == 3) {
             phonetype.setSelection(2);
           } else {
-            phonetype.setSelection(3);
+            phonetype.setSelection(0);
           }
         }
       } while (cr.moveToNext());
@@ -197,8 +204,10 @@ public class ContactViewerActivity extends Activity {
 
   }
 
-  private void onSaveChangesButtonClicked() {
+  private void onSaveChangesButtonClicked(long id) {
     Log.v("TAG", "Save button clicked");
+    
+    Uri myPerson = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, id);
 
     ContentValues values = new ContentValues();
 
@@ -212,9 +221,18 @@ public class ContactViewerActivity extends Activity {
     firstname = firstnameField.getText().toString();
     lastname = lastnameField.getText().toString();
     phonenumber = phonenumberField.getText().toString();
-    phonetype = phonetypeField.getSelectedItem().toString();
+    phonetype = (Integer) phonetypeField.getSelectedItem();
     mailaddress = mailaddressField.getText().toString();
-    mailtype = mailtypeField.getSelectedItem().toString();
+    mailtype = (Integer) mailtypeField.getSelectedItem();
+    
+    values.put(StructuredName.GIVEN_NAME, firstname);
+    values.put(StructuredName.FAMILY_NAME, lastname);
+    values.put(Phone.NUMBER, phonenumber);
+    values.put(Phone.DATA2, phonetype);
+    values.put(Email.DATA1, mailaddress);
+    values.put(Email.DATA2, mailtype);
+    
+    getContentResolver().insert(myPerson, values);
 
     // TODO
   }
