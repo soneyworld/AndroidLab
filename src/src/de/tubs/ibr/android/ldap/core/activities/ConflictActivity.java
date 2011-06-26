@@ -5,8 +5,6 @@ import java.util.HashMap;
 import de.tubs.ibr.android.ldap.R;
 import android.app.ListActivity;
 import android.os.Bundle;
-import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.RadioButton;
 import android.widget.SimpleAdapter;
 
