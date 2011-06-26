@@ -10,4 +10,5 @@ public abstract class LDAPResultRunnable implements Runnable {
   public LDAPException exception;
   public LDAPResult deleteResult;
   public LDAPResult modificationResult;
+  public String[] dirsResult;
 }

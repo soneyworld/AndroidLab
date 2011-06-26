@@ -91,7 +91,7 @@ public final class AttributeMapper {
   /**
    * The name of the attribute that holds the user's id.
    */
-  public static final String ATTR_UID = "uid";
+  public static final String ATTR_UID = "entryUUID";
 
 
   // The map of lowercase attribute names to the numeric identifiers for display

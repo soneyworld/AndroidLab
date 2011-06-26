@@ -32,6 +32,7 @@ public class ContactManager {
     // Check if the Entry is a Person and can be synchronized
     boolean isSyncable = false;
     String sourceId = entry.getAttributeValue(AttributeMapper.ATTR_UID);
+    String ldif = entry.toLDIFString();
     for (String string : entry.getAttributeValues("objectClass")) {
       if (string.equalsIgnoreCase("inetOrgPerson") && sourceId != null) {
         isSyncable = true;
@@ -438,5 +439,11 @@ public class ContactManager {
       c.close();
     }
     return dn;
+  }
+  
+  private static String buildLDIFFromContact(int id, Context context){
+    String dn = getDNofRawContact(id, context);
+    
+    return "";
   }
 }

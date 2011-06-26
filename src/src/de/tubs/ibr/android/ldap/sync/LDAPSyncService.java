@@ -110,7 +110,7 @@ public class LDAPSyncService extends Service {
       conn = instance.getConnection();
       final Filter filter = Filter.create("(cn=*)");
       final SearchRequest request = new SearchRequest(instance.getBaseDN(),
-          SearchScope.SUB, filter);
+          SearchScope.SUB, filter,SearchRequest.ALL_OPERATIONAL_ATTRIBUTES, SearchRequest.ALL_USER_ATTRIBUTES);
       request.setSizeLimit(1000000);
       request.setTimeLimitSeconds(300);
       ldapresult = conn.search(request);
