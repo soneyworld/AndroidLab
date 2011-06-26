@@ -24,6 +24,7 @@ import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.ResultCode;
+import com.unboundid.ldap.sdk.examples.LDAPSearch;
 import com.unboundid.ldap.sdk.migrate.ldapjdk.LDAPConstraints;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
 import de.tubs.ibr.android.ldap.provider.LDAPService;
@@ -523,12 +524,14 @@ public class ContactManager {
       while (c.moveToNext()) {
         int Id = c.getInt(0);
         if (Id == id) {
-          String temp = c.getString(1);
-          int endline = temp.indexOf("\n");
-          if (endline > 0) {
-            dn = temp.substring(0, endline);
-          } else {
-            dn = temp;
+          if (!c.isNull(1)) {
+            String temp = c.getString(1);
+            int endline = temp.indexOf("\n");
+            if (endline > 0) {
+              dn = temp.substring(0, endline);
+            } else {
+              dn = temp;
+            }
           }
           break;
         }
@@ -545,6 +548,15 @@ public class ContactManager {
     return "";
   }
 
+  /**
+   * Adds a locally added Contact to the LDAP Server, if possible, and updates
+   * the status of the local contact if successfully added
+   * 
+   * @param rawcontactId
+   * @param batchOperation
+   * @param serverInstance
+   * @param context
+   */
   public static void addLocalContactToLDAP(int rawcontactId,
       BatchOperation batchOperation, ServerInstance serverInstance,
       Context context) {
@@ -553,11 +565,9 @@ public class ContactManager {
       dn = serverInstance.getBaseDN();
     }
     Entry ldapentry = new Entry(dn);
-    Uri entityUri = ContentUris.withAppendedId(RawContactsEntity.CONTENT_URI,
-        rawcontactId);
     Cursor c = context.getContentResolver().query(
         Data.CONTENT_URI,
-        new String[] { RawContactsEntity.DATA_ID, RawContactsEntity.MIMETYPE,
+        new String[] { RawContactsEntity._ID, RawContactsEntity.MIMETYPE,
             RawContactsEntity.DATA1, RawContactsEntity.DATA2,
             RawContactsEntity.DATA3, RawContactsEntity.DATA4,
             RawContactsEntity.DATA5, RawContactsEntity.DATA6,
@@ -566,23 +576,23 @@ public class ContactManager {
             RawContactsEntity.DATA11, RawContactsEntity.DATA12,
             RawContactsEntity.DATA13, RawContactsEntity.DATA14,
             RawContactsEntity.DATA15 },
-        Data.RAW_CONTACT_ID + "=" + rawcontactId,
-        new String[] { String.valueOf(rawcontactId) }, null);
+        Data.RAW_CONTACT_ID + "=" + rawcontactId, null, null);
     try {
       while (c.moveToNext()) {
-        String mimetype = c.getString(2);
+        String mimetype = c.getString(1);
         // is a name
         if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/name")) {
           ldapentry
-              .addAttribute(AttributeMapper.ATTR_FULL_NAME, c.getString(1));
-          ldapentry.addAttribute("displayName", c.getString(1));
+              .addAttribute(AttributeMapper.ATTR_FULL_NAME, c.getString(2));
+          ldapentry.addAttribute("displayName", c.getString(2));
           ldapentry.addAttribute(AttributeMapper.ATTR_FIRST_NAME,
-              c.getString(2));
+              c.getString(3));
+          ldapentry.setDN("cn='"+c.getString(2)+"',"+ldapentry.getDN());
           ldapentry
-              .addAttribute(AttributeMapper.ATTR_LAST_NAME, c.getString(3));
+              .addAttribute(AttributeMapper.ATTR_LAST_NAME, c.getString(4));
         }
         if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/im")) {
-
+          // TODO Instant Messengers
         }
         if (mimetype
             .equalsIgnoreCase("vnd.android.cursor.item/postal-address_v2")) {
@@ -602,47 +612,47 @@ public class ContactManager {
           }
         }
         if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/photo")) {
-
+          // TODO Photo import
         }
         if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/phone_v2")) {
           int type = c.getInt(2);
           switch (type) {
             case Phone.TYPE_HOME:
               ldapentry.addAttribute(AttributeMapper.ATTR_HOME_PHONE,
-                  c.getString(1));
+                  c.getString(2));
               break;
             case Phone.TYPE_WORK:
               ldapentry.addAttribute(AttributeMapper.ATTR_PRIMARY_PHONE,
-                  c.getString(1));
+                  c.getString(2));
               break;
             case Phone.TYPE_FAX_WORK:
               ldapentry.addAttribute(AttributeMapper.ATTR_FAX, c.getString(1));
             case Phone.TYPE_MOBILE:
               ldapentry.addAttribute(AttributeMapper.ATTR_MOBILE_PHONE,
-                  c.getString(1));
+                  c.getString(2));
             case Phone.TYPE_PAGER:
               ldapentry
-                  .addAttribute(AttributeMapper.ATTR_PAGER, c.getString(1));
+                  .addAttribute(AttributeMapper.ATTR_PAGER, c.getString(2));
             default:
               break;
           }
         }
         if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/organization")) {
-
+          // TODO Organisation
         }
         if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/nickname")) {
-
+          // TODO Nickname
         }
         if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/email_v2")) {
           int type = c.getInt(2);
           switch (type) {
             case Email.TYPE_WORK:
               ldapentry.addAttribute(AttributeMapper.ATTR_PRIMARY_MAIL,
-                  c.getString(1));
+                  c.getString(3));
               break;
             case Email.TYPE_HOME:
               ldapentry.addAttribute(AttributeMapper.ATTR_ALTERNATE_MAIL,
-                  c.getString(1));
+                  c.getString(3));
             default:
               break;
           }
@@ -651,5 +661,29 @@ public class ContactManager {
     } finally {
       c.close();
     }
+    ldapentry.addAttribute("objectClass", "inetOrgPerson");
+    ldapentry.addAttribute("objectClass", "person");
+    ldapentry.addAttribute("objectClass", "top");
+    // ldapentry.addAttribute("objectClass", "organizationalPerson");
+    String ldif = ldapentry.toLDIFString();
+    LDAPConnection connection = null;
+    try {
+      connection = serverInstance.getConnection();
+      LDAPResult result = connection.add(ldapentry);
+      String errormessage = result.getResultCode().toString();
+      if(result.getMessageID() == ResultCode.SUCCESS_INT_VALUE){
+        //TODO Batch Update des Datensatzes einfügen
+      }else if(!ResultCode.isClientSideResultCode(result.getResultCode())){
+        //TODO Notifiy the User about Server Problem
+        
+      }
+    } catch (LDAPException e) {
+      String error = e.getExceptionMessage();
+    } finally {
+      if (connection != null) {
+        connection.close();
+      }
+    }
+
   }
 }
