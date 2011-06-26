@@ -41,7 +41,7 @@ public final class AttributeMapper {
   /**
    * The name of the attribute that holds the user's home postal address.
    */
-  public static final String ATTR_HOME_ADDRESS = "homeAddress";
+  public static final String ATTR_HOME_ADDRESS = "homePostalAddress";
 
   /**
    * The name of the attribute that holds the user's home phone number.
