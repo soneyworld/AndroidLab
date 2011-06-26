@@ -59,13 +59,28 @@ public class LDAPSyncService extends Service {
     return sSyncAdapter.getSyncAdapterBinder();
   }
 
+  /**
+   * Performs a sync on the Contacts saved on the local Phone comparing the
+   * state on the LDAP Server
+   * 
+   * @param context
+   * @param account
+   * @param extras
+   * @param authority
+   * @param provider
+   * @param syncResult
+   * @throws OperationCanceledException
+   */
   protected static void performSync(Context context, Account account,
       Bundle extras, String authority, ContentProviderClient provider,
       SyncResult syncResult) throws OperationCanceledException {
+    // Contacts which has been deleted by the user are only marked as deleted,
+    // but not really deleted, so they have to be deleted on the LDAP Server.
+    // All Entries listed in this List, will be deleted on the LDAP and locally
     LinkedList<Integer> markedToBeDeleted = new LinkedList<Integer>();
     HashMap<String, Integer> localContacts = new HashMap<String, Integer>();
     mContentResolver = context.getContentResolver();
-    // Load the local Last.fm contacts
+    // Load the local synced contacts
     Uri rawContactUri = RawContacts.CONTENT_URI.buildUpon()
         .appendQueryParameter(RawContacts.ACCOUNT_NAME, account.name)
         .appendQueryParameter(RawContacts.ACCOUNT_TYPE, account.type).build();
@@ -133,6 +148,8 @@ public class LDAPSyncService extends Service {
       for (Entry<String, Integer> deletelocal : localContacts.entrySet()) {
         ContactManager.deleteLocalContact(deletelocal.getValue(),
             context.getContentResolver());
+        // If it is also locally marked to be deleted, the above call have done
+        // it, or it is not necessary
         markedToBeDeleted.remove(deletelocal.getValue());
       }
     }
