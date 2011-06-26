@@ -1,0 +1,213 @@
+\documentclass[hyperref={bookmarksopen=false}]{beamer} 
+
+\usepackage[english]{babel}
+\usepackage{pgf,pgfarrows,pgfnodes,pgfautomata,pgfheaps,pgfshade}
+\usepackage{ngerman}
+\usepackage[latin1]{inputenc}
+
+\usepackage{graphicx}
+
+\useoutertheme[section]{tubs}
+
+%\setbeamertemplate{itemize items}[ball]
+%\setbeamertemplate{itemize items}[square]
+\setbeamertemplate{itemize items}[tusquare]
+
+\subtitle{Labor Android Programmierung - 1. Review}
+\title{LDAP Contact Sync} 
+\author[C. Gerloff und T. Lorentzen]{Till Lorentzen und Christopher Gerloff}
+\institute[TU Braunschweig, IBR]{Technische Universität Braunschweig, IBR}
+
+\date{\today}
+
+\instlogo{ibr_deu}
+%\titlegraphic{iz}
+\titlegraphic{iz_corner}
+
+
+
+\begin{document}
+
+\frame[plain]{\titlepage} 
+
+\setbeamercolor{frametitle}{fg=white,bg=tu-red}
+\frame{
+        \frametitle{Einleitung}
+        \tableofcontents
+        }
+\setbeamercolor{frametitle}{fg=black,bg=tu-grey}
+
+
+\section{Einleitung}
+
+\frame{
+ \frametitle{Einleitung} 
+ \begin{block}{Idee}
+ \begin{itemize}
+     \item Kontaktsynchronisation mit LDAP Verzeichnissen
+ \end{itemize}
+ \end{block}
+ \begin{block}{Aufgaben}
+    \begin{itemize}
+        \item Gibt es funktionierende LDAP Bibliotheken für Java/Android?
+        \item Wie soll die Anwendung strukturiert sein?
+        \item Welche Funktionen soll die Anwendung bereitstellen?
+        \item Wie Importieren/Exportieren/Synchronisieren wir die Kontaktdaten?
+        \item Design der grafischen Oberfläche
+        \item Aufsetzen eines LDAP Servers zum Testen
+    \end{itemize}
+ \end{block}
+}
+
+\frame{
+	\frametitle{Stand der Dinge}
+	
+ 	  \begin{block}{Bisherige Ergebnisse}
+   	      \begin{itemize}
+                  \item Zwei LDAP Bibliotheken für Java
+                    \begin{itemize}
+                      \item JOpenLDAP
+                      \item LDAP SDK von UnboundID
+                    \end{itemize}
+                  \item Struktur der Anwendung ist festgelegt
+                  \item Primäre Funktionen sind definiert
+                  \item Importieren/Exportieren/Synchronisieren in Arbeit
+                  \item Prototyp der grafischen Oberfläche erstellt
+                  \item LDAP Server noch nicht aufgesetzt
+                   \begin{itemize}
+                      \item Testen der Verbindung bisher mit öffentlichen LDAP Verzeichnissen
+                    \end{itemize}
+                \end{itemize}
+           \end{block}
+}
+
+\frame{
+ \frametitle{Wichtige Komponenten} 
+ \begin{block}{AccountManager}
+ \begin{itemize}
+   \item Speichert alle LDAP Accounts, mit denen synchronisiert werden soll
+   \item Android übernimmt die Speicherung
+ \end{itemize}
+ \end{block}
+    \begin{block}{AccountAuthenticator}
+    \begin{itemize}
+      \item Schnittstelle um einen Account hinzuzufügen 
+      \item Ruft die AddServer Activity aus den Einstellungen auf
+      \item Speichert die Eingaben als Account ab
+    \end{itemize}
+ \end{block}
+}
+
+\frame{
+ \frametitle{Wichtige Komponenten} 
+\begin{block}{RawContacts}
+    \begin{itemize}
+        \item Kontaktdaten werden pro Account gespeichert
+	\item Sichtbarkeit im Kontaktbuch je nach Wunsch 
+    \end{itemize}
+ \end{block}
+ \begin{block}{SyncAdapter}
+    \begin{itemize}
+        \item Schnittstelle für Android zur Synchronisation
+    \end{itemize}
+ \end{block}
+
+   \begin{block}{ContentProvider}
+    \begin{itemize}
+        \item Stellt die Verbindung zu den LDAP Servern her
+	\item Gibt den Mime Type zurück, den der gefundene Datensatz hat
+    \end{itemize}
+ \end{block}
+}
+
+\section{Stand der Dinge}
+
+
+\begin{frame}[fragile]
+	\frametitle{Grafische Oberfläche}
+	\begin{block}{Hauptbildschirm}
+	\hspace{0.5 cm}
+	\includegraphics[scale=0.3]{LocalTabView.png}
+	\vspace{1 cm}
+	\includegraphics[scale=0.3]{LocalTabView_MenuOpen.png}
+	\vspace{1 cm}
+	\includegraphics[scale=0.3]{LDAPTabView.png}
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Grafische Oberfläche}
+	\begin{block}{Kontoverwaltung}
+	\hspace{0.5 cm}
+	\includegraphics[scale=0.3]{Add_Account_AccountsandSync.png}
+	\vspace{1 cm}
+	\includegraphics[scale=0.3]{Add_Account1.png}
+	\vspace{1 cm}
+	\includegraphics[scale=0.3]{Add_Account2.png}
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Grafische Oberfläche}
+	\begin{block}{Integrierte Erweiterungen}
+	\hspace{0.5 cm}
+	\includegraphics[scale=0.3]{createContact_chooseAccount.png}
+	\vspace{1 cm}
+	\includegraphics[scale=0.3]{Accounts_Sync.png}
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Grafische Oberfläche}
+	\begin{block}{Sonstiges}
+	\hspace{0.5 cm}
+	\includegraphics[scale=0.3]{choose_active_Account_for_TabView.png}
+	\vspace{1 cm}
+	\includegraphics[scale=0.3]{specific_Account_Settings.png}
+	\end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Teamwork}
+  \begin{block}{Git \& GitHub}
+    \includegraphics[scale=0.28]{git.png}\\
+    \tiny{ https://www.github.com/soneyworld/AndroidLab}\\
+    \tiny{\$ git clone git://github.com/soneyworld/AndroidLab.git AndroidLab}
+  \end{block}
+  \begin{block}{Projektstatus}
+  \includegraphics[scale=0.25]{status.png}\\
+  \tiny{ https://github.com/soneyworld/AndroidLab/issues/milestones}
+  \end{block}
+\end{frame}
+
+
+
+\section{Ausblick}
+
+\frame{
+ \frametitle{Ausblick} 
+ \begin{block}{To Do}
+ \begin{itemize}
+    \item LDAP Server Installation
+    \item LDAP ContentProvider
+    \item Merge und Sync Prozesse
+    \item Testen
+ \end{itemize}
+ \end{block}
+}
+
+\frame{
+  \frametitle{Fragen?}
+  \begin{block}{Antworten!}
+   
+  \end{block}
+
+  \begin{block}{Weitere Informationsquellen}
+  \begin{itemize}
+    \item Wiki: \tiny{https://github.com/soneyworld/AndroidLab/wiki}\normalsize
+    \item Twitter: \tiny{https://twitter.com/ldapsync}
+  \end{itemize}
+  \end{block}
+}
+
+\end{document}   
