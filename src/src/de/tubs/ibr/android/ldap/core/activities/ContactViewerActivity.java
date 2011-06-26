@@ -4,7 +4,6 @@ import de.tubs.ibr.android.ldap.R;
 import android.app.Activity;
 import android.content.ContentUris;
 import android.content.ContentValues;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,9 +15,6 @@ import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
@@ -33,9 +29,9 @@ public class ContactViewerActivity extends Activity {
   String firstname;
   String lastname;
   String phonenumber;
-  int phonetype;
+  Object phonetype;
   String mailaddress;
-  int mailtype;
+  Object mailtype;
   String syncstatus;
   String src_id;
 
@@ -56,8 +52,6 @@ public class ContactViewerActivity extends Activity {
     Button saveChanges = (Button) findViewById(R.id.contactSaveButton);
     Button exportContact = (Button) findViewById(R.id.contactExportButton);
     CheckBox syncCheckBox = (CheckBox) findViewById(R.id.syncCheckBox);
-
-    saveChanges.setText("Save changes");
 
     syncCheckBox.setOnClickListener(new OnClickListener() {
       public void onClick(View v) {
@@ -124,7 +118,7 @@ public class ContactViewerActivity extends Activity {
 
         Cursor source_id = managedQuery(
             ContactsContract.RawContacts.CONTENT_URI, projection,
-            RawContacts.SOURCE_ID + "= ?", new String[] { String.valueOf(id) },
+            RawContacts._ID + "="+id,null,
             null);
         if (source_id.moveToFirst()) {
           src_id = source_id.getString(source_id.getColumnIndex(RawContacts.SOURCE_ID));
@@ -134,14 +128,14 @@ public class ContactViewerActivity extends Activity {
         
         Log.v("ContactViewerActivity", "SOURCE_ID: " + src_id);
 
-        projection = new String[] { Data.SYNC1 };
-        Cursor sync = managedQuery(ContactsContract.Data.CONTENT_URI,
+        projection = new String[] { RawContacts.SYNC1 };
+        Cursor sync = managedQuery(ContactsContract.RawContacts.CONTENT_URI,
             projection, Data.CONTACT_ID + "= ?",
             new String[] { String.valueOf(id) }, null);
         if (sync.moveToFirst()) {
-          syncstatus = sync.getString(sync.getColumnIndex(Data.SYNC1));
+          syncstatus = sync.getString(0);
           Log.v("ContactViewerActivity", "Syncstatus: " + syncstatus);
-          if (syncstatus != "") {
+          if ((syncstatus.compareTo("locally added")) == 0) {
             syncCheckBox.setChecked(true);
             mUserIdEditText.setEnabled(true);
             mUserIdTextView.setEnabled(true);
@@ -164,14 +158,14 @@ public class ContactViewerActivity extends Activity {
           EditText addr = (EditText) findViewById(R.id.contactEmailEditText);
           addr.setText(address);
 
-          if (addresstype == 1) {
-            addrtype.setSelection(3);
-          } else if (addresstype == 4) {
-            addrtype.setSelection(1);
-          } else if (addresstype == 2) {
-            addrtype.setSelection(2);
-          } else {
+          if (addresstype == Email.TYPE_HOME) {
             addrtype.setSelection(0);
+          } else if (addresstype == Email.TYPE_WORK) {
+            addrtype.setSelection(1);
+          } else if (addresstype == Email.TYPE_MOBILE) {
+            addrtype.setSelection(2);
+          } else if (addresstype == Email.TYPE_OTHER) {
+            addrtype.setSelection(3);
           }
 
         }
@@ -189,14 +183,14 @@ public class ContactViewerActivity extends Activity {
           EditText nr = (EditText) findViewById(R.id.contactPhoneEditText);
           nr.setText(number);
 
-          if (numbertype == 1) {
-            phonetype.setSelection(3);
-          } else if (numbertype == 2) {
-            phonetype.setSelection(1);
-          } else if (numbertype == 3) {
-            phonetype.setSelection(2);
-          } else {
+          if (numbertype == Phone.TYPE_HOME) {
             phonetype.setSelection(0);
+          } else if (numbertype == Phone.TYPE_WORK) {
+            phonetype.setSelection(1);
+          } else if (numbertype == Phone.TYPE_MOBILE) {
+            phonetype.setSelection(2);
+          } else if (numbertype == Phone.TYPE_OTHER) {
+            phonetype.setSelection(3);
           }
         }
       } while (cr.moveToNext());
@@ -221,18 +215,18 @@ public class ContactViewerActivity extends Activity {
     firstname = firstnameField.getText().toString();
     lastname = lastnameField.getText().toString();
     phonenumber = phonenumberField.getText().toString();
-    phonetype = (Integer) phonetypeField.getSelectedItem();
+    phonetype = phonetypeField.getSelectedItem();
     mailaddress = mailaddressField.getText().toString();
-    mailtype = (Integer) mailtypeField.getSelectedItem();
+    mailtype = mailtypeField.getSelectedItem();
     
     values.put(StructuredName.GIVEN_NAME, firstname);
     values.put(StructuredName.FAMILY_NAME, lastname);
     values.put(Phone.NUMBER, phonenumber);
-    values.put(Phone.DATA2, phonetype);
+    values.put(Phone.DATA2, (String) phonetype);
     values.put(Email.DATA1, mailaddress);
-    values.put(Email.DATA2, mailtype);
+    values.put(Email.DATA2, (String) mailtype);
     
-    getContentResolver().insert(myPerson, values);
+    getContentResolver().update(myPerson, values, "_ID =" + id , null);
 
     // TODO
   }

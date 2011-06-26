@@ -11,6 +11,8 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.provider.ContactsContract.CommonDataKinds.Email;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -203,11 +205,43 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
         Log.v(TAG, "Syncstatus: " + syncstatus);
         String phone = mContactPhoneEditText.getText().toString();
         String email = mContactEmailEditText.getText().toString();
-        int phoneType = mContactPhoneTypes.get(
+        int phoneType;
+        int phoneTypeStorage = mContactPhoneTypes.get(
                 mContactPhoneTypeSpinner.getSelectedItemPosition());
-        int emailType = mContactEmailTypes.get(
-                mContactEmailTypeSpinner.getSelectedItemPosition());;
-
+        if (phoneTypeStorage == 0) {
+          phoneType = Phone.TYPE_HOME;  
+        }
+        else if (phoneTypeStorage == 1) {
+          phoneType = Phone.TYPE_WORK;
+        }
+        else if (phoneTypeStorage == 2) {
+          phoneType = Phone.TYPE_MOBILE;
+        }
+        else if (phoneTypeStorage == 3) {
+          phoneType = Phone.TYPE_OTHER;
+        }
+        else {
+          phoneType = Phone.TYPE_OTHER;
+        }
+        
+        int emailType;
+        int emailTypeStorage = mContactEmailTypes.get(mContactEmailTypeSpinner.getSelectedItemPosition());
+        if (emailTypeStorage == 0) {
+          emailType = Email.TYPE_HOME;  
+        }
+        else if (emailTypeStorage == 1) {
+          emailType = Email.TYPE_WORK;
+        }
+        else if (phoneTypeStorage == 2) {
+          emailType = Email.TYPE_MOBILE;
+        }
+        else if (phoneTypeStorage == 3) {
+          emailType = Email.TYPE_OTHER;
+        }
+        else {
+          emailType = Email.TYPE_OTHER;
+        }
+        
         // Prepare contact creation request
         //
         // Note: We use RawContacts because this data must be associated with a particular account.
@@ -218,31 +252,16 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
                 .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, mSelectedAccount.getType())
                 .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, mSelectedAccount.getName())
                 .withValue(ContactsContract.RawContacts.SOURCE_ID, userid)
+                .withValue(ContactsContract.RawContacts.SYNC1, syncstatus)
                 .build());
         ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
             .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
             .withValue(ContactsContract.Data.MIMETYPE,
                     ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
             .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, displayname)
-            .build());
-        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-            .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
-            .withValue(ContactsContract.Data.SYNC1, syncstatus)
-            .build());
-        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-            .withValue(ContactsContract.Data.MIMETYPE,
-                    ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
             .withValue(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME, firstname)
+            .withValue(ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME, name)
             .build());
-        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-                .withValue(ContactsContract.Data.MIMETYPE,
-                        ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
-                .withValue(ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME, name)
-                .build());
-        
         ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
                 .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
                 .withValue(ContactsContract.Data.MIMETYPE,
