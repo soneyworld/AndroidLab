@@ -4,15 +4,25 @@ import static com.unboundid.util.StaticUtils.EOL;
 import java.util.StringTokenizer;
 import android.accounts.Account;
 import android.content.ContentProviderOperation;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.provider.ContactsContract.RawContacts.Entity;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
+import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.RawContactsEntity;
+import com.unboundid.ldap.sdk.DeleteRequest;
 import com.unboundid.ldap.sdk.Entry;
+import com.unboundid.ldap.sdk.LDAPConnection;
+import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.LDAPResult;
+import com.unboundid.ldap.sdk.ResultCode;
+import com.unboundid.ldap.sdk.migrate.ldapjdk.LDAPConstraints;
+import de.tubs.ibr.android.ldap.auth.ServerInstance;
+import de.tubs.ibr.android.ldap.provider.LDAPService;
 import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 
 public class ContactManager {
@@ -130,14 +140,54 @@ public class ContactManager {
 
   }
 
-  public static void deleteLDAPContact(long id, BatchOperation batch) {
-    int rawContactInsertIndex = batch.size();
+  /**
+   * Deletes a local {@link RawContacts} from the {@link Contacts} with the
+   * given {@link RawContacts} database id. Calls the delete execution with
+   * {@link ContactsContract}.CALLER_IS_SYNCADAPTER flag.
+   * 
+   * @param id
+   * @param batch
+   */
+  public static void deleteLocalContact(int id, ContentResolver resolver) {
+    
     Uri contentAsSyncAdapter = ContactsContract.RawContacts.CONTENT_URI
         .buildUpon()
         .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
         .build();
-    batch.add(ContentProviderOperation.newDelete(contentAsSyncAdapter)
-        .withValue(ContactsContract.RawContacts._ID, id).build());
+    resolver.delete(contentAsSyncAdapter, "_ID="+id, null);
+  }
+
+  /**
+   * Tries to delete the Contact on the remote LDAP Server
+   * 
+   * @param id
+   * @param batch
+   */
+  public static void deleteLDAPContact(final int id, BatchOperation batch,
+      final ServerInstance instance, final Context context) {
+    boolean remotelyDeleted = false;
+    LDAPConnection conn = null;
+    try {
+      conn = instance.getConnection();
+      DeleteRequest deleteRequest = new DeleteRequest(getDNofRawContact(id,
+          context));
+      LDAPResult deleteResult = conn.delete(deleteRequest);
+      if (deleteRequest.getLastMessageID() == ResultCode.SUCCESS_INT_VALUE
+          || deleteRequest.getLastMessageID() == ResultCode.NO_SUCH_OBJECT_INT_VALUE) {
+        remotelyDeleted = true;
+      } else {
+        // Write error Message and result Code to local RawContact!
+      }
+    } catch (LDAPException e) {
+
+    } finally {
+      if (conn != null) {
+        conn.close();
+      }
+    }
+    if (remotelyDeleted) {
+      deleteLocalContact(id, context.getContentResolver());
+    }
   }
 
   public static void updateLDAPContact(int id, Context context,
@@ -356,5 +406,37 @@ public class ContactManager {
         .withValue(
             ContactsContract.CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS,
             addr.toString()).build();
+  }
+
+  /**
+   * Returns the LDAP DN of the given {@link RawContacts} id
+   * 
+   * @param id
+   * @param context
+   * @return
+   */
+  private static String getDNofRawContact(final int id, Context context) {
+    String dn = null;
+    Uri rawContactUri = ContentUris.withAppendedId(RawContacts.CONTENT_URI, id);
+    Cursor c = context.getContentResolver().query(rawContactUri,
+        new String[] { RawContacts._ID, RawContacts.SYNC3 }, null, null, null);
+    try {
+      while (c.moveToNext()) {
+        int Id = c.getInt(0);
+        if (Id == id) {
+          String temp = c.getString(1);
+          int endline = temp.indexOf("\n");
+          if (endline > 0) {
+            dn = temp.substring(0, endline);
+          } else {
+            dn = temp;
+          }
+          break;
+        }
+      }
+    } finally {
+      c.close();
+    }
+    return dn;
   }
 }

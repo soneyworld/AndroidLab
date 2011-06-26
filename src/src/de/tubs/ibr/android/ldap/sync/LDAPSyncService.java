@@ -2,6 +2,7 @@ package de.tubs.ibr.android.ldap.sync;
 
 //import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map.Entry;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnection;
@@ -61,6 +62,7 @@ public class LDAPSyncService extends Service {
   protected static void performSync(Context context, Account account,
       Bundle extras, String authority, ContentProviderClient provider,
       SyncResult syncResult) throws OperationCanceledException {
+    LinkedList<Integer> markedToBeDeleted = new LinkedList<Integer>();
     HashMap<String, Integer> localContacts = new HashMap<String, Integer>();
     mContentResolver = context.getContentResolver();
     // Load the local Last.fm contacts
@@ -68,11 +70,15 @@ public class LDAPSyncService extends Service {
         .appendQueryParameter(RawContacts.ACCOUNT_NAME, account.name)
         .appendQueryParameter(RawContacts.ACCOUNT_TYPE, account.type).build();
     Cursor c1 = mContentResolver.query(rawContactUri, new String[] {
-        BaseColumns._ID, RawContacts.SOURCE_ID }, null, null, null);
+        BaseColumns._ID, RawContacts.SOURCE_ID, RawContacts.DELETED }, null,
+        null, null);
     while (c1.moveToNext()) {
       final String sourceid = c1.getString(1);
       if (sourceid != null && !sourceid.equalsIgnoreCase("")) {
         localContacts.put(c1.getString(1), c1.getInt(0));
+      }
+      if (c1.getInt(2) == 1) {
+        markedToBeDeleted.add(c1.getInt(0));
       }
     }
     boolean error = false;
@@ -125,39 +131,19 @@ public class LDAPSyncService extends Service {
     // sind, sollen diese aus dem Kontaktbuch gelöscht werden.
     if (!localContacts.isEmpty()) {
       for (Entry<String, Integer> deletelocal : localContacts.entrySet()) {
-        ContactManager
-            .deleteLDAPContact(deletelocal.getValue(), batchOperation);
+        ContactManager.deleteLocalContact(deletelocal.getValue(),
+            context.getContentResolver());
+        markedToBeDeleted.remove(deletelocal.getValue());
       }
+    }
+    // Try to deleted marked Entries for local Entries marked to be deleted
+    for (Integer i : markedToBeDeleted) {
+      ContactManager.deleteLDAPContact(i, batchOperation, new ServerInstance(
+          accountManager, account), context);
     }
     // A sync adapter should batch operations on multiple contacts,
     // because it will make a dramatic performance difference.
     batchOperation.execute();
-    // TODO use LDAP Content Provider to search for contacts, which has to be
-    // synchronized
-    // ArrayList<ContentProviderOperation> operationList = new
-    // ArrayList<ContentProviderOperation>();
-
-    // LastFmServer server = AndroidLastFmServerFactory.getServer();
-    // try {
-    // Friends friends = server.getFriends(account.name, "", "50");
-    // for (User user : friends.getFriends()) {
-    // if (!localContacts.containsKey(user.getName())) {
-    // if (user.getRealName().length() > 0)
-    // addContact(account, user.getRealName(), user.getName());
-    // else
-    // addContact(account, user.getName(), user.getName());
-    // } else {
-    // updateContactStatus(operationList,
-    // localContacts.get(user.getName()), tracks[0]);
-    // }
-    // }
-    // }
-    // if (operationList.size() > 0)
-    // mContentResolver.applyBatch(ContactsContract.AUTHORITY, operationList);
-    // } catch (Exception e1) {
-    // e1.printStackTrace();
-    // }
-
   }
 
   // private static void addContact(Account account, String name, String uuid) {
