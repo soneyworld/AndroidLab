@@ -18,6 +18,18 @@
                      android:id="@+id/accountSpinner"/>
         </TableRow>
         <TableRow>
+            <TextView android:id="@+id/targetLDAPDirectory"
+            		  android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:text="Target directory"/>
+        </TableRow>
+        <TableRow>
+            <Spinner android:layout_height="wrap_content"
+                     android:layout_width="match_parent"
+                     android:layout_weight="1"
+                     android:id="@+id/directorySpinner"/>
+        </TableRow>
+        <TableRow>
             <TextView android:id="@+id/userIdTextView"
             		  android:visibility="visible"
             		  android:layout_width="wrap_content"

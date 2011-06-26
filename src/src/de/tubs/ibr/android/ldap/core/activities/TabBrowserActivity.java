@@ -48,12 +48,12 @@ public class TabBrowserActivity extends TabActivity implements
     TabHost tabHost = (TabHost) findViewById(android.R.id.tabhost);
 
     TabSpec localTabSpec = tabHost.newTabSpec("tid1");
-    localTabSpec.setIndicator(("Local"), getResources().getDrawable(R.drawable.local)); 
+    localTabSpec.setIndicator(("Local"), getResources().getDrawable(R.drawable.home_icon)); 
     localTabSpec.setContent(new Intent(this, LocalTabActivity.class));
     tabHost.addTab(localTabSpec);
     
     TabSpec syncTabSpec = tabHost.newTabSpec("tid1");
-    syncTabSpec.setIndicator(("Sync"), getResources().getDrawable(R.drawable.sync)); 
+    syncTabSpec.setIndicator(("Sync"), getResources().getDrawable(android.R.drawable.ic_popup_sync)); 
     syncTabSpec.setContent(new Intent(this, SyncTabActivity.class));
     tabHost.addTab(syncTabSpec);
 
@@ -103,7 +103,7 @@ public class TabBrowserActivity extends TabActivity implements
     ldapintent.putExtra("bindDN", accManager.getUserData(a, "bindDN"));
     ldapintent.putExtra("bindPW", accManager.getUserData(a, "bindPW"));
     ldapintent.putExtra("baseDN", accManager.getUserData(a, "baseDN"));
-    ldapTabSpec.setIndicator(("LDAP"), getResources().getDrawable(R.drawable.ldap)); 
+    ldapTabSpec.setIndicator(("LDAP"), getResources().getDrawable(R.drawable.loup_icon)); 
     ldapTabSpec.setContent(ldapintent);
     tabHost.addTab(ldapTabSpec);
 

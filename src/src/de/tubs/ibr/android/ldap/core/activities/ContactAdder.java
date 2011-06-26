@@ -44,6 +44,7 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
     private ArrayList<AccountData> mAccounts;
     private AccountAdapter mAccountAdapter;
     private Spinner mAccountSpinner;
+    private Spinner mDirectorySpinner;
     private EditText mUserIdEditText;
     private TextView mUserIdTextView;
     private EditText mContactEmailEditText;
@@ -72,6 +73,7 @@ public final class ContactAdder extends Activity implements OnAccountsUpdateList
 
         // Obtain handles to UI objects
         mAccountSpinner = (Spinner) findViewById(R.id.accountSpinner);
+        mDirectorySpinner = (Spinner) findViewById(R.id.directorySpinner);
         mUserIdEditText = (EditText) findViewById(R.id.userIdEditText);
         mUserIdTextView = (TextView) findViewById(R.id.userIdTextView);
         mContactFirstnameEditText = (EditText) findViewById(R.id.contactFirstnameEditText);
