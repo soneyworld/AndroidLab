@@ -135,7 +135,7 @@ public class ContactViewerActivity extends Activity {
         if (sync.moveToFirst()) {
           syncstatus = sync.getString(0);
           Log.v("ContactViewerActivity", "Syncstatus: " + syncstatus);
-          if ((syncstatus.compareTo("locally added")) == 0) {
+          if (syncstatus!=null && syncstatus.equalsIgnoreCase("locally added")) {
             syncCheckBox.setChecked(true);
             mUserIdEditText.setEnabled(true);
             mUserIdTextView.setEnabled(true);
@@ -166,7 +166,9 @@ public class ContactViewerActivity extends Activity {
             addrtype.setSelection(2);
           } else if (addresstype == Email.TYPE_OTHER) {
             addrtype.setSelection(3);
-          }
+          } else 
+            addrtype.setSelection(3);
+          
 
         }
         if (cr.getString(cr.getColumnIndex(Contacts.HAS_PHONE_NUMBER))
@@ -191,7 +193,8 @@ public class ContactViewerActivity extends Activity {
             phonetype.setSelection(2);
           } else if (numbertype == Phone.TYPE_OTHER) {
             phonetype.setSelection(3);
-          }
+          } else
+            phonetype.setSelection(3);
         }
       } while (cr.moveToNext());
     }
