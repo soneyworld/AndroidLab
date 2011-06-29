@@ -122,7 +122,13 @@ public class LDAPSyncService extends Service {
     List<SearchResultEntry> ldapresult = null;
     try {
       conn = instance.getConnection();
-      final Filter filter = Filter.create("(cn=*)");
+      // If a filter was saved for this account, respect him, otherwise use
+      // default filter
+      String f = instance.getFilter();
+      if (f == null) {
+        f = "cn=*";
+      }
+      final Filter filter = Filter.create(f);
       final SearchRequest request = new SearchRequest(instance.getBaseDN(),
           SearchScope.SUB, filter, SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
           SearchRequest.ALL_USER_ATTRIBUTES);
@@ -130,12 +136,12 @@ public class LDAPSyncService extends Service {
       request.setTimeLimitSeconds(300);
       ldapresult = conn.search(request).getSearchEntries();
     } catch (LDAPSearchException lse) {
-      // If the 
+      // If the
       if (lse.getResultCode().isConnectionUsable()
           && !lse.getResultCode().isClientSideResultCode()) {
-        try{
+        try {
           ldapresult = scanImportedContacts();
-        }catch (LDAPException e) {
+        } catch (LDAPException e) {
           error = true;
         }
       } else {
@@ -193,6 +199,7 @@ public class LDAPSyncService extends Service {
     batchOperation.execute();
 
   }
+
   // private static void addContact(Account account, String name, String uuid) {
   // ArrayList<ContentProviderOperation> operationList = new
   // ArrayList<ContentProviderOperation>();
@@ -233,7 +240,8 @@ public class LDAPSyncService extends Service {
   // }
   // }
 
-  private static List<SearchResultEntry> scanImportedContacts() throws LDAPException {
+  private static List<SearchResultEntry> scanImportedContacts()
+      throws LDAPException {
     // TODO Auto-generated method stub
     return null;
   }
