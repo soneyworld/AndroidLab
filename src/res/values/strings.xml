@@ -35,6 +35,10 @@
   <string name="layout_define_server_label_base_dn">
     Base DN (leave empty for entire server)
   </string>
+  
+  <string name="layout_define_server_label_filter">
+    Filter String (leave empty for entire scope)
+  </string>
 
   <string name="layout_define_server_button_label_test">
     Test Settings

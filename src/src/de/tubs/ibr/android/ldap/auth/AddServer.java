@@ -86,6 +86,13 @@ public final class AddServer extends AccountAuthenticatorActivity implements
    * The name of the field used to define the base DN.
    */
   public static final String BUNDLE_FIELD_BASE_DN = "ADD_SERVER_BASE_DN";
+  
+  /**
+   * The name of the field used to define the filter string
+   */
+  public static final String BUNDLE_FIELD_FILTER = "ADD_SERVER_FILTER";
+  
+  
 
   public static final String INTENT_EXTRA_TITLE = "TITLE";
 
@@ -123,6 +130,9 @@ public final class AddServer extends AccountAuthenticatorActivity implements
 
   // The server ID.
   private String id = "";
+
+  // The filter string for filter entries on LDAP, which should be synchronized
+  private String filter = "";
 
   private TestServerService.TestServerBinder mBinder;
 
@@ -216,6 +226,7 @@ public final class AddServer extends AccountAuthenticatorActivity implements
           this.bindDN = accManager.getUserData(acc, "bindDN");
           this.baseDN = accManager.getUserData(acc, "baseDN");
           this.host = accManager.getUserData(acc, "host");
+          this.filter = accManager.getUserData(acc, "filter");
           try {
             this.port = Integer.parseInt(accManager.getUserData(acc, "port"));
           } catch (Exception e) {
@@ -232,6 +243,9 @@ public final class AddServer extends AccountAuthenticatorActivity implements
                 "useStartTLS"));
           } catch (Exception e) {
             this.useStartTLS = false;
+          }
+          if(filter==null){
+            filter = "";
           }
           this.modifymode = true;
           break;
@@ -275,7 +289,10 @@ public final class AddServer extends AccountAuthenticatorActivity implements
     // Populate the base DN.
     final EditText baseDNField = (EditText) findViewById(R.id.layout_define_server_field_base);
     baseDNField.setText(baseDN);
-
+    
+    //Populate the filter string
+    final EditText filterField = (EditText) findViewById(R.id.layout_define_server_field_filter);
+    filterField.setText(filter);
     // Add an on-click listener to the test and save buttons.
     final Button testButton = (Button) findViewById(R.id.layout_define_server_button_server_test);
     testButton.setOnClickListener(this);
@@ -294,6 +311,7 @@ public final class AddServer extends AccountAuthenticatorActivity implements
       bindPWField.setEnabled(false);
       baseDNField.setEnabled(false);
       saveButton.setEnabled(false);
+      filterField.setEnabled(false);
     }
     final Intent intent = new Intent(this, TestServerService.class);
     getApplicationContext().bindService(intent, mServiceConnection,
@@ -383,8 +401,10 @@ public final class AddServer extends AccountAuthenticatorActivity implements
     bindPW = bindPWField.getText().toString();
     final EditText baseField = (EditText) findViewById(R.id.layout_define_server_field_base);
     baseDN = baseField.getText().toString();
+    final EditText filterField = (EditText) findViewById(R.id.layout_define_server_field_filter);
+    filter = filterField.getText().toString();
     return new ServerInstance(serverID, host, port, useSSL, useStartTLS,
-        bindDN, bindPW, baseDN);
+        bindDN, bindPW, baseDN, filter);
   }
 
   /**
@@ -527,6 +547,10 @@ public final class AddServer extends AccountAuthenticatorActivity implements
     if (baseDN == null) {
       baseDN = "";
     }
+    filter = state.getString(BUNDLE_FIELD_FILTER);
+    if (filter == null){
+      filter = "";
+    }
   }
 
   /**
@@ -575,6 +599,9 @@ public final class AddServer extends AccountAuthenticatorActivity implements
     final EditText baseDNField = (EditText) findViewById(R.id.layout_define_server_field_base);
     baseDN = baseDNField.getText().toString();
     state.putString(BUNDLE_FIELD_BASE_DN, baseDN);
+    final EditText filterField = (EditText) findViewById(R.id.layout_define_server_field_filter);
+    filter = filterField.getText().toString();
+    state.putString(BUNDLE_FIELD_FILTER, filter);
   }
 
   /**

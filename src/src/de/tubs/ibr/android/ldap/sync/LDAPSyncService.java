@@ -3,6 +3,7 @@ package de.tubs.ibr.android.ldap.sync;
 //import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map.Entry;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnection;
@@ -118,7 +119,7 @@ public class LDAPSyncService extends Service {
     LDAPConnection conn = null;
     AccountManager accountManager = AccountManager.get(context);
     ServerInstance instance = new ServerInstance(accountManager, account);
-    SearchResult ldapresult = null;
+    List<SearchResultEntry> ldapresult = null;
     try {
       conn = instance.getConnection();
       final Filter filter = Filter.create("(cn=*)");
@@ -127,9 +128,19 @@ public class LDAPSyncService extends Service {
           SearchRequest.ALL_USER_ATTRIBUTES);
       request.setSizeLimit(1000000);
       request.setTimeLimitSeconds(300);
-      ldapresult = conn.search(request);
+      ldapresult = conn.search(request).getSearchEntries();
     } catch (LDAPSearchException lse) {
-      error = true;
+      // If the 
+      if (lse.getResultCode().isConnectionUsable()
+          && !lse.getResultCode().isClientSideResultCode()) {
+        try{
+          ldapresult = scanImportedContacts();
+        }catch (LDAPException e) {
+          error = true;
+        }
+      } else {
+        error = true;
+      }
     } catch (LDAPException le) {
       error = true;
     } finally {
@@ -142,7 +153,7 @@ public class LDAPSyncService extends Service {
     }
     // Alle LDAP Kontakte überprüfen, ob diese lokal importiert werden müssen,
     // oder ob es bereits welche gibt und diese aktualisiert werden müssen.
-    for (final SearchResultEntry user : ldapresult.getSearchEntries()) {
+    for (final SearchResultEntry user : ldapresult) {
       ldapuid = user.getAttributeValue(AttributeMapper.ATTR_UID);
       // Check to see if the contact needs to be inserted or updated
       if (localContacts.containsKey(ldapuid)) {
@@ -173,15 +184,15 @@ public class LDAPSyncService extends Service {
           accountManager, account), context);
     }
     // Try to add a local Contact to LDAP
-    for (Integer i: shouldBeAdded){
-      ContactManager.addLocalContactToLDAP(i, batchOperation, new ServerInstance(accountManager,account), context);
+    for (Integer i : shouldBeAdded) {
+      ContactManager.addLocalContactToLDAP(i, batchOperation,
+          new ServerInstance(accountManager, account), context);
     }
     // A sync adapter should batch operations on multiple contacts,
     // because it will make a dramatic performance difference.
     batchOperation.execute();
 
   }
-
   // private static void addContact(Account account, String name, String uuid) {
   // ArrayList<ContentProviderOperation> operationList = new
   // ArrayList<ContentProviderOperation>();
@@ -221,5 +232,10 @@ public class LDAPSyncService extends Service {
   // e.printStackTrace();
   // }
   // }
+
+  private static List<SearchResultEntry> scanImportedContacts() throws LDAPException {
+    // TODO Auto-generated method stub
+    return null;
+  }
 
 }
