@@ -10,13 +10,11 @@ import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPSearchException;
 import com.unboundid.ldap.sdk.SearchRequest;
-import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
 import de.tubs.ibr.android.ldap.core.BatchOperation;
 import de.tubs.ibr.android.ldap.core.ContactManager;
-import de.tubs.ibr.android.ldap.provider.LDAPService;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.OperationCanceledException;
@@ -36,7 +34,6 @@ import android.os.IBinder;
 import android.provider.BaseColumns;
 //import android.provider.ContactsContract;
 import android.provider.ContactsContract.RawContacts;
-import android.util.Log;
 
 public class LDAPSyncService extends Service {
   private static final Object sSyncAdapterLock = new Object();
@@ -100,7 +97,7 @@ public class LDAPSyncService extends Service {
         // "locally added", this contact has to be added and synced with the
         // LDAP Directory
         String status = c1.getString(3);
-        if (status != null && status.equalsIgnoreCase("locally added")) {
+        if (status != null && status.equalsIgnoreCase("locally added") && c1.getInt(2) != 1) {
           shouldBeAdded.add(c1.getInt(0));
         }
       }
@@ -111,7 +108,6 @@ public class LDAPSyncService extends Service {
     }
     // Now search for all entries inside the Database
     boolean error = false;
-    long userId;
     String ldapuid;
     int rawContactId = 0;
     final ContentResolver resolver = context.getContentResolver();
@@ -125,8 +121,8 @@ public class LDAPSyncService extends Service {
       // If a filter was saved for this account, respect him, otherwise use
       // default filter
       String f = instance.getFilter();
-      if (f == null) {
-        f = "cn=*";
+      if (f == null || f.length()==0) {
+        f = "(cn=*)";
       }
       final Filter filter = Filter.create(f);
       final SearchRequest request = new SearchRequest(instance.getBaseDN(),

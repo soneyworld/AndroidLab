@@ -2,18 +2,15 @@ package de.tubs.ibr.android.ldap.provider;
 
 import com.unboundid.ldap.sdk.AddRequest;
 import com.unboundid.ldap.sdk.DeleteRequest;
-import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.LDAPSearchException;
 import com.unboundid.ldap.sdk.ModifyRequest;
 import com.unboundid.ldap.sdk.SearchRequest;
 import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
-import com.unboundid.ldap.sdk.examples.LDAPSearch;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
 import android.app.Service;
 import android.content.Intent;
@@ -210,41 +207,42 @@ public class LDAPService extends Service {
      * @param instance
      */
     public void searchDirs(final ServerInstance instance) {
-      new Thread() {
-        public void run() {
-          LDAPConnection conn = null;
-          try {
-            conn = instance.getConnection();
-            final Filter filter = Filter
-                .create("(objectClass=organizationalUnit)");
-            final SearchRequest request = new SearchRequest(
-                instance.getBaseDN(), SearchScope.SUB, filter,
-                SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
-                SearchRequest.ALL_USER_ATTRIBUTES);
-            request.setSizeLimit(SIZE_LIMIT);
-            request.setTimeLimitSeconds(TIME_LIMIT_SECONDS);
-            SearchResult result = conn.search(request);
-            mRunnable.dirsResult = new String[result.getEntryCount()];
-            int i = 0;
-            for (SearchResultEntry entry : result.getSearchEntries()) {
-              mRunnable.dirsResult[i] = entry.getDN();
-              i++;
+      if (instance != null)
+        new Thread() {
+          public void run() {
+            LDAPConnection conn = null;
+            try {
+              conn = instance.getConnection();
+              final Filter filter = Filter
+                  .create("(objectClass=organizationalUnit)");
+              final SearchRequest request = new SearchRequest(
+                  instance.getBaseDN(), SearchScope.SUB, filter,
+                  SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
+                  SearchRequest.ALL_USER_ATTRIBUTES);
+              request.setSizeLimit(SIZE_LIMIT);
+              request.setTimeLimitSeconds(TIME_LIMIT_SECONDS);
+              SearchResult result = conn.search(request);
+              mRunnable.dirsResult = new String[result.getEntryCount()];
+              int i = 0;
+              for (SearchResultEntry entry : result.getSearchEntries()) {
+                mRunnable.dirsResult[i] = entry.getDN();
+                i++;
+              }
+            } catch (LDAPSearchException lse) {
+              mRunnable.exception = lse;
+              mRunnable.searchResult = lse.getSearchResult();
+            } catch (LDAPException le) {
+              mRunnable.exception = le;
+              mRunnable.searchResult = new LDAPSearchException(le)
+                  .getSearchResult();
+            } finally {
+              if (conn != null) {
+                conn.close();
+              }
             }
-          } catch (LDAPSearchException lse) {
-            mRunnable.exception = lse;
-            mRunnable.searchResult = lse.getSearchResult();
-          } catch (LDAPException le) {
-            mRunnable.exception = le;
-            mRunnable.searchResult = new LDAPSearchException(le)
-                .getSearchResult();
-          } finally {
-            if (conn != null) {
-              conn.close();
-            }
+            mCallbackHandler.post(mRunnable);
           }
-          mCallbackHandler.post(mRunnable);
-        }
-      }.start();
+        }.start();
     }
   }
 }

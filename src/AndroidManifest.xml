@@ -61,6 +61,7 @@
 		<activity android:name=".core.activities.ConflictActivity"></activity>
 		<activity android:name=".core.activities.ContactAdder"></activity>
 		<activity android:name=".core.activities.SyncTabActivity"></activity>
+		<service android:name=".provider.LDAPService"></service>
 
 	</application>
 </manifest>

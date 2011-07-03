@@ -24,10 +24,7 @@ import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.ResultCode;
-import com.unboundid.ldap.sdk.examples.LDAPSearch;
-import com.unboundid.ldap.sdk.migrate.ldapjdk.LDAPConstraints;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
-import de.tubs.ibr.android.ldap.provider.LDAPService;
 import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 
 public class ContactManager {
@@ -269,14 +266,18 @@ public class ContactManager {
     LDAPConnection conn = null;
     try {
       conn = instance.getConnection();
-      DeleteRequest deleteRequest = new DeleteRequest(getDNofRawContact(id,
-          context));
-      LDAPResult deleteResult = conn.delete(deleteRequest);
-      if (deleteRequest.getLastMessageID() == ResultCode.SUCCESS_INT_VALUE
-          || deleteRequest.getLastMessageID() == ResultCode.NO_SUCH_OBJECT_INT_VALUE) {
+      String dn = getDNofRawContact(id, context);
+      if (dn == null || dn.length() == 0) {
         remotelyDeleted = true;
       } else {
-        // Write error Message and result Code to local RawContact!
+        DeleteRequest deleteRequest = new DeleteRequest(dn);
+        LDAPResult deleteResult = conn.delete(deleteRequest);
+        if (deleteResult.getMessageID() == ResultCode.SUCCESS_INT_VALUE
+            || deleteResult.getMessageID() == ResultCode.NO_SUCH_OBJECT_INT_VALUE) {
+          remotelyDeleted = true;
+        } else {
+          // Write error Message and result Code to local RawContact!
+        }
       }
     } catch (LDAPException e) {
 
@@ -587,7 +588,6 @@ public class ContactManager {
           ldapentry.addAttribute("displayName", c.getString(2));
           ldapentry.addAttribute(AttributeMapper.ATTR_FIRST_NAME,
               c.getString(3));
-          ldapentry.setDN("cn='"+c.getString(2)+"',"+ldapentry.getDN());
           ldapentry
               .addAttribute(AttributeMapper.ATTR_LAST_NAME, c.getString(4));
         }
@@ -662,20 +662,21 @@ public class ContactManager {
       c.close();
     }
     ldapentry.addAttribute("objectClass", "inetOrgPerson");
+    ldapentry.addAttribute("objectClass", "organizationalPerson");
     ldapentry.addAttribute("objectClass", "person");
     ldapentry.addAttribute("objectClass", "top");
-    // ldapentry.addAttribute("objectClass", "organizationalPerson");
-    String ldif = ldapentry.toLDIFString();
+
+//    String ldif = ldapentry.toLDIFString();
     LDAPConnection connection = null;
     try {
       connection = serverInstance.getConnection();
       LDAPResult result = connection.add(ldapentry);
       String errormessage = result.getResultCode().toString();
-      if(result.getMessageID() == ResultCode.SUCCESS_INT_VALUE){
-        //TODO Batch Update des Datensatzes einfügen
-      }else if(!ResultCode.isClientSideResultCode(result.getResultCode())){
-        //TODO Notifiy the User about Server Problem
-        
+      if (result.getMessageID() == ResultCode.SUCCESS_INT_VALUE) {
+        // TODO Batch Update des Datensatzes einfügen
+      } else if (!ResultCode.isClientSideResultCode(result.getResultCode())) {
+        // TODO Notifiy the User about Server Problem
+
       }
     } catch (LDAPException e) {
       String error = e.getExceptionMessage();
