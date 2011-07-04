@@ -457,7 +457,8 @@ public class ContactManager {
         .withValue(ContactsContract.RawContacts.SYNC1, status)
         .withValue(ContactsContract.RawContacts.SYNC3, dn)
         .withValue(ContactsContract.RawContacts.SYNC4, ldif)
-        .withValue(ContactsContract.RawContacts.SOURCE_ID, uuid).build();
+        .withValue(ContactsContract.RawContacts.SOURCE_ID, uuid)
+        .withValue(ContactsContract.RawContacts.DIRTY, "0").build();
   }
 
   /**
