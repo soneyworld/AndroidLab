@@ -234,8 +234,7 @@ public final class ContactAdder extends Activity implements
     String phone = mContactPhoneEditText.getText().toString();
     String email = mContactEmailEditText.getText().toString();
     int phoneType;
-    switch (mContactPhoneTypeSpinner
-        .getSelectedItemPosition()) {
+    switch (mContactPhoneTypeSpinner.getSelectedItemPosition()) {
       case 0:
         phoneType = Phone.TYPE_HOME;
         break;
@@ -250,8 +249,7 @@ public final class ContactAdder extends Activity implements
         break;
     }
     int emailType;
-    switch (mContactEmailTypeSpinner
-        .getSelectedItemPosition()) {
+    switch (mContactEmailTypeSpinner.getSelectedItemPosition()) {
       case 0:
         emailType = Email.TYPE_HOME;
         break;
@@ -293,23 +291,26 @@ public final class ContactAdder extends Activity implements
             firstname)
         .withValue(ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME,
             name).build());
-    ops.add(ContentProviderOperation
-        .newInsert(ContactsContract.Data.CONTENT_URI)
-        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-        .withValue(ContactsContract.Data.MIMETYPE,
-            ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
-        .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, phone)
-        .withValue(ContactsContract.CommonDataKinds.Phone.TYPE, phoneType)
-        .build());
-    ops.add(ContentProviderOperation
-        .newInsert(ContactsContract.Data.CONTENT_URI)
-        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-        .withValue(ContactsContract.Data.MIMETYPE,
-            ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
-        .withValue(ContactsContract.CommonDataKinds.Email.DATA, email)
-        .withValue(ContactsContract.CommonDataKinds.Email.TYPE, emailType)
-        .build());
-
+    if (phone != null && phone.length() > 0) {
+      ops.add(ContentProviderOperation
+          .newInsert(ContactsContract.Data.CONTENT_URI)
+          .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+          .withValue(ContactsContract.Data.MIMETYPE,
+              ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
+          .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, phone)
+          .withValue(ContactsContract.CommonDataKinds.Phone.TYPE, phoneType)
+          .build());
+    }
+    if (email != null && email.length() > 0) {
+      ops.add(ContentProviderOperation
+          .newInsert(ContactsContract.Data.CONTENT_URI)
+          .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+          .withValue(ContactsContract.Data.MIMETYPE,
+              ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
+          .withValue(ContactsContract.CommonDataKinds.Email.DATA, email)
+          .withValue(ContactsContract.CommonDataKinds.Email.TYPE, emailType)
+          .build());
+    }
     // Ask the Contact provider to create a new contact
     Log.i(TAG, "Selected account: " + mSelectedAccount.getName() + " ("
         + mSelectedAccount.getType() + ")");

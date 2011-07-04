@@ -452,7 +452,8 @@ public class ContactManager {
   private static ContentProviderOperation updateLocallyAddedToSyncStatus(
       final int id, final String status, final Uri ContactAsSyncAdapter,
       final String ldif, final String uuid, final String dn) {
-    return ContentProviderOperation.newUpdate(ContactAsSyncAdapter)
+    return ContentProviderOperation
+        .newUpdate(ContentUris.withAppendedId(ContactAsSyncAdapter, id))
         .withValue(ContactsContract.RawContacts.SYNC1, status)
         .withValue(ContactsContract.RawContacts.SYNC3, dn)
         .withValue(ContactsContract.RawContacts.SYNC4, ldif)
@@ -643,7 +644,7 @@ public class ContactManager {
           // TODO Photo import
         }
         if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/phone_v2")) {
-          int type = c.getInt(2);
+          int type = c.getInt(3);
           switch (type) {
             case Phone.TYPE_HOME:
               ldapentry.addAttribute(AttributeMapper.ATTR_HOME_PHONE,
@@ -672,15 +673,15 @@ public class ContactManager {
           // TODO Nickname
         }
         if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/email_v2")) {
-          int type = c.getInt(2);
+          int type = c.getInt(3);
           switch (type) {
             case Email.TYPE_WORK:
               ldapentry.addAttribute(AttributeMapper.ATTR_PRIMARY_MAIL,
-                  c.getString(3));
+                  c.getString(2));
               break;
             case Email.TYPE_HOME:
               ldapentry.addAttribute(AttributeMapper.ATTR_ALTERNATE_MAIL,
-                  c.getString(3));
+                  c.getString(2));
             default:
               break;
           }
@@ -700,12 +701,13 @@ public class ContactManager {
       connection = serverInstance.getConnection();
       LDAPResult result = connection.add(ldapentry);
       String errormessage = result.getResultCode().toString();
-      if (result.getMessageID() == ResultCode.SUCCESS_INT_VALUE) {
+      if (result.getResultCode().intValue() == ResultCode.SUCCESS_INT_VALUE) {
         // TODO Batch Update des Datensatzes einfügen
-        SearchRequest request = new SearchRequest(dn, SearchScope.ONE,
-            Filter.create("(cn=*"), SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
+        SearchRequest request = new SearchRequest(dn, SearchScope.BASE,
+            Filter.create("(cn=*)"), SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
             SearchRequest.ALL_USER_ATTRIBUTES);
         SearchResult searchResults = connection.search(request);
+        int resultnumber = searchResults.getEntryCount();
         if (searchResults.getSearchEntries().size() >= 1) {
           SearchResultEntry entry = searchResults.getSearchEntries().get(0);
           String uuid = entry.getAttributeValue(AttributeMapper.ATTR_UID);
@@ -720,7 +722,8 @@ public class ContactManager {
               .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER,
                   "true").build();
           ContentProviderOperation update = updateLocallyAddedToSyncStatus(
-              rawcontactId, status, contentAsSyncProvider, ldif, uuid, dnAndClasses);
+              rawcontactId, status, contentAsSyncProvider, ldif, uuid,
+              dnAndClasses);
           batchOperation.add(update);
         }
       } else if (!ResultCode.isClientSideResultCode(result.getResultCode())) {
