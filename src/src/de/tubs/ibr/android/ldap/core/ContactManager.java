@@ -18,12 +18,19 @@ import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.RawContactsEntity;
+import com.unboundid.ldap.sdk.Control;
 import com.unboundid.ldap.sdk.DeleteRequest;
 import com.unboundid.ldap.sdk.Entry;
+import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.ResultCode;
+import com.unboundid.ldap.sdk.SearchRequest;
+import com.unboundid.ldap.sdk.SearchResult;
+import com.unboundid.ldap.sdk.SearchResultEntry;
+import com.unboundid.ldap.sdk.SearchScope;
+import com.unboundid.ldap.sdk.migrate.ldapjdk.LDAPSearchResults;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
 import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 
@@ -432,6 +439,27 @@ public class ContactManager {
   }
 
   /**
+   * Adds the provided phone number to the contact.
+   * 
+   * @param number
+   *          The number to add.
+   * @param type
+   *          The type of number to add.
+   * @param uri
+   *          The base URI for the contact.
+   * @return a addPhoneNumber Operation
+   */
+  private static ContentProviderOperation updateLocallyAddedToSyncStatus(
+      final int id, final String status, final Uri ContactAsSyncAdapter,
+      final String ldif, final String uuid, final String dn) {
+    return ContentProviderOperation.newUpdate(ContactAsSyncAdapter)
+        .withValue(ContactsContract.RawContacts.SYNC1, status)
+        .withValue(ContactsContract.RawContacts.SYNC3, dn)
+        .withValue(ContactsContract.RawContacts.SYNC4, ldif)
+        .withValue(ContactsContract.RawContacts.SOURCE_ID, uuid).build();
+  }
+
+  /**
    * Adds the provided e-mail address to the contact.
    * 
    * @param address
@@ -666,7 +694,7 @@ public class ContactManager {
     ldapentry.addAttribute("objectClass", "person");
     ldapentry.addAttribute("objectClass", "top");
 
-//    String ldif = ldapentry.toLDIFString();
+    // String ldif = ldapentry.toLDIFString();
     LDAPConnection connection = null;
     try {
       connection = serverInstance.getConnection();
@@ -674,6 +702,27 @@ public class ContactManager {
       String errormessage = result.getResultCode().toString();
       if (result.getMessageID() == ResultCode.SUCCESS_INT_VALUE) {
         // TODO Batch Update des Datensatzes einfügen
+        SearchRequest request = new SearchRequest(dn, SearchScope.ONE,
+            Filter.create("(cn=*"), SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
+            SearchRequest.ALL_USER_ATTRIBUTES);
+        SearchResult searchResults = connection.search(request);
+        if (searchResults.getSearchEntries().size() >= 1) {
+          SearchResultEntry entry = searchResults.getSearchEntries().get(0);
+          String uuid = entry.getAttributeValue(AttributeMapper.ATTR_UID);
+          String ldif = entry.toLDIFString();
+          String status = "inSync";
+          String dnAndClasses = entry.getDN();
+          for (String objectClass : entry.getAttributeValues("objectClass")) {
+            dnAndClasses = dnAndClasses + "\n" + objectClass;
+          }
+          Uri contentAsSyncProvider = ContactsContract.RawContacts.CONTENT_URI
+              .buildUpon()
+              .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER,
+                  "true").build();
+          ContentProviderOperation update = updateLocallyAddedToSyncStatus(
+              rawcontactId, status, contentAsSyncProvider, ldif, uuid, dnAndClasses);
+          batchOperation.add(update);
+        }
       } else if (!ResultCode.isClientSideResultCode(result.getResultCode())) {
         // TODO Notifiy the User about Server Problem
 
