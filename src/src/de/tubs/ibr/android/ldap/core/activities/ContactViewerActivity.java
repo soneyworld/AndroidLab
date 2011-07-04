@@ -4,6 +4,7 @@ import de.tubs.ibr.android.ldap.R;
 import android.app.Activity;
 import android.content.ContentUris;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -34,6 +35,7 @@ public class ContactViewerActivity extends Activity {
   Object mailtype;
   String syncstatus;
   String src_id;
+  private static final String ACTION_EDIT = "android.intent.action.EDIT";
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -78,8 +80,17 @@ public class ContactViewerActivity extends Activity {
     adapterphone
         .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
     phonetype.setAdapter(adapterphone);
+    // TODO Fallunterscheidung einführen, ob diese Activity überhaupt zuständig
+    // ist, für den Intent, ansonsten den default Intent werfen
+    final long id;
+    // Falls der Intent vom Android Kontaktbuch kam, dann ist die ID, die des
+    // RawContacts
+    if (getIntent().getAction().equalsIgnoreCase(ACTION_EDIT)) {
+      id = Integer.parseInt(getIntent().getData().getLastPathSegment());
+    } else {
+      id = getIntent().getExtras().getLong("_id");
+    }
 
-    final long id = getIntent().getExtras().getLong("_id");
     String[] projection = new String[] { Contacts._ID,
         Contacts.HAS_PHONE_NUMBER };
     Cursor cr = managedQuery(ContactsContract.Contacts.CONTENT_URI, projection,
@@ -118,14 +129,14 @@ public class ContactViewerActivity extends Activity {
 
         Cursor source_id = managedQuery(
             ContactsContract.RawContacts.CONTENT_URI, projection,
-            RawContacts._ID + "="+id,null,
-            null);
+            RawContacts._ID + "=" + id, null, null);
         if (source_id.moveToFirst()) {
-          src_id = source_id.getString(source_id.getColumnIndex(RawContacts.SOURCE_ID));
+          src_id = source_id.getString(source_id
+              .getColumnIndex(RawContacts.SOURCE_ID));
           mUserIdEditText.setText(src_id);
           Log.v("ContactViewerActivity", "SOURCE_ID: " + src_id);
         }
-        
+
         Log.v("ContactViewerActivity", "SOURCE_ID: " + src_id);
 
         projection = new String[] { RawContacts.SYNC1 };
@@ -135,7 +146,8 @@ public class ContactViewerActivity extends Activity {
         if (sync.moveToFirst()) {
           syncstatus = sync.getString(0);
           Log.v("ContactViewerActivity", "Syncstatus: " + syncstatus);
-          if (syncstatus!=null && syncstatus.equalsIgnoreCase("locally added")) {
+          if (syncstatus != null
+              && syncstatus.equalsIgnoreCase("locally added")) {
             syncCheckBox.setChecked(true);
             mUserIdEditText.setEnabled(true);
             mUserIdTextView.setEnabled(true);
@@ -166,9 +178,8 @@ public class ContactViewerActivity extends Activity {
             addrtype.setSelection(2);
           } else if (addresstype == Email.TYPE_OTHER) {
             addrtype.setSelection(3);
-          } else 
+          } else
             addrtype.setSelection(3);
-          
 
         }
         if (cr.getString(cr.getColumnIndex(Contacts.HAS_PHONE_NUMBER))
@@ -203,8 +214,9 @@ public class ContactViewerActivity extends Activity {
 
   private void onSaveChangesButtonClicked(long id) {
     Log.v("TAG", "Save button clicked");
-    
-    Uri myPerson = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, id);
+
+    Uri myPerson = ContentUris.withAppendedId(
+        ContactsContract.Contacts.CONTENT_URI, id);
 
     ContentValues values = new ContentValues();
 
@@ -221,15 +233,15 @@ public class ContactViewerActivity extends Activity {
     phonetype = phonetypeField.getSelectedItem();
     mailaddress = mailaddressField.getText().toString();
     mailtype = mailtypeField.getSelectedItem();
-    
+
     values.put(StructuredName.GIVEN_NAME, firstname);
     values.put(StructuredName.FAMILY_NAME, lastname);
     values.put(Phone.NUMBER, phonenumber);
     values.put(Phone.DATA2, (String) phonetype);
     values.put(Email.DATA1, mailaddress);
     values.put(Email.DATA2, (String) mailtype);
-    
-    getContentResolver().update(myPerson, values, "_ID =" + id , null);
+
+    getContentResolver().update(myPerson, values, "_ID =" + id, null);
 
     // TODO
   }
