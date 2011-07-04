@@ -56,18 +56,29 @@
 		<activity android:name=".auth.PopUp"></activity>
 		<activity android:name=".core.activities.ContactViewerActivity">
 			<intent-filter>
-                <action android:name="android.intent.action.EDIT" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="vnd.android.cursor.item/person" android:host="contacts" />
-                <data android:mimeType="vnd.android.cursor.item/contact" android:host="com.android.contacts" />
-                <data android:mimeType="vnd.android.cursor.item/raw_contact" android:host="com.android.contacts" />
+				<action android:name="android.intent.action.EDIT" />
+				<category android:name="android.intent.category.DEFAULT" />
+				<data android:mimeType="vnd.android.cursor.item/person"
+					android:host="contacts" />
+				<data android:mimeType="vnd.android.cursor.item/contact"
+					android:host="com.android.contacts" />
+				<data android:mimeType="vnd.android.cursor.item/raw_contact"
+					android:host="com.android.contacts" />
 			</intent-filter>
 		</activity>
 		<service android:name=".provider.SearchService"></service>
 		<activity android:name=".core.activities.ViewEntry"></activity>
 		<service android:name=".provider.TestServerService"></service>
 		<activity android:name=".core.activities.ConflictActivity"></activity>
-		<activity android:name=".core.activities.ContactAdder"></activity>
+		<activity android:name=".core.activities.ContactAdder">
+            <intent-filter android:label="new Contact on LDAP">
+                <action android:name="android.intent.action.INSERT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="vnd.android.cursor.dir/person" />
+                <data android:mimeType="vnd.android.cursor.dir/contact" />
+                <data android:mimeType="vnd.android.cursor.dir/raw_contact" />
+            </intent-filter>
+		</activity>
 		<activity android:name=".core.activities.SyncTabActivity"></activity>
 		<service android:name=".provider.LDAPService"></service>
 
