@@ -26,6 +26,7 @@ import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.RawContactsEntity;
+import android.test.IsolatedContext;
 import android.widget.Toast;
 import com.unboundid.ldap.sdk.DeleteRequest;
 import com.unboundid.ldap.sdk.Entry;
@@ -652,39 +653,49 @@ public class ContactManager {
    */
   private static void saveNewLocallyAddedContact(final Bundle b,
       final Context context, final Account account, boolean onlyImportNotSync) {
+    // Name
     String sn = null;
     String cn = null;
-    String description = null;
+    String initials = null;
     String title = null;
-    String registeredAddress = null;
-    String destinationIndicator = null;
-    String preferredDeliveryMethod = null;
-    String faxNumber = null;
+    String displayName = null;
+    String givenName = null;
+    // Description
+    String description = null;
+    // Numbers
     String telephoneNumber = null;
-    String internationalISDNNumber = null;
+    String homePhone = null;
+    String mobile = null;
     String facsimileTelephoneNumber = null;
+    String pager = null;
+    String telexNumber = null;
+    String internationalISDNNumber = null;
+    // Mail
+    String mail = null;
+    // Addresses
+    String destinationIndicator = null;
+    String registeredAddress = null;
     String street = null;
+    String preferredDeliveryMethod = null;
     String postOfficeBox = null;
     String postalCode = null;
     String postalAddress = null;
-    String physicalDeliveryOfficeName = null;
-    String ou = null;
-    String st = null;
-    String l = null;
-    String businessCategory = null;
-    String departmentNumber = null;
-    String displayName = null;
-    String givenName = null;
-    String homePhone = null;
     String homePostalAddress = null;
-    String initials = null;
-    String mail = null;
-    String mobile = null;
+    String st = null;
+    // Website
+    String seeAlso = null;
+    // Organization
     String o = null;
-    String pager = null;
-    String roomNumber = null;
-    String uid = null;
+    String ou = null;
+    String l = null;
     String preferredLanguage = null;
+    String departmentNumber = null;
+    String physicalDeliveryOfficeName = null;
+    String roomNumber = null;
+    String businessCategory = null;
+    // Others
+    String uid = null;
+
     String dn = null;
     String syncstatus = null;
     BatchOperation batch = new BatchOperation(context,
@@ -700,7 +711,7 @@ public class ContactManager {
       } else if (key.equals(AttributeMapper.UID)) {
         uid = b.getString(key);
       } else if (key.equals(AttributeMapper.FAX)) {
-        faxNumber = b.getString(key);
+        facsimileTelephoneNumber = b.getString(key);
       } else if (key.equals(AttributeMapper.DESCRIPTION)) {
         description = b.getString(key);
       } else if (key.equals(AttributeMapper.TITLE)) {
@@ -757,6 +768,10 @@ public class ContactManager {
         roomNumber = b.getString(key);
       } else if (key.equals(AttributeMapper.PREFERRED_LANGUAGE)) {
         preferredLanguage = b.getString(key);
+      } else if (key.equals(AttributeMapper.TELEX)) {
+        telexNumber = b.getString(key);
+      } else if (key.equals(AttributeMapper.SEE_ALSO)) {
+        seeAlso = b.getString(key);
       }
     }
     Uri rawContactUri = null;
@@ -776,35 +791,29 @@ public class ContactManager {
       dataUri = Data.CONTENT_URI;
     }
     // Prepare contact creation request
-    // TODO Alle weiteren Routinen müssen noch geschrieben werden
-    ContactUtils.createRawContact(account, dn, syncstatus, batch, rawContactUri);
+    ContactUtils
+        .createRawContact(account, dn, syncstatus, batch, rawContactUri);
     // Adding all Name values
-    ContactUtils.createStructuredName(sn, cn, title, givenName, batch, dataUri);
-    if (telephoneNumber != null && telephoneNumber.length() > 0) {
-      // Adding Phone Numbers
-      ContactUtils.createPhone(telephoneNumber, batch, dataUri);
-    }
-    if (mail != null && mail.length() > 0) {
-      // Adding Mail
-      ContactUtils.createMail(mail, batch, dataUri);
-    }
-    if (initials != null && initials.length() > 0) {
-      // Adding Initials
-      ContactUtils.createInitials(initials, batch, dataUri);
-    }
-    if (description != null && description.length() > 0) {
-      // Adding Description
-      ContactUtils.createDescription(description, batch, dataUri);
-    }
-    if ((st != null && st.length() > 0)
-        || (homePostalAddress != null && homePostalAddress.length() > 0)
-        || (street != null && street.length() > 0)) {
-      // Adding Address
-      batch.add(ContentProviderOperation.newInsert(dataUri)
-          .withValueBackReference(Data.RAW_CONTACT_ID, 0)
-          .withValue(Data.MIMETYPE, StructuredPostal.CONTENT_TYPE).build());
-
-    }
+    ContactUtils.createStructuredName(sn, cn, initials, title, givenName,
+        batch, dataUri);
+    // Adding Description
+    ContactUtils.createDescription(description, batch, dataUri);
+    // Adding Numbers
+    ContactUtils.createPhoneNumbers(telephoneNumber, homePhone, mobile,
+        facsimileTelephoneNumber, pager, telexNumber, internationalISDNNumber,
+        batch, dataUri);
+    // Adding Mail
+    ContactUtils.createMail(mail, batch, dataUri);
+    // Adding Addresses
+    ContactUtils.createAddresses(destinationIndicator, registeredAddress,
+        street, preferredDeliveryMethod, postOfficeBox, postalCode,
+        postalAddress, homePostalAddress, st, batch, dataUri);
+    // Adding SeeAlso as website
+    ContactUtils.createSeeAlso(seeAlso, batch, dataUri);
+    // Adding Organization
+    ContactUtils.createOrganization(o, ou, departmentNumber, l, roomNumber,
+        preferredLanguage, physicalDeliveryOfficeName, businessCategory, batch,
+        dataUri);
     // Ask the Contact provider to create a new contact
     try {
       batch.execute();
@@ -882,8 +891,6 @@ public class ContactManager {
     String roomNumber = null;
     String uid = null;
     String preferredLanguage = null;
-    String dn = null;
-    String syncstatus = null;
     Uri rawContactUri = ContentUris.withAppendedId(RawContacts.CONTENT_URI,
         rawcontactId);
     Cursor c = context.getContentResolver().query(
@@ -906,12 +913,10 @@ public class ContactManager {
         }
       }
       if (!c.isNull(3)) {
-        String temp = c.getString(3);
-        int endline = temp.indexOf(EOL);
+        String dn = c.getString(3);
+        int endline = dn.indexOf(EOL);
         if (endline > 0) {
-          dn = temp.substring(0, endline);
-        } else {
-          dn = temp;
+          dn = dn.substring(0, endline);
         }
         contact.putString(AttributeMapper.DN, dn);
       }
@@ -966,9 +971,10 @@ public class ContactManager {
               contact.putString(AttributeMapper.POSTAL_CODE, c.getString(10));
               break;
             case StructuredPostal.TYPE_HOME:
-              contact.putString(AttributeMapper.HOME_ADDRESS, c.getString(4));
+              contact.putString(AttributeMapper.HOME_ADDRESS, c.getString(2));
               contact.putString(AttributeMapper.STREET, c.getString(5));
               contact.putString(AttributeMapper.STATE, c.getString(9));
+              break;
           }
         } else if (mimetype.equalsIgnoreCase(Photo.CONTENT_ITEM_TYPE)) {
           // TODO Photo import
@@ -984,11 +990,20 @@ public class ContactManager {
               contact.putString(AttributeMapper.PRIMARY_PHONE, c.getString(2));
               break;
             case Phone.TYPE_FAX_WORK:
-              contact.putString(AttributeMapper.FAX, c.getString(1));
+              contact.putString(AttributeMapper.FAX, c.getString(2));
+              break;
             case Phone.TYPE_MOBILE:
               contact.putString(AttributeMapper.MOBILE_PHONE, c.getString(2));
+              break;
             case Phone.TYPE_PAGER:
               contact.putString(AttributeMapper.PAGER, c.getString(2));
+              break;
+            case Phone.TYPE_TELEX:
+              contact.putString(AttributeMapper.TELEX, c.getString(2));
+              break;
+            case Phone.TYPE_ISDN:
+              contact.putString(AttributeMapper.ISDN, c.getString(2));
+              break;
           }
         } else if (mimetype.equalsIgnoreCase(Organization.CONTENT_ITEM_TYPE)) {
           contact.putString(AttributeMapper.ORGANIZATION, c.getString(2));
