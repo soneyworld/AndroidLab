@@ -21,78 +21,92 @@ public final class AttributeMapper {
   /**
    * The name of the attribute that holds the user's alternate e-mail address.
    */
-  public static final String ATTR_ALTERNATE_MAIL = "mailAlternateAddress";
+  @Deprecated
+  public static final String ALTERNATE_MAIL = "mailAlternateAddress";
 
   /**
    * The name of the attribute that holds the user's fax number.
    */
-  public static final String ATTR_FAX = "fax";
+  public static final String FAX = "facsimileTelephoneNumber";
 
   /**
    * The name of the attribute that holds the user's first name.
    */
-  public static final String ATTR_FIRST_NAME = "givenName";
+  public static final String FIRST_NAME = "givenName";
 
   /**
    * The name of the attribute that holds the user's full name.
    */
-  public static final String ATTR_FULL_NAME = "cn";
+  public static final String FULL_NAME = "cn";
 
   /**
    * The name of the attribute that holds the user's home postal address.
    */
-  public static final String ATTR_HOME_ADDRESS = "homePostalAddress";
+  public static final String HOME_ADDRESS = "homePostalAddress";
 
   /**
    * The name of the attribute that holds the user's home phone number.
    */
-  public static final String ATTR_HOME_PHONE = "homePhone";
+  public static final String HOME_PHONE = "homePhone";
 
   /**
    * The name of the attribute that holds the user's last name.
    */
-  public static final String ATTR_LAST_NAME = "sn";
+  public static final String LAST_NAME = "sn";
 
   /**
    * The name of the attribute that holds the user's mobile phone number.
    */
-  public static final String ATTR_MOBILE_PHONE = "mobile";
+  public static final String MOBILE_PHONE = "mobile";
 
   /**
    * The name of the attribute that holds the user's organization.
    */
-  public static final String ATTR_ORGANIZATION = "o";
+  public static final String ORGANIZATION = "o";
+  
+  /**
+   * The name of the attribute that holds the user's organization unit.
+   */
+  public static final String ORGANIZATION_UNIT = "ou";
 
   /**
    * The name of the attribute that holds the user's pager number.
    */
-  public static final String ATTR_PAGER = "pager";
+  public static final String PAGER = "pager";
 
   /**
    * The name of the attribute that holds the user's primary postal address.
    */
-  public static final String ATTR_PRIMARY_ADDRESS = "postalAddress";
+  public static final String PRIMARY_ADDRESS = "postalAddress";
 
   /**
    * The name of the attribute that holds the user's primary e-mail address.
    */
-  public static final String ATTR_PRIMARY_MAIL = "mail";
+  public static final String PRIMARY_MAIL = "mail";
 
   /**
    * The name of the attribute that holds the user's primary phone number.
    */
-  public static final String ATTR_PRIMARY_PHONE = "telephoneNumber";
+  public static final String PRIMARY_PHONE = "telephoneNumber";
 
   /**
    * The name of the attribute that holds the user's title.
    */
-  public static final String ATTR_TITLE = "title";
-  
+  public static final String TITLE = "title";
+
   /**
    * The name of the attribute that holds the user's id.
    */
   public static final String ATTR_UID = "entryUUID";
 
+  /**
+   * The name of the attribute that holds the user's id.
+   */
+  public static final String UID = "uid";
+
+  public static final String DESCRIPTION = "description";
+
+  public static final String DN = "dn";
 
   // The map of lowercase attribute names to the numeric identifiers for display
   // names.
@@ -110,6 +124,60 @@ public final class AttributeMapper {
 
   // The set of attributes (with lowercase names) used to hold postal addresses.
   private static final Set<String> postalAddressAttrs;
+
+  /**
+   * This attribute holds a postal address suitable for reception of telegrams
+   * or expedited documents, where it is necessary to have the recipient accept
+   * delivery.
+   */
+  public static final String REGISTERED_ADDRESS = "registeredAddress";
+
+  /**
+   * This attribute holds a postal address suitable for reception of telegrams
+   * or expedited documents, where it is necessary to have the recipient accept
+   * delivery.
+   */
+  public static final String PREFERRED_DELIVERY_METHOD = "preferredDeliveryMethod";
+
+  /**
+   * This attribute is used for the telegram service.
+   */
+  public static final String DESTINATION_INDICATOR = "destinationIndicator";
+
+  public static final String INTERNATIONAL_ISDN_NUMBER = "internationaliSDNNumber";
+
+  public static final String STREET = "street";
+
+  public static final String POST_OFFICE_BOX = "postOfficeBox";
+
+  public static final String POSTAL_CODE = "postalCode";
+
+  public static final String POSTAL_ADDRESS = "postalAddress";
+
+  public static final String PHYSICAL_DELIVERY_OFFICE_NAME = "physicalDeliveryOfficeName";
+
+  /**
+   * This attribute contains the full name of a state or province
+   */
+  public static final String STATE = "st";
+
+  /**
+   * This attribute contains the name of a locality, such as a city, county or
+   * other geographic region (localityName).
+   */
+  public static final String LOCALITY = "l";
+
+  public static final String BUSINESS_CATEGORY = "businessCategory";
+
+  public static final String DISPLAYNAME = "displayName";
+
+  public static final String DEPARTMENT_NUMBER = "departmentNumber";
+
+  public static final String INITIALS = "initials";
+
+  public static final String ROOM_NUMBER = "roomNumber";
+
+  public static final String PREFERRED_LANGUAGE = "preferredLanguage";
 
   static {
     final HashMap<String, Integer> aMap = new HashMap<String, Integer>(10);
@@ -353,8 +421,9 @@ public final class AttributeMapper {
    * @param s
    *          The name for which to make the determination. It must not be
    *          {@code null}.
-   * @return {@code true} if the provided string is the name of an attribute that
-   *         should be treated as a generic attribute, or {@code false} if not.
+   * @return {@code true} if the provided string is the name of an attribute
+   *         that should be treated as a generic attribute, or {@code false} if
+   *         not.
    */
   public static boolean isGenericAttr(final String s) {
 

@@ -1,12 +1,14 @@
 package de.tubs.ibr.android.ldap.core;
 
 import static com.unboundid.util.StaticUtils.EOL;
+import java.util.Set;
 import java.util.StringTokenizer;
 import android.accounts.Account;
 import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
+import android.os.Bundle;
 import android.provider.ContactsContract.RawContacts.Entity;
 import android.database.Cursor;
 import android.net.Uri;
@@ -18,7 +20,7 @@ import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.RawContactsEntity;
-import com.unboundid.ldap.sdk.Control;
+import android.widget.Toast;
 import com.unboundid.ldap.sdk.DeleteRequest;
 import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.Filter;
@@ -30,11 +32,22 @@ import com.unboundid.ldap.sdk.SearchRequest;
 import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
-import com.unboundid.ldap.sdk.migrate.ldapjdk.LDAPSearchResults;
+import de.tubs.ibr.android.ldap.R;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
 import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 
 public class ContactManager {
+
+  public enum SyncType {
+    LOCALLY_ADDED, DO_NOT_SYNC, IN_SYNC
+  }
+
+  private static final String SYNC_STATUS_LOCALLY_ADDED = "locally added";
+
+  private static final String SYNC_STATUS_DO_NOT_SYNC = "";
+
+  private static final String SYNC_STATUS_IN_SYNC = "inSync";
+
   public static void addLDAPContactToAccount(Entry entry, Account account,
       BatchOperation batch) {
     int rawContactInsertIndex = batch.size();
@@ -50,27 +63,23 @@ public class ContactManager {
     if (!isSyncable) {
       return;
     }
-    String name = entry.getAttributeValue(AttributeMapper.ATTR_FULL_NAME);
-    String workPhone = entry
-        .getAttributeValue(AttributeMapper.ATTR_PRIMARY_PHONE);
-    String homePhone = entry.getAttributeValue(AttributeMapper.ATTR_HOME_PHONE);
-    String mobile = entry.getAttributeValue(AttributeMapper.ATTR_MOBILE_PHONE);
-    String pager = entry.getAttributeValue(AttributeMapper.ATTR_PAGER);
-    String fax = entry.getAttributeValue(AttributeMapper.ATTR_FAX);
-    String workEMail = entry
-        .getAttributeValue(AttributeMapper.ATTR_PRIMARY_MAIL);
-    String homeEMail = entry
-        .getAttributeValue(AttributeMapper.ATTR_ALTERNATE_MAIL);
+    String name = entry.getAttributeValue(AttributeMapper.FULL_NAME);
+    String workPhone = entry.getAttributeValue(AttributeMapper.PRIMARY_PHONE);
+    String homePhone = entry.getAttributeValue(AttributeMapper.HOME_PHONE);
+    String mobile = entry.getAttributeValue(AttributeMapper.MOBILE_PHONE);
+    String pager = entry.getAttributeValue(AttributeMapper.PAGER);
+    String fax = entry.getAttributeValue(AttributeMapper.FAX);
+    String workEMail = entry.getAttributeValue(AttributeMapper.PRIMARY_MAIL);
+    String homeEMail = entry.getAttributeValue(AttributeMapper.ALTERNATE_MAIL);
     String workAddress = entry
-        .getAttributeValue(AttributeMapper.ATTR_PRIMARY_ADDRESS);
-    String homeAddress = entry
-        .getAttributeValue(AttributeMapper.ATTR_HOME_ADDRESS);
-    String firstname = entry.getAttributeValue(AttributeMapper.ATTR_FIRST_NAME);
-    String lastname = entry.getAttributeValue(AttributeMapper.ATTR_LAST_NAME);
+        .getAttributeValue(AttributeMapper.PRIMARY_ADDRESS);
+    String homeAddress = entry.getAttributeValue(AttributeMapper.HOME_ADDRESS);
+    String firstname = entry.getAttributeValue(AttributeMapper.FIRST_NAME);
+    String lastname = entry.getAttributeValue(AttributeMapper.LAST_NAME);
     // List all LDAP ObjectClasses
     String objectClass = "";
     for (String objectClazz : entry.getAttributeValues("objectClass")) {
-      objectClass = objectClass + "\n" + objectClazz;
+      objectClass = objectClass + EOL + objectClazz;
     }
     Uri contentAsSyncAdapter = ContactsContract.RawContacts.CONTENT_URI
         .buildUpon()
@@ -84,7 +93,7 @@ public class ContactManager {
         .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, account.type)
         .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, account.name)
         .withValue(ContactsContract.RawContacts.SOURCE_ID, sourceId)
-        .withValue(ContactsContract.RawContacts.SYNC1, "inSync")
+        .withValue(ContactsContract.RawContacts.SYNC1, SYNC_STATUS_IN_SYNC)
         .withValue(ContactsContract.RawContacts.SYNC2, "")
         .withValue(ContactsContract.RawContacts.SYNC3,
             entry.getDN() + objectClass)
@@ -155,23 +164,19 @@ public class ContactManager {
       BatchOperation batch) {
     int rawContactInsertIndex = batch.size();
     // Check if the Entry is a Person and can be synchronized
-    String name = entry.getAttributeValue(AttributeMapper.ATTR_FULL_NAME);
-    String workPhone = entry
-        .getAttributeValue(AttributeMapper.ATTR_PRIMARY_PHONE);
-    String homePhone = entry.getAttributeValue(AttributeMapper.ATTR_HOME_PHONE);
-    String mobile = entry.getAttributeValue(AttributeMapper.ATTR_MOBILE_PHONE);
-    String pager = entry.getAttributeValue(AttributeMapper.ATTR_PAGER);
-    String fax = entry.getAttributeValue(AttributeMapper.ATTR_FAX);
-    String workEMail = entry
-        .getAttributeValue(AttributeMapper.ATTR_PRIMARY_MAIL);
-    String homeEMail = entry
-        .getAttributeValue(AttributeMapper.ATTR_ALTERNATE_MAIL);
+    String name = entry.getAttributeValue(AttributeMapper.FULL_NAME);
+    String workPhone = entry.getAttributeValue(AttributeMapper.PRIMARY_PHONE);
+    String homePhone = entry.getAttributeValue(AttributeMapper.HOME_PHONE);
+    String mobile = entry.getAttributeValue(AttributeMapper.MOBILE_PHONE);
+    String pager = entry.getAttributeValue(AttributeMapper.PAGER);
+    String fax = entry.getAttributeValue(AttributeMapper.FAX);
+    String workEMail = entry.getAttributeValue(AttributeMapper.PRIMARY_MAIL);
+    String homeEMail = entry.getAttributeValue(AttributeMapper.ALTERNATE_MAIL);
     String workAddress = entry
-        .getAttributeValue(AttributeMapper.ATTR_PRIMARY_ADDRESS);
-    String homeAddress = entry
-        .getAttributeValue(AttributeMapper.ATTR_HOME_ADDRESS);
-    String firstname = entry.getAttributeValue(AttributeMapper.ATTR_FIRST_NAME);
-    String lastname = entry.getAttributeValue(AttributeMapper.ATTR_LAST_NAME);
+        .getAttributeValue(AttributeMapper.PRIMARY_ADDRESS);
+    String homeAddress = entry.getAttributeValue(AttributeMapper.HOME_ADDRESS);
+    String firstname = entry.getAttributeValue(AttributeMapper.FIRST_NAME);
+    String lastname = entry.getAttributeValue(AttributeMapper.LAST_NAME);
     // List all LDAP ObjectClasses
     Uri contentAsSyncAdapter = ContactsContract.RawContacts.CONTENT_URI
         .buildUpon()
@@ -557,7 +562,7 @@ public class ContactManager {
         if (Id == id) {
           if (!c.isNull(1)) {
             String temp = c.getString(1);
-            int endline = temp.indexOf("\n");
+            int endline = temp.indexOf(EOL);
             if (endline > 0) {
               dn = temp.substring(0, endline);
             } else {
@@ -613,13 +618,10 @@ public class ContactManager {
         String mimetype = c.getString(1);
         // is a name
         if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/name")) {
-          ldapentry
-              .addAttribute(AttributeMapper.ATTR_FULL_NAME, c.getString(2));
+          ldapentry.addAttribute(AttributeMapper.FULL_NAME, c.getString(2));
           ldapentry.addAttribute("displayName", c.getString(2));
-          ldapentry.addAttribute(AttributeMapper.ATTR_FIRST_NAME,
-              c.getString(3));
-          ldapentry
-              .addAttribute(AttributeMapper.ATTR_LAST_NAME, c.getString(4));
+          ldapentry.addAttribute(AttributeMapper.FIRST_NAME, c.getString(3));
+          ldapentry.addAttribute(AttributeMapper.LAST_NAME, c.getString(4));
         }
         if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/im")) {
           // TODO Instant Messengers
@@ -629,13 +631,13 @@ public class ContactManager {
           int type = c.getInt(2);
           switch (type) {
             case StructuredPostal.TYPE_WORK:
-              ldapentry.addAttribute(AttributeMapper.ATTR_PRIMARY_ADDRESS,
+              ldapentry.addAttribute(AttributeMapper.PRIMARY_ADDRESS,
                   c.getString(4));
               ldapentry.addAttribute("postOfficeBox", c.getString(5));
               ldapentry.addAttribute("postalCode", c.getString(9));
               break;
             case StructuredPostal.TYPE_HOME:
-              ldapentry.addAttribute(AttributeMapper.ATTR_HOME_ADDRESS,
+              ldapentry.addAttribute(AttributeMapper.HOME_ADDRESS,
                   c.getString(4));
             default:
               break;
@@ -648,21 +650,20 @@ public class ContactManager {
           int type = c.getInt(3);
           switch (type) {
             case Phone.TYPE_HOME:
-              ldapentry.addAttribute(AttributeMapper.ATTR_HOME_PHONE,
-                  c.getString(2));
+              ldapentry
+                  .addAttribute(AttributeMapper.HOME_PHONE, c.getString(2));
               break;
             case Phone.TYPE_WORK:
-              ldapentry.addAttribute(AttributeMapper.ATTR_PRIMARY_PHONE,
+              ldapentry.addAttribute(AttributeMapper.PRIMARY_PHONE,
                   c.getString(2));
               break;
             case Phone.TYPE_FAX_WORK:
-              ldapentry.addAttribute(AttributeMapper.ATTR_FAX, c.getString(1));
+              ldapentry.addAttribute(AttributeMapper.FAX, c.getString(1));
             case Phone.TYPE_MOBILE:
-              ldapentry.addAttribute(AttributeMapper.ATTR_MOBILE_PHONE,
+              ldapentry.addAttribute(AttributeMapper.MOBILE_PHONE,
                   c.getString(2));
             case Phone.TYPE_PAGER:
-              ldapentry
-                  .addAttribute(AttributeMapper.ATTR_PAGER, c.getString(2));
+              ldapentry.addAttribute(AttributeMapper.PAGER, c.getString(2));
             default:
               break;
           }
@@ -677,11 +678,11 @@ public class ContactManager {
           int type = c.getInt(3);
           switch (type) {
             case Email.TYPE_WORK:
-              ldapentry.addAttribute(AttributeMapper.ATTR_PRIMARY_MAIL,
+              ldapentry.addAttribute(AttributeMapper.PRIMARY_MAIL,
                   c.getString(2));
               break;
             case Email.TYPE_HOME:
-              ldapentry.addAttribute(AttributeMapper.ATTR_ALTERNATE_MAIL,
+              ldapentry.addAttribute(AttributeMapper.ALTERNATE_MAIL,
                   c.getString(2));
             default:
               break;
@@ -703,7 +704,6 @@ public class ContactManager {
       LDAPResult result = connection.add(ldapentry);
       String errormessage = result.getResultCode().toString();
       if (result.getResultCode().intValue() == ResultCode.SUCCESS_INT_VALUE) {
-        // TODO Batch Update des Datensatzes einfügen
         SearchRequest request = new SearchRequest(dn, SearchScope.BASE,
             Filter.create("(cn=*)"), SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
             SearchRequest.ALL_USER_ATTRIBUTES);
@@ -713,10 +713,10 @@ public class ContactManager {
           SearchResultEntry entry = searchResults.getSearchEntries().get(0);
           String uuid = entry.getAttributeValue(AttributeMapper.ATTR_UID);
           String ldif = entry.toLDIFString();
-          String status = "inSync";
+          String status = SYNC_STATUS_IN_SYNC;
           String dnAndClasses = entry.getDN();
           for (String objectClass : entry.getAttributeValues("objectClass")) {
-            dnAndClasses = dnAndClasses + "\n" + objectClass;
+            dnAndClasses = dnAndClasses + EOL + objectClass;
           }
           Uri contentAsSyncProvider = ContactsContract.RawContacts.CONTENT_URI
               .buildUpon()
@@ -739,5 +739,179 @@ public class ContactManager {
       }
     }
 
+  }
+
+  private static void saveNewLocallyAddedContact(final Bundle b,
+      final Context context, final Account account, boolean onlyImportNotSync) {
+    String sn = null;
+    String cn = null;
+    String description = null;
+    String title = null;
+    String registeredAddress = null;
+    String destinationIndicator = null;
+    String preferredDeliveryMethod = null;
+    String faxNumber = null;
+    String telephoneNumber = null;
+    String internationalISDNNumber = null;
+    String facsimileTelephoneNumber = null;
+    String street = null;
+    String postOfficeBox = null;
+    String postalCode = null;
+    String postalAddress = null;
+    String physicalDeliveryOfficeName = null;
+    String ou = null;
+    String st = null;
+    String l = null;
+    String businessCategory = null;
+    String departmentNumber = null;
+    String displayName = null;
+    String givenName = null;
+    String homePhone = null;
+    String homePostalAddress = null;
+    String initials = null;
+    String mail = null;
+    String mobile = null;
+    String o = null;
+    String pager = null;
+    String roomNumber = null;
+    String uid = null;
+    String preferredLanguage = null;
+    String dn = null;
+    String syncstatus = null;
+    BatchOperation batch = new BatchOperation(context,
+        context.getContentResolver());
+    Set<String> keys = b.keySet();
+    for (String key : keys) {
+      if (key.equals(AttributeMapper.FIRST_NAME)) {
+        givenName = b.getString(key);
+      } else if (key.equals(AttributeMapper.LAST_NAME)) {
+        sn = b.getString(key);
+      } else if (key.equals(AttributeMapper.DN)) {
+        dn = b.getString(key);
+      } else if (key.equals(AttributeMapper.UID)) {
+        uid = b.getString(key);
+      } else if (key.equals(AttributeMapper.FAX)) {
+        faxNumber = b.getString(key);
+      } else if (key.equals(AttributeMapper.DESCRIPTION)) {
+        description = b.getString(key);
+      } else if (key.equals(AttributeMapper.TITLE)) {
+        title = b.getString(key);
+      } else if (key.equals(AttributeMapper.REGISTERED_ADDRESS)) {
+        registeredAddress = b.getString(key);
+      } else if (key.equals(AttributeMapper.DESTINATION_INDICATOR)) {
+        destinationIndicator = b.getString(key);
+      } else if (key.equals(AttributeMapper.PREFERRED_DELIVERY_METHOD)) {
+        preferredDeliveryMethod = b.getString(key);
+      } else if (key.equals(AttributeMapper.PRIMARY_PHONE)) {
+        telephoneNumber = b.getString(key);
+      } else if (key.equals(AttributeMapper.INTERNATIONAL_ISDN_NUMBER)) {
+        internationalISDNNumber = b.getString(key);
+      } else if (key.equals(AttributeMapper.STREET)) {
+        street = b.getString(key);
+      } else if (key.equals(AttributeMapper.POST_OFFICE_BOX)) {
+        postOfficeBox = b.getString(key);
+      } else if (key.equals(AttributeMapper.POSTAL_CODE)) {
+        postalCode = b.getString(key);
+      } else if (key.equals(AttributeMapper.POSTAL_ADDRESS)) {
+        postalAddress = b.getString(key);
+      } else if (key.equals(AttributeMapper.PHYSICAL_DELIVERY_OFFICE_NAME)) {
+        physicalDeliveryOfficeName = b.getString(key);
+      } else if (key.equals(AttributeMapper.ORGANIZATION_UNIT)) {
+        ou = b.getString(key);
+      } else if (key.equals(AttributeMapper.STATE)) {
+        st = b.getString(key);
+      } else if (key.equals(AttributeMapper.LOCALITY)) {
+        l = b.getString(key);
+      } else if (key.equals(AttributeMapper.BUSINESS_CATEGORY)) {
+        businessCategory = b.getString(key);
+      } else if (key.equals(AttributeMapper.DEPARTMENT_NUMBER)) {
+        departmentNumber = b.getString(key);
+      } else if (key.equals(AttributeMapper.FULL_NAME)
+          || key.equals(AttributeMapper.DISPLAYNAME)) {
+        displayName = b.getString(key);
+        cn = b.getString(key);
+      } else if (key.equals(AttributeMapper.HOME_PHONE)) {
+        homePhone = b.getString(key);
+      } else if (key.equals(AttributeMapper.HOME_ADDRESS)) {
+        homePostalAddress = b.getString(key);
+      } else if (key.equals(AttributeMapper.INITIALS)) {
+        initials = b.getString(key);
+      } else if (key.equals(AttributeMapper.PRIMARY_MAIL)) {
+        mail = b.getString(key);
+      } else if (key.equals(AttributeMapper.MOBILE_PHONE)) {
+        mobile = b.getString(key);
+      } else if (key.equals(AttributeMapper.ORGANIZATION)) {
+        o = b.getString(key);
+      } else if (key.equals(AttributeMapper.PAGER)) {
+        pager = b.getString(key);
+      } else if (key.equals(AttributeMapper.ROOM_NUMBER)) {
+        roomNumber = b.getString(key);
+      } else if (key.equals(AttributeMapper.PREFERRED_LANGUAGE)) {
+        preferredLanguage = b.getString(key);
+      }
+    }
+    if (onlyImportNotSync) {
+      uid = null;
+      syncstatus = SYNC_STATUS_DO_NOT_SYNC;
+    } else {
+      syncstatus = SYNC_STATUS_LOCALLY_ADDED;
+    }
+    // Prepare contact creation request
+    //TODO Alle Routinen müssen noch geschrieben werden
+    batch.add(ContentProviderOperation
+        .newInsert(ContactsContract.RawContacts.CONTENT_URI)
+        .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, account.type)
+        .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, account.name)
+        .withValue(ContactsContract.RawContacts.SYNC3, dn)
+        .withValue(ContactsContract.RawContacts.SYNC1, syncstatus).build());
+    batch.add(ContentProviderOperation
+        .newInsert(ContactsContract.Data.CONTENT_URI)
+        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+        .withValue(ContactsContract.Data.MIMETYPE,
+            ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+        .withValue(
+            ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME,
+            displayName)
+        .withValue(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME,
+            givenName)
+        .withValue(ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME,
+            sn).build());
+    if (telephoneNumber != null && telephoneNumber.length() > 0) {
+      batch.add(ContentProviderOperation
+          .newInsert(ContactsContract.Data.CONTENT_URI)
+          .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+          .withValue(ContactsContract.Data.MIMETYPE,
+              ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
+          .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER,
+              telephoneNumber)
+          .withValue(ContactsContract.CommonDataKinds.Phone.TYPE,
+              Phone.TYPE_MAIN).build());
+    }
+    if (mail != null && mail.length() > 0) {
+      batch.add(ContentProviderOperation
+          .newInsert(ContactsContract.Data.CONTENT_URI)
+          .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+          .withValue(ContactsContract.Data.MIMETYPE,
+              ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
+          .withValue(ContactsContract.CommonDataKinds.Email.DATA, mail)
+          .withValue(ContactsContract.CommonDataKinds.Email.TYPE,
+              Email.TYPE_WORK).build());
+    }
+    // Ask the Contact provider to create a new contact
+    try {
+      batch.execute();
+    } catch (Exception e) {
+      // Display warning
+      CharSequence txt = context.getString(R.string.contactCreationFailure);
+      int duration = Toast.LENGTH_SHORT;
+      Toast toast = Toast.makeText(context.getApplicationContext(), txt,
+          duration);
+      toast.show();
+    }
+  }
+
+  public static void saveNewLocallyAddedContactAndSync(final Bundle b,
+      final Account account, final Context context) {
+    saveNewLocallyAddedContact(b, context, account, false);
   }
 }

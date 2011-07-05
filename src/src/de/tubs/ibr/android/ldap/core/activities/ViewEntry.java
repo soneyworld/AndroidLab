@@ -100,25 +100,25 @@ public final class ViewEntry extends Activity implements StringProvider , OnClic
    */
   private boolean hasContactAttributes(final Entry e) {
     // The entry must have a full name attribute to be considered a user.
-    if (!e.hasAttribute(ATTR_FULL_NAME)) {
+    if (!e.hasAttribute(FULL_NAME)) {
       return false;
     }
 
     // The user also needs at least one of an e-mail address or phone number.
-    return (e.hasAttribute(ATTR_PRIMARY_MAIL)
-        || e.hasAttribute(ATTR_ALTERNATE_MAIL)
-        || e.hasAttribute(ATTR_PRIMARY_PHONE)
-        || e.hasAttribute(ATTR_HOME_PHONE) || e.hasAttribute(ATTR_MOBILE_PHONE)
-        || e.hasAttribute(ATTR_PAGER) || e.hasAttribute(ATTR_FAX));
+    return (e.hasAttribute(PRIMARY_MAIL)
+        || e.hasAttribute(ALTERNATE_MAIL)
+        || e.hasAttribute(PRIMARY_PHONE)
+        || e.hasAttribute(HOME_PHONE) || e.hasAttribute(MOBILE_PHONE)
+        || e.hasAttribute(PAGER) || e.hasAttribute(FAX));
   }
 
   /**
    * Generates the display for a user entry.
    */
   private void displayUser() {
-    final String name = entry.getAttributeValue(ATTR_FULL_NAME);
-    final String title = entry.getAttributeValue(ATTR_TITLE);
-    final String organization = entry.getAttributeValue(ATTR_ORGANIZATION);
+    final String name = entry.getAttributeValue(FULL_NAME);
+    final String title = entry.getAttributeValue(TITLE);
+    final String organization = entry.getAttributeValue(ORGANIZATION);
 
     setTitle("Entry for User " + name);
 
