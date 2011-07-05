@@ -81,6 +81,7 @@
 		</activity>
 		<activity android:name=".core.activities.SyncTabActivity"></activity>
 		<service android:name=".provider.LDAPService"></service>
+		<meta-data android:resource="@xml/ldap_row" android:value="android.provider.CONTACTS_STRUCTURE" android:name="android:name"></meta-data>
 
 	</application>
 </manifest>
