@@ -40,7 +40,7 @@ public class ContactViewerActivity extends Activity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.contact_adder);
+    setContentView(R.layout.layout_editcontact_view);
 
     Spinner acctype = (Spinner) findViewById(R.id.accountSpinner);
     TextView acctextview = (TextView) findViewById(R.id.targetAccountTextView);

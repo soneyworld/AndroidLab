@@ -70,7 +70,7 @@
 		<activity android:name=".core.activities.ViewEntry"></activity>
 		<service android:name=".provider.TestServerService"></service>
 		<activity android:name=".core.activities.ConflictActivity"></activity>
-		<activity android:name=".core.activities.ContactAdder">
+		<activity android:name=".core.activities.EditContactActivity">
             <intent-filter android:label="new Contact on LDAP">
                 <action android:name="android.intent.action.INSERT" />
                 <category android:name="android.intent.category.DEFAULT" />
