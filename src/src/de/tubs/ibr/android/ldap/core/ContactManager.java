@@ -741,6 +741,16 @@ public class ContactManager {
 
   }
 
+  /**
+   * Internal Method to save the given Contact Data to the local Android
+   * Contacts and marks them with the right sync status, to initialize an
+   * asynchronous synchronization, if it is necessary
+   * 
+   * @param b
+   * @param context
+   * @param account
+   * @param onlyImportNotSync
+   */
   private static void saveNewLocallyAddedContact(final Bundle b,
       final Context context, final Account account, boolean onlyImportNotSync) {
     String sn = null;
@@ -850,22 +860,31 @@ public class ContactManager {
         preferredLanguage = b.getString(key);
       }
     }
+    Uri rawContactUri = null;
+    Uri dataUri = null;
     if (onlyImportNotSync) {
       uid = null;
       syncstatus = SYNC_STATUS_DO_NOT_SYNC;
+      rawContactUri = ContactsContract.RawContacts.CONTENT_URI.buildUpon()
+          .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
+          .build();
+      dataUri = ContactsContract.Data.CONTENT_URI.buildUpon()
+          .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
+          .build();
     } else {
       syncstatus = SYNC_STATUS_LOCALLY_ADDED;
+      rawContactUri = ContactsContract.RawContacts.CONTENT_URI;
+      dataUri = ContactsContract.Data.CONTENT_URI;
     }
     // Prepare contact creation request
-    //TODO Alle Routinen müssen noch geschrieben werden
-    batch.add(ContentProviderOperation
-        .newInsert(ContactsContract.RawContacts.CONTENT_URI)
+    // TODO Alle weiteren Routinen müssen noch geschrieben werden
+    batch.add(ContentProviderOperation.newInsert(rawContactUri)
         .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, account.type)
         .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, account.name)
         .withValue(ContactsContract.RawContacts.SYNC3, dn)
         .withValue(ContactsContract.RawContacts.SYNC1, syncstatus).build());
     batch.add(ContentProviderOperation
-        .newInsert(ContactsContract.Data.CONTENT_URI)
+        .newInsert(dataUri)
         .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
         .withValue(ContactsContract.Data.MIMETYPE,
             ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
@@ -878,7 +897,7 @@ public class ContactManager {
             sn).build());
     if (telephoneNumber != null && telephoneNumber.length() > 0) {
       batch.add(ContentProviderOperation
-          .newInsert(ContactsContract.Data.CONTENT_URI)
+          .newInsert(dataUri)
           .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
           .withValue(ContactsContract.Data.MIMETYPE,
               ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
@@ -889,7 +908,7 @@ public class ContactManager {
     }
     if (mail != null && mail.length() > 0) {
       batch.add(ContentProviderOperation
-          .newInsert(ContactsContract.Data.CONTENT_URI)
+          .newInsert(dataUri)
           .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
           .withValue(ContactsContract.Data.MIMETYPE,
               ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
@@ -910,8 +929,35 @@ public class ContactManager {
     }
   }
 
+  /**
+   * This Function adds all given LDAP Parameter to the local AndroidContacts
+   * and tries to sync them with the LDAP asynchronous
+   * 
+   * @param b
+   *          Bundle with all LDAP Entries included as key value store
+   * @param account
+   *          to which the Entries should be added
+   * @param context
+   *          in which the Function is called
+   */
   public static void saveNewLocallyAddedContactAndSync(final Bundle b,
       final Account account, final Context context) {
     saveNewLocallyAddedContact(b, context, account, false);
+  }
+
+  /**
+   * This Function adds all given LDAP Parameter to the local AndroidContacts
+   * and do NOT synchronize them with the LDAP Server
+   * 
+   * @param b
+   *          Bundle with all LDAP Entries included as key value store
+   * @param account
+   *          to which the Entries should be added
+   * @param context
+   *          in which the Function is called
+   */
+  public static void saveNewLocallyAddedContactAndDoNotSync(final Bundle b,
+      final Account account, final Context context) {
+    saveNewLocallyAddedContact(b, context, account, true);
   }
 }
