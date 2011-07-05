@@ -14,6 +14,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
+import android.provider.ContactsContract.CommonDataKinds.Nickname;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.StructuredPostal;
 import android.provider.ContactsContract.Contacts;
@@ -47,6 +48,14 @@ public class ContactManager {
   private static final String SYNC_STATUS_DO_NOT_SYNC = "";
 
   private static final String SYNC_STATUS_IN_SYNC = "inSync";
+
+  private static final String SYNC_STATUS_CONFLICT = "conflict";
+
+  public static final String LDAP_SYNC_STATUS_KEY = "LDAP_SYNC_STATUS";
+
+  public static final String LDAP_ERROR_MESSAGE_KEY = "LDAP_ERROR_MESSAGE";
+
+  public static final String LDAP_LDIF_DETAILS_KEY = "LDAP_LDIF_DETAILS";
 
   public static void addLDAPContactToAccount(Entry entry, Account account,
       BatchOperation batch) {
@@ -596,107 +605,23 @@ public class ContactManager {
   public static void addLocalContactToLDAP(int rawcontactId,
       BatchOperation batchOperation, ServerInstance serverInstance,
       Context context) {
-    String dn = getDNofRawContact(rawcontactId, context);
+    Bundle contact = loadContact(rawcontactId, context);
+    String dn = contact.getString(AttributeMapper.DN);
     if (dn == null) {
       dn = serverInstance.getBaseDN();
     }
     Entry ldapentry = new Entry(dn);
-    Cursor c = context.getContentResolver().query(
-        Data.CONTENT_URI,
-        new String[] { RawContactsEntity._ID, RawContactsEntity.MIMETYPE,
-            RawContactsEntity.DATA1, RawContactsEntity.DATA2,
-            RawContactsEntity.DATA3, RawContactsEntity.DATA4,
-            RawContactsEntity.DATA5, RawContactsEntity.DATA6,
-            RawContactsEntity.DATA7, RawContactsEntity.DATA8,
-            RawContactsEntity.DATA9, RawContactsEntity.DATA10,
-            RawContactsEntity.DATA11, RawContactsEntity.DATA12,
-            RawContactsEntity.DATA13, RawContactsEntity.DATA14,
-            RawContactsEntity.DATA15 },
-        Data.RAW_CONTACT_ID + "=" + rawcontactId, null, null);
-    try {
-      while (c.moveToNext()) {
-        String mimetype = c.getString(1);
-        // is a name
-        if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/name")) {
-          ldapentry.addAttribute(AttributeMapper.FULL_NAME, c.getString(2));
-          ldapentry.addAttribute("displayName", c.getString(2));
-          ldapentry.addAttribute(AttributeMapper.FIRST_NAME, c.getString(3));
-          ldapentry.addAttribute(AttributeMapper.LAST_NAME, c.getString(4));
-        }
-        if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/im")) {
-          // TODO Instant Messengers
-        }
-        if (mimetype
-            .equalsIgnoreCase("vnd.android.cursor.item/postal-address_v2")) {
-          int type = c.getInt(2);
-          switch (type) {
-            case StructuredPostal.TYPE_WORK:
-              ldapentry.addAttribute(AttributeMapper.PRIMARY_ADDRESS,
-                  c.getString(4));
-              ldapentry.addAttribute("postOfficeBox", c.getString(5));
-              ldapentry.addAttribute("postalCode", c.getString(9));
-              break;
-            case StructuredPostal.TYPE_HOME:
-              ldapentry.addAttribute(AttributeMapper.HOME_ADDRESS,
-                  c.getString(4));
-            default:
-              break;
-          }
-        }
-        if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/photo")) {
-          // TODO Photo import
-        }
-        if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/phone_v2")) {
-          int type = c.getInt(3);
-          switch (type) {
-            case Phone.TYPE_HOME:
-              ldapentry
-                  .addAttribute(AttributeMapper.HOME_PHONE, c.getString(2));
-              break;
-            case Phone.TYPE_WORK:
-              ldapentry.addAttribute(AttributeMapper.PRIMARY_PHONE,
-                  c.getString(2));
-              break;
-            case Phone.TYPE_FAX_WORK:
-              ldapentry.addAttribute(AttributeMapper.FAX, c.getString(1));
-            case Phone.TYPE_MOBILE:
-              ldapentry.addAttribute(AttributeMapper.MOBILE_PHONE,
-                  c.getString(2));
-            case Phone.TYPE_PAGER:
-              ldapentry.addAttribute(AttributeMapper.PAGER, c.getString(2));
-            default:
-              break;
-          }
-        }
-        if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/organization")) {
-          // TODO Organisation
-        }
-        if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/nickname")) {
-          // TODO Nickname
-        }
-        if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/email_v2")) {
-          int type = c.getInt(3);
-          switch (type) {
-            case Email.TYPE_WORK:
-              ldapentry.addAttribute(AttributeMapper.PRIMARY_MAIL,
-                  c.getString(2));
-              break;
-            case Email.TYPE_HOME:
-              ldapentry.addAttribute(AttributeMapper.ALTERNATE_MAIL,
-                  c.getString(2));
-            default:
-              break;
-          }
-        }
-      }
-    } finally {
-      c.close();
+    contact.remove(AttributeMapper.DN);
+    contact.remove(LDAP_SYNC_STATUS_KEY);
+    contact.remove(LDAP_ERROR_MESSAGE_KEY);
+    contact.remove(LDAP_LDIF_DETAILS_KEY);
+    for (String attr : contact.keySet()) {
+      ldapentry.addAttribute(attr, contact.getString(attr));
     }
     ldapentry.addAttribute("objectClass", "inetOrgPerson");
     ldapentry.addAttribute("objectClass", "organizationalPerson");
     ldapentry.addAttribute("objectClass", "person");
     ldapentry.addAttribute("objectClass", "top");
-
     // String ldif = ldapentry.toLDIFString();
     LDAPConnection connection = null;
     try {
@@ -916,15 +841,24 @@ public class ContactManager {
           .withValue(ContactsContract.CommonDataKinds.Email.TYPE,
               Email.TYPE_WORK).build());
     }
+    if (initials != null && initials.length() > 0) {
+      batch.add(ContentProviderOperation
+          .newInsert(dataUri)
+          .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+          .withValue(ContactsContract.Data.MIMETYPE,
+              ContactsContract.CommonDataKinds.Nickname.CONTENT_ITEM_TYPE)
+          .withValue(ContactsContract.CommonDataKinds.Nickname.NAME, initials)
+          .withValue(ContactsContract.CommonDataKinds.Nickname.TYPE,
+              Nickname.TYPE_INITIALS).build());
+    }
     // Ask the Contact provider to create a new contact
     try {
       batch.execute();
     } catch (Exception e) {
       // Display warning
-      CharSequence txt = context.getString(R.string.contactCreationFailure);
       int duration = Toast.LENGTH_SHORT;
-      Toast toast = Toast.makeText(context.getApplicationContext(), txt,
-          duration);
+      Toast toast = Toast.makeText(context.getApplicationContext(),
+          R.string.contactCreationFailure, duration);
       toast.show();
     }
   }
@@ -959,5 +893,189 @@ public class ContactManager {
   public static void saveNewLocallyAddedContactAndDoNotSync(final Bundle b,
       final Account account, final Context context) {
     saveNewLocallyAddedContact(b, context, account, true);
+  }
+
+  /**
+   * Loads a Contact from local Android Contacts and puts the result into a
+   * Bundle with the {@link AttributeMapper} Keys, if the entries are not null
+   * 
+   * @param rawcontactId
+   * @param account
+   * @param context
+   * @return
+   */
+  public static Bundle loadContact(final int rawcontactId, final Context context) {
+    Bundle contact = new Bundle();
+    String description = null;
+    String title = null;
+    String registeredAddress = null;
+    String destinationIndicator = null;
+    String preferredDeliveryMethod = null;
+    String faxNumber = null;
+    String telephoneNumber = null;
+    String internationalISDNNumber = null;
+    String facsimileTelephoneNumber = null;
+    String street = null;
+    String postOfficeBox = null;
+    String postalCode = null;
+    String postalAddress = null;
+    String physicalDeliveryOfficeName = null;
+    String ou = null;
+    String st = null;
+    String l = null;
+    String businessCategory = null;
+    String departmentNumber = null;
+    String homePhone = null;
+    String homePostalAddress = null;
+    String initials = null;
+    String mobile = null;
+    String o = null;
+    String pager = null;
+    String roomNumber = null;
+    String uid = null;
+    String preferredLanguage = null;
+    String dn = null;
+    String syncstatus = null;
+    Uri rawContactUri = ContentUris.withAppendedId(RawContacts.CONTENT_URI,
+        rawcontactId);
+    Cursor c = context.getContentResolver().query(
+        rawContactUri,
+        new String[] { RawContacts._ID, RawContacts.SYNC1, RawContacts.SYNC2,
+            RawContacts.SYNC3, RawContacts.SYNC4 }, null, null, null);
+    try {
+      if (!c.isNull(1)) {
+        String status = c.getString(1);
+        if (status.length() > 0) {
+          if (!status.equals(SYNC_STATUS_DO_NOT_SYNC)) {
+            contact.putString(LDAP_SYNC_STATUS_KEY, status);
+          }
+        }
+      }
+      if (!c.isNull(2)) {
+        String errormessage = c.getString(2);
+        if (errormessage.length() > 0) {
+          contact.putString(LDAP_ERROR_MESSAGE_KEY, errormessage);
+        }
+      }
+      if (!c.isNull(3)) {
+        String temp = c.getString(3);
+        int endline = temp.indexOf(EOL);
+        if (endline > 0) {
+          dn = temp.substring(0, endline);
+        } else {
+          dn = temp;
+        }
+        contact.putString(AttributeMapper.DN, dn);
+      }
+      if (!c.isNull(4)) {
+        String ldif = c.getString(4);
+        if (ldif.length() > 0) {
+          contact.putString(LDAP_LDIF_DETAILS_KEY, ldif);
+        }
+      }
+    } catch (Exception e) {
+      // Display warning
+      int duration = Toast.LENGTH_SHORT;
+      Toast toast = Toast.makeText(context.getApplicationContext(),
+          R.string.contactLoadingFailure, duration);
+      toast.show();
+    } finally {
+      c.close();
+    }
+    c = context.getContentResolver().query(
+        Data.CONTENT_URI,
+        new String[] { RawContactsEntity._ID, RawContactsEntity.MIMETYPE,
+            RawContactsEntity.DATA1, RawContactsEntity.DATA2,
+            RawContactsEntity.DATA3, RawContactsEntity.DATA4,
+            RawContactsEntity.DATA5, RawContactsEntity.DATA6,
+            RawContactsEntity.DATA7, RawContactsEntity.DATA8,
+            RawContactsEntity.DATA9, RawContactsEntity.DATA10,
+            RawContactsEntity.DATA11, RawContactsEntity.DATA12,
+            RawContactsEntity.DATA13, RawContactsEntity.DATA14,
+            RawContactsEntity.DATA15 },
+        Data.RAW_CONTACT_ID + "=" + rawcontactId, null, null);
+    try {
+      while (c.moveToNext()) {
+        String mimetype = c.getString(1);
+        // is a name
+        if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/name")) {
+          contact.putString(AttributeMapper.FULL_NAME, c.getString(2));
+          contact.putString(AttributeMapper.DISPLAYNAME, c.getString(2));
+          contact.putString(AttributeMapper.FIRST_NAME, c.getString(3));
+          contact.putString(AttributeMapper.LAST_NAME, c.getString(4));
+        }
+        if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/im")) {
+          // TODO Instant Messengers
+        }
+        if (mimetype
+            .equalsIgnoreCase("vnd.android.cursor.item/postal-address_v2")) {
+          int type = c.getInt(2);
+          switch (type) {
+            case StructuredPostal.TYPE_WORK:
+              contact
+                  .putString(AttributeMapper.PRIMARY_ADDRESS, c.getString(4));
+              contact
+                  .putString(AttributeMapper.POST_OFFICE_BOX, c.getString(5));
+              contact.putString(AttributeMapper.POSTAL_CODE, c.getString(9));
+              break;
+            case StructuredPostal.TYPE_HOME:
+              contact.putString(AttributeMapper.HOME_ADDRESS, c.getString(4));
+            default:
+              break;
+          }
+        }
+        if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/photo")) {
+          // TODO Photo import
+        }
+        if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/phone_v2")) {
+          int type = c.getInt(3);
+          switch (type) {
+            case Phone.TYPE_HOME:
+              contact.putString(AttributeMapper.HOME_PHONE, c.getString(2));
+              break;
+            case Phone.TYPE_WORK:
+              contact.putString(AttributeMapper.PRIMARY_PHONE, c.getString(2));
+              break;
+            case Phone.TYPE_FAX_WORK:
+              contact.putString(AttributeMapper.FAX, c.getString(1));
+            case Phone.TYPE_MOBILE:
+              contact.putString(AttributeMapper.MOBILE_PHONE, c.getString(2));
+            case Phone.TYPE_PAGER:
+              contact.putString(AttributeMapper.PAGER, c.getString(2));
+            default:
+              break;
+          }
+        }
+        if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/organization")) {
+          contact.putString(AttributeMapper.ORGANIZATION, c.getString(2));
+          contact.putString(AttributeMapper.ORGANIZATION_UNIT, c.getString(6));
+        }
+        if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/nickname")) {
+          int type = c.getInt(3);
+          switch (type) {
+            case Nickname.TYPE_INITIALS:
+              contact.putString(AttributeMapper.INITIALS, c.getString(2));
+              break;
+            default:
+              break;
+          }
+        }
+        if (mimetype.equalsIgnoreCase("vnd.android.cursor.item/email_v2")) {
+          int type = c.getInt(3);
+          switch (type) {
+            case Email.TYPE_WORK:
+              contact.putString(AttributeMapper.PRIMARY_MAIL, c.getString(2));
+              break;
+            case Email.TYPE_HOME:
+              contact.putString(AttributeMapper.ALTERNATE_MAIL, c.getString(2));
+            default:
+              break;
+          }
+        }
+      }
+    } finally {
+      c.close();
+    }
+    return contact;
   }
 }
