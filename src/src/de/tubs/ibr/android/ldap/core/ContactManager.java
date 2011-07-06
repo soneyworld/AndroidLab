@@ -64,6 +64,12 @@ public class ContactManager {
 
   public static final String LDAP_LDIF_DETAILS_KEY = "LDAP_LDIF_DETAILS";
 
+  public static final String LOCAL_ACCOUNT_TYPE_KEY = "ANDROID_LOCAL_ACCOUNT_TYPE";
+
+  public static final String LOCAL_ACCOUNT_NAME_KEY = "ANDROID_LOCAL_ACCOUNT_NAME";
+
+  public static final String LDAP_SOURCE_ID_KEY = AttributeMapper.ATTR_UID;
+
   public static void addLDAPContactToAccount(Entry entry, Account account,
       BatchOperation batch) {
     int rawContactInsertIndex = batch.size();
@@ -137,7 +143,7 @@ public class ContactManager {
     ContactUtils.createLDAPRow(AttributeMapper.UID,
         entry.getAttributeValue(AttributeMapper.UID), batch, dataAsSyncAdapter,
         rawContactInsertIndex);
-    //TODO CREATE ORGANIZATION
+    // TODO CREATE ORGANIZATION
   }
 
   /**
@@ -148,6 +154,7 @@ public class ContactManager {
   public static void importLDAPContact(Entry entry, Account account,
       BatchOperation batch) {
     int rawContactInsertIndex = batch.size();
+
     // Check if the Entry is a Person and can be synchronized
     String name = entry.getAttributeValue(AttributeMapper.FULL_NAME);
     String workPhone = entry.getAttributeValue(AttributeMapper.PRIMARY_PHONE);
@@ -632,7 +639,9 @@ public class ContactManager {
   /**
    * Internal Method to save the given Contact Data to the local Android
    * Contacts and marks them with the right sync status, to initialize an
-   * asynchronous synchronization, if it is necessary
+   * asynchronous synchronization, if it is necessary If BatchOperation is null,
+   * the instruction is executed directly, otherwise, it adds the operations to
+   * the batch
    * 
    * @param b
    * @param context
@@ -640,7 +649,8 @@ public class ContactManager {
    * @param onlyImportNotSync
    */
   private static void saveNewLocallyAddedContact(final Bundle b,
-      final Context context, final Account account, boolean onlyImportNotSync) {
+      final Context context, final Account account, BatchOperation batch,
+      boolean onlyImportNotSync) {
     // Name
     String sn = null;
     String cn = null;
@@ -686,8 +696,14 @@ public class ContactManager {
 
     String dn = null;
     String syncstatus = null;
-    BatchOperation batch = new BatchOperation(context,
-        context.getContentResolver());
+    int rawContactInsertIndex = 0;
+    boolean executeDirectly = false;
+    if (batch == null) {
+      batch = new BatchOperation(context, context.getContentResolver());
+      executeDirectly = true;
+    }else{
+      rawContactInsertIndex = batch.size();
+    }
     Set<String> keys = b.keySet();
     for (String key : keys) {
       if (key.equals(AttributeMapper.FIRST_NAME)) {
@@ -783,37 +799,38 @@ public class ContactManager {
         .createRawContact(account, dn, syncstatus, batch, rawContactUri);
     // Adding all Name values
     ContactUtils.createStructuredName(sn, cn, initials, title, givenName,
-        batch, dataUri);
+        batch, dataUri,rawContactInsertIndex);
     // Adding Description
-    ContactUtils.createDescription(description, batch, dataUri);
+    ContactUtils.createDescription(description, batch, dataUri,rawContactInsertIndex);
     // Adding Numbers
     ContactUtils.createPhoneNumbers(telephoneNumber, homePhone, mobile,
         facsimileTelephoneNumber, pager, telexNumber, internationalISDNNumber,
-        batch, dataUri);
+        batch, dataUri,rawContactInsertIndex);
     // Adding Mail
-    ContactUtils.createMail(mail, batch, dataUri);
+    ContactUtils.createMail(mail, batch, dataUri,rawContactInsertIndex);
     // Adding Addresses
     ContactUtils.createAddresses(destinationIndicator, registeredAddress,
         street, preferredDeliveryMethod, postOfficeBox, postalCode,
-        postalAddress, homePostalAddress, st, batch, dataUri);
+        postalAddress, homePostalAddress, st, batch, dataUri,rawContactInsertIndex);
     // Adding SeeAlso as website
-    ContactUtils.createSeeAlso(seeAlso, batch, dataUri);
+    ContactUtils.createSeeAlso(seeAlso, batch, dataUri,rawContactInsertIndex);
     // Adding Organization
     ContactUtils.createOrganization(o, ou, departmentNumber, l, roomNumber,
         preferredLanguage, physicalDeliveryOfficeName, businessCategory, batch,
-        dataUri);
+        dataUri,rawContactInsertIndex);
     // Adding non mapped rows
-    ContactUtils.createLDAPRow(AttributeMapper.UID, uid, batch, dataUri);
-
-    // Ask the Contact provider to create a new contact
-    try {
-      batch.execute();
-    } catch (Exception e) {
-      // Display warning
-      int duration = Toast.LENGTH_SHORT;
-      Toast toast = Toast.makeText(context.getApplicationContext(),
-          R.string.contactCreationFailure, duration);
-      toast.show();
+    ContactUtils.createLDAPRow(AttributeMapper.UID, uid, batch, dataUri,rawContactInsertIndex);
+    if (executeDirectly) {
+      // Ask the Contact provider to create a new contact
+      try {
+        batch.execute();
+      } catch (Exception e) {
+        // Display warning
+        int duration = Toast.LENGTH_SHORT;
+        Toast toast = Toast.makeText(context.getApplicationContext(),
+            R.string.contactCreationFailure, duration);
+        toast.show();
+      }
     }
   }
 
@@ -830,7 +847,7 @@ public class ContactManager {
    */
   public static void saveNewLocallyAddedContactAndSync(final Bundle b,
       final Account account, final Context context) {
-    saveNewLocallyAddedContact(b, context, account, false);
+    saveNewLocallyAddedContact(b, context, account, null, false);
   }
 
   /**
@@ -846,7 +863,7 @@ public class ContactManager {
    */
   public static void saveNewLocallyAddedContactAndDoNotSync(final Bundle b,
       final Account account, final Context context) {
-    saveNewLocallyAddedContact(b, context, account, true);
+    saveNewLocallyAddedContact(b, context, account, null, true);
   }
 
   /**
@@ -860,58 +877,17 @@ public class ContactManager {
    */
   public static Bundle loadContact(final int rawcontactId, final Context context) {
     Bundle contact = new Bundle();
-    String registeredAddress = null;
-    String destinationIndicator = null;
-    String preferredDeliveryMethod = null;
-
-    String street = null;
-    String postOfficeBox = null;
-    String postalAddress = null;
-    String physicalDeliveryOfficeName = null;
-    String st = null;
-    String l = null;
-    String businessCategory = null;
-    String departmentNumber = null;
-    String homePostalAddress = null;
-    String initials = null;
-    String roomNumber = null;
-    String uid = null;
-    String preferredLanguage = null;
     Uri rawContactUri = ContentUris.withAppendedId(RawContacts.CONTENT_URI,
         rawcontactId);
-    Cursor c = context.getContentResolver().query(
-        rawContactUri,
-        new String[] { RawContacts._ID, RawContacts.SYNC1, RawContacts.SYNC2,
-            RawContacts.SYNC3, RawContacts.SYNC4 }, null, null, null);
+    Cursor c = context.getContentResolver()
+        .query(
+            rawContactUri,
+            new String[] { RawContacts._ID, RawContacts.SYNC1,
+                RawContacts.SYNC2, RawContacts.SYNC3, RawContacts.SYNC4,
+                RawContacts.ACCOUNT_NAME, RawContacts.ACCOUNT_TYPE,
+                RawContacts.SOURCE_ID }, null, null, null);
     try {
-      if (!c.isNull(1)) {
-        String status = c.getString(1);
-        if (status.length() > 0) {
-          if (!status.equals(SYNC_STATUS_DO_NOT_SYNC)) {
-            contact.putString(LDAP_SYNC_STATUS_KEY, status);
-          }
-        }
-      }
-      if (!c.isNull(2)) {
-        String errormessage = c.getString(2);
-        if (errormessage.length() > 0) {
-          contact.putString(LDAP_ERROR_MESSAGE_KEY, errormessage);
-        }
-      }
-      if (!c.isNull(3)) {
-        String dn = c.getString(3);
-        int endline = dn.indexOf(EOL);
-        if (endline > 0) {
-          dn = dn.substring(0, endline);
-        }
-        contact.putString(AttributeMapper.DN, dn);
-      }
-      if (!c.isNull(4)) {
-        String ldif = c.getString(4);
-        if (ldif.length() > 0) {
-          contact.putString(LDAP_LDIF_DETAILS_KEY, ldif);
-        }
-      }
+      loadSyncData(contact, c, 1, 2, 3, 4, 5, 6, 7);
     } catch (Exception e) {
       // Display warning
       int duration = Toast.LENGTH_SHORT;
@@ -939,8 +915,6 @@ public class ContactManager {
         // is a name
         if (mimetype.equalsIgnoreCase(StructuredName.CONTENT_ITEM_TYPE)) {
           ContactUtils.loadName(contact, c, 2, 3, 4, 5);
-        } else if (mimetype.equalsIgnoreCase(Im.CONTENT_ITEM_TYPE)) {
-          // TODO Instant Messengers
         } else if (mimetype
             .equalsIgnoreCase(StructuredPostal.CONTENT_ITEM_TYPE)) {
           ContactUtils.loadAddress(contact, c, 3, 2, 5, 6, 9, 10);
@@ -964,5 +938,53 @@ public class ContactManager {
       c.close();
     }
     return contact;
+  }
+
+  private static void loadSyncData(Bundle contact, Cursor c, int sync1,
+      int sync2, int sync3, int sync4, int accountname, int accounttype,
+      int sourceid) {
+    if (!c.isNull(sync1)) {
+      String status = c.getString(sync1);
+      if (status.length() > 0) {
+        if (!status.equals(SYNC_STATUS_DO_NOT_SYNC)) {
+          contact.putString(LDAP_SYNC_STATUS_KEY, status);
+        }
+      }
+    }
+    if (!c.isNull(sync2)) {
+      String errormessage = c.getString(sync2);
+      if (errormessage.length() > 0) {
+        contact.putString(LDAP_ERROR_MESSAGE_KEY, errormessage);
+      }
+    }
+    if (!c.isNull(sync3)) {
+      String dn = c.getString(sync3);
+      int endline = dn.indexOf(EOL);
+      if (endline > 0) {
+        dn = dn.substring(0, endline);
+      }
+      contact.putString(AttributeMapper.DN, dn);
+    }
+    if (!c.isNull(sync4)) {
+      String ldif = c.getString(sync4);
+      if (ldif.length() > 0) {
+        contact.putString(LDAP_LDIF_DETAILS_KEY, ldif);
+      }
+    }
+    if (!c.isNull(accountname)) {
+      contact.putString(LOCAL_ACCOUNT_NAME_KEY, c.getString(accountname));
+    } else {
+      contact.putString(LOCAL_ACCOUNT_NAME_KEY, "");
+    }
+    if (!c.isNull(accounttype)) {
+      contact.putString(LOCAL_ACCOUNT_TYPE_KEY, c.getString(accounttype));
+    } else {
+      contact.putString(LOCAL_ACCOUNT_TYPE_KEY, "");
+    }
+    if (!c.isNull(sourceid)) {
+      contact.putString(LDAP_SOURCE_ID_KEY, c.getString(sourceid));
+    } else {
+      contact.putString(LDAP_SOURCE_ID_KEY, "");
+    }
   }
 }
