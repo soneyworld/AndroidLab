@@ -43,8 +43,8 @@ import de.tubs.ibr.android.ldap.core.ContactManager;
 
 public class EditContactActivity extends Activity implements
     OnAccountsUpdateListener {
-  
-  /*Data structures*/
+
+  /* Data structures */
   public static final String TAG = "ContactsAdder";
   public static final String ACCOUNT_NAME = "LDAP";
   public static final String ACCOUNT_TYPE = "de.tubs.ibr.ldap";
@@ -60,8 +60,8 @@ public class EditContactActivity extends Activity implements
   private ServerInstance instance;
   private Context mContext;
   private AccountAdapter mAccountAdapter;
-  
-  /*UI elements*/
+
+  /* UI elements */
   private Spinner mAccountSpinner;
   private Spinner mDirectorySpinner;
   private EditText mCommonNameEditText;
@@ -98,25 +98,23 @@ public class EditContactActivity extends Activity implements
   private CheckBox mSyncCheckBox;
   private Button mContactActionButton;
   private Button mContactRevertButton;
-  
 
   /**
    * Called when the activity is first created. Responsible for initializing the
    * UI.
-   * @return 
+   * 
+   * @return
    */
   @Override
   public void onCreate(Bundle savedInstanceState) {
     Log.v(TAG, "Activity State: onCreate()");
     super.onCreate(savedInstanceState);
-    
+
     final Intent intent = getIntent();
     final String action = intent.getAction();
-    
+
     setContentView(R.layout.layout_editcontact_view);
     mContext = this;
-    
-    
 
     // Obtain handles to UI objects
     mAccountSpinner = (Spinner) findViewById(R.id.accountSpinner);
@@ -155,24 +153,22 @@ public class EditContactActivity extends Activity implements
     mSyncCheckBox = (CheckBox) findViewById(R.id.syncCheckBox);
     mContactActionButton = (Button) findViewById(R.id.btn_action);
     mContactRevertButton = (Button) findViewById(R.id.btn_revert);
-    
-    
-    final boolean hasIncomingState = savedInstanceState != null && savedInstanceState.containsKey(KEY_EDIT_STATE);
-    
+
+    final boolean hasIncomingState = savedInstanceState != null
+        && savedInstanceState.containsKey(KEY_EDIT_STATE);
+
     if (Intent.ACTION_EDIT.equals(action) && !hasIncomingState) {
       setTitle("Edit Contact");
       mStatus = STATUS_EDIT;
       mContactActionButton.setText("Save");
 
       // Read initial state from database
-      //TODO
-    } 
-    else if (Intent.ACTION_INSERT.equals(action) && !hasIncomingState) {
+      // TODO
+    } else if (Intent.ACTION_INSERT.equals(action) && !hasIncomingState) {
       setTitle("Add Contact");
       mStatus = STATUS_INSERT;
       mContactActionButton.setText("Add");
     }
-
 
     // Prepare model for account spinner
     mAccounts = new ArrayList<AccountData>();
@@ -183,8 +179,7 @@ public class EditContactActivity extends Activity implements
         android.R.layout.simple_spinner_item);
     mDirectorySpinner.setAdapter(mDirectoryAdapter);
     mSyncCheckBox.setChecked(true);
-    //mContactExportButton.setVisibility(Button.GONE);
-    
+    // mContactExportButton.setVisibility(Button.GONE);
 
     // Prepare the system account manager. On registering the listener below, we
     // also ask for
@@ -204,11 +199,11 @@ public class EditContactActivity extends Activity implements
         // this.
       }
     });
-//    mContactSaveButton.setOnClickListener(new View.OnClickListener() {
-//      public void onClick(View v) {
-//        onSaveButtonClicked();
-//      }
-//    });
+    // mContactSaveButton.setOnClickListener(new View.OnClickListener() {
+    // public void onClick(View v) {
+    // onSaveButtonClicked();
+    // }
+    // });
     final Intent intent_service = new Intent(this, LDAPService.class);
     getApplicationContext().bindService(intent_service, mServiceConnection,
         Context.BIND_AUTO_CREATE);
@@ -223,9 +218,8 @@ public class EditContactActivity extends Activity implements
     if (status == 1) {
       createContactEntry();
       finish();
-    }
-    else {
-      //TODO
+    } else {
+      // TODO
     }
   }
 
@@ -236,12 +230,13 @@ public class EditContactActivity extends Activity implements
   protected void createContactEntry() {
     // Get values from UI
     Bundle contactData = new Bundle();
-    
+
     String accountSpinnerValue = (String) mAccountSpinner.getSelectedItem();
     String directorySpinnerValue = (String) mDirectorySpinner.getSelectedItem();
     String commonNameValue = mCommonNameEditText.getText().toString();
     String displaynameValue = mDisplaynameEditText.getText().toString();
-    String contactFirstnameValue = mContactFirstnameEditText.getText().toString();
+    String contactFirstnameValue = mContactFirstnameEditText.getText()
+        .toString();
     String contactNameValue = mContactNameEditText.getText().toString();
     String initialsValue = mInitialsEditText.getText().toString();
     String titleValue = mTitleEditText.getText().toString();
@@ -260,18 +255,23 @@ public class EditContactActivity extends Activity implements
     String postalCodeValue = mPostalCodeEditText.getText().toString();
     String postalAddressValue = mPostalAddressEditText.getText().toString();
     String postOfficeboxValue = mPostOfficeboxEditText.getText().toString();
-    String physicalDeliveryOfficeNameValue = mPhysicalDeliveryOfficeNameEditText.getText().toString();
-    String businessCategoryValue = mBusinessCategoryEditText.getText().toString();
-    String departmentNumberValue = mDepartmentNumberEditText.getText().toString();
-    String homePostalAddressValue = mHomePostalAddressEditText.getText().toString();
+    String physicalDeliveryOfficeNameValue = mPhysicalDeliveryOfficeNameEditText
+        .getText().toString();
+    String businessCategoryValue = mBusinessCategoryEditText.getText()
+        .toString();
+    String departmentNumberValue = mDepartmentNumberEditText.getText()
+        .toString();
+    String homePostalAddressValue = mHomePostalAddressEditText.getText()
+        .toString();
     String stateValue = mStateEditText.getText().toString();
     String organizationValue = mOrganizationEditText.getText().toString();
-    String organizationalUnitValue = mOrganizationalUnitEditText.getText().toString();
+    String organizationalUnitValue = mOrganizationalUnitEditText.getText()
+        .toString();
     String roomNummberValue = mRoomNumberEditText.getText().toString();
     String prefLanguageValue = mPrefLanguageEditText.getText().toString();
     String webSiteValue = mWebSiteEditText.getText().toString();
     boolean syncCheckBoxValue = mSyncCheckBox.isChecked();
-    
+
     contactData.putString("sn", contactNameValue);
     contactData.putString("cn", commonNameValue);
     contactData.putString("initials", initialsValue);
@@ -298,11 +298,21 @@ public class EditContactActivity extends Activity implements
     contactData.putString("st", stateValue);
     contactData.putString("ou", organizationalUnitValue);
     contactData.putString("seeAlso", webSiteValue);
-    
-    if (syncCheckBoxValue) {
-      saveNewLocallyAddedContactAndSync(contactData, , mContext);
+    Account[] accounts = AccountManager.get(this).getAccountsByType(
+        ACCOUNT_TYPE);
+    for (Account a : accounts) {
+      if (a.name.equals(((AccountData) mAccountSpinner.getSelectedItem())
+          .getName())) {
+        if (syncCheckBoxValue) {
+          ContactManager.saveNewLocallyAddedContactAndSync(contactData, a,
+              mContext);
+        } else {
+          ContactManager.saveNewLocallyAddedContactAndDoNotSync(contactData, a,
+              mContext);
+        }
+        break;
+      }
     }
-    
   }
 
   /**
