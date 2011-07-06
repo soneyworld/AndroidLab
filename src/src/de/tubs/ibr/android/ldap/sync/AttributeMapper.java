@@ -110,6 +110,10 @@ public final class AttributeMapper {
   // The set of attributes (with lowercase names) used to hold name details.
   private static final Set<String> nameAttrs;
 
+  // The set of attributes (with lowercase names) used to hold name details
+  // mapped together.
+  private static final Set<String> nameSubAttrs;
+
   // The set of attributes (with lowercase names) used to hold description
   // details.
   private static final Set<String> descAttrs;
@@ -127,12 +131,22 @@ public final class AttributeMapper {
   // The set of attributes (with lowercase names) used to hold postal addresses.
   private static final Set<String> postalAddressAttrs;
 
+  // The set of attributes (with lowercase names) used to hold postal addresses.
+  private static final Set<String> postalWorkAddressAttrs;
+
+  // The set of attributes (with lowercase names) used to hold postal addresses.
+  private static final Set<String> postalHomeAddressAttrs;
+
   // The set of attributes (with lowercase names) used to hold web addresses.
   private static final Set<String> webAttrs;
 
   // The set of attributes (with lowercase names) used to hold organization
   // informations.
   private static final Set<String> orgaAttrs;
+
+  // The set of attributes (with lowercase names) used to hold organization
+  // informations mapped together.
+  private static final Set<String> orgaSubAttrs;
   /**
    * This attribute holds a postal address suitable for reception of telegrams
    * or expedited documents, where it is necessary to have the recipient accept
@@ -196,14 +210,17 @@ public final class AttributeMapper {
   static {
     final HashMap<String, Integer> aMap = new HashMap<String, Integer>(10);
     final LinkedHashSet<String> nSet = new LinkedHashSet<String>(10);
+    final LinkedHashSet<String> nSubSet = new LinkedHashSet<String>(10);
     final LinkedHashSet<String> aSet = new LinkedHashSet<String>(10);
     final LinkedHashSet<String> eSet = new LinkedHashSet<String>(10);
     final LinkedHashSet<String> wSet = new LinkedHashSet<String>(10);
     final LinkedHashSet<String> oSet = new LinkedHashSet<String>(10);
+    final LinkedHashSet<String> oSubSet = new LinkedHashSet<String>(4);
     final LinkedHashSet<String> hSet = new LinkedHashSet<String>(10);
     final LinkedHashSet<String> tSet = new LinkedHashSet<String>(10);
     final LinkedHashSet<String> dSet = new LinkedHashSet<String>(1);
-
+    final LinkedHashSet<String> waSet = new LinkedHashSet<String>(4);
+    final LinkedHashSet<String> haSet = new LinkedHashSet<String>(4);
     aMap.put(toLowerCase("cn"), R.string.attribute_mapper_name_cn);
 
     aMap.put(toLowerCase("departmentNumber"),
@@ -288,6 +305,12 @@ public final class AttributeMapper {
     nSet.add(toLowerCase(TITLE));
     nSet.add(toLowerCase(FULL_NAME));
 
+    nSubSet.add(toLowerCase(FIRST_NAME));
+    nSubSet.add(toLowerCase(DISPLAYNAME));
+    nSubSet.add(toLowerCase(LAST_NAME));
+    nSubSet.add(toLowerCase(TITLE));
+    nSubSet.add(toLowerCase(FULL_NAME));
+
     dSet.add(toLowerCase(DESCRIPTION));
 
     tSet.add(toLowerCase(PRIMARY_PHONE));
@@ -308,6 +331,14 @@ public final class AttributeMapper {
     aSet.add(toLowerCase(HOME_ADDRESS));
     aSet.add(toLowerCase(STATE));
 
+    waSet.add(toLowerCase(POST_OFFICE_BOX));
+    waSet.add(toLowerCase(POSTAL_CODE));
+    waSet.add(toLowerCase(POSTAL_ADDRESS));
+    waSet.add(toLowerCase(STATE));
+
+    haSet.add(toLowerCase(STREET));
+    haSet.add(toLowerCase(HOME_ADDRESS));
+
     wSet.add(toLowerCase(SEE_ALSO));
 
     oSet.add(toLowerCase(ORGANIZATION));
@@ -318,6 +349,11 @@ public final class AttributeMapper {
     oSet.add(toLowerCase(DEPARTMENT_NUMBER));
     oSet.add(toLowerCase(ROOM_NUMBER));
     oSet.add(toLowerCase(BUSINESS_CATEGORY));
+
+    oSubSet.add(toLowerCase(ORGANIZATION));
+    oSubSet.add(toLowerCase(ORGANIZATION_UNIT));
+    oSubSet.add(toLowerCase(LOCALITY));
+    oSubSet.add(toLowerCase(BUSINESS_CATEGORY));
 
     hSet.add(toLowerCase("jpegPhoto"));
     hSet.add(toLowerCase("manager"));
@@ -334,12 +370,16 @@ public final class AttributeMapper {
 
     descAttrs = Collections.unmodifiableSet(dSet);
     nameAttrs = Collections.unmodifiableSet(nSet);
+    nameSubAttrs = Collections.unmodifiableSet(nSubSet);
     emailAttrs = Collections.unmodifiableSet(eSet);
     hiddenAttrs = Collections.unmodifiableSet(hSet);
     postalAddressAttrs = Collections.unmodifiableSet(aSet);
+    postalWorkAddressAttrs = Collections.unmodifiableSet(waSet);
+    postalHomeAddressAttrs = Collections.unmodifiableSet(waSet);
     phoneNumberAttrs = Collections.unmodifiableSet(tSet);
     webAttrs = Collections.unmodifiableSet(wSet);
     orgaAttrs = Collections.unmodifiableSet(oSet);
+    orgaSubAttrs = Collections.unmodifiableSet(oSubSet);
   }
 
   /**
@@ -441,6 +481,31 @@ public final class AttributeMapper {
   }
 
   /**
+   * Retrieves a set containing the lowercase names of the attributes that
+   * contain name informations.
+   * 
+   * @return A set containing the lowercase names of the attributes that contain
+   *         name informations.
+   */
+  public static Set<String> getNameSubAttrs() {
+    return nameSubAttrs;
+  }
+
+  /**
+   * Indicates whether the provided string is the name of one of the attributes
+   * that contains name informations.
+   * 
+   * @param s
+   *          The name for which to make the determination. It must not be
+   *          {@code null}.
+   * @return {@code true} if the provided string is the name of one of a name
+   *         information containing attributes, or {@code false} if not.
+   */
+  public static boolean isNameSubAttr(final String s) {
+    return nameSubAttrs.contains(toLowerCase(s));
+  }
+
+  /**
    * Retrieves a set containing the lowercase names of the attributes that hold
    * postal addresses.
    * 
@@ -463,6 +528,56 @@ public final class AttributeMapper {
    */
   public static boolean isPostalAddressAttr(final String s) {
     return postalAddressAttrs.contains(toLowerCase(s));
+  }
+
+  /**
+   * Retrieves a set containing the lowercase names of the attributes that hold
+   * postal addresses.
+   * 
+   * @return A set containing the lowercase names of the attributes that hold
+   *         postal addresses.
+   */
+  public static Set<String> getPostalHomeAddressAttrs() {
+    return postalHomeAddressAttrs;
+  }
+
+  /**
+   * Indicates whether the provided string is the name of one of the defined
+   * postal address attributes.
+   * 
+   * @param s
+   *          The name for which to make the determination. It must not be
+   *          {@code null}.
+   * @return {@code true} if the provided string is the name of one of the
+   *         defined postal address attributes, or {@code false} if not.
+   */
+  public static boolean isPostalHomeAddressAttr(final String s) {
+    return postalHomeAddressAttrs.contains(toLowerCase(s));
+  }
+
+  /**
+   * Retrieves a set containing the lowercase names of the attributes that hold
+   * postal addresses.
+   * 
+   * @return A set containing the lowercase names of the attributes that hold
+   *         postal addresses.
+   */
+  public static Set<String> getPostalWorkAddressAttrs() {
+    return postalWorkAddressAttrs;
+  }
+
+  /**
+   * Indicates whether the provided string is the name of one of the defined
+   * postal address attributes.
+   * 
+   * @param s
+   *          The name for which to make the determination. It must not be
+   *          {@code null}.
+   * @return {@code true} if the provided string is the name of one of the
+   *         defined postal address attributes, or {@code false} if not.
+   */
+  public static boolean isPostalWorkAddressAttr(final String s) {
+    return postalWorkAddressAttrs.contains(toLowerCase(s));
   }
 
   /**
@@ -564,6 +679,32 @@ public final class AttributeMapper {
    */
   public static boolean isOrganizationAttr(final String s) {
     return orgaAttrs.contains(toLowerCase(s));
+  }
+
+  /**
+   * Retrieves a set containing the lowercase names of the attributes that hold
+   * organization informations mapped together.
+   * 
+   * @return A set containing the lowercase names of the attributes that hold
+   *         organization informations.
+   */
+  public static Set<String> getOrganizationSubAttrs() {
+    return orgaSubAttrs;
+  }
+
+  /**
+   * Indicates whether the provided string is the name of one of the defined
+   * organization information attributes mapped together.
+   * 
+   * @param s
+   *          The name for which to make the determination. It must not be
+   *          {@code null}.
+   * @return {@code true} if the provided string is the name of one of the
+   *         defined organization information attributes, or {@code false} if
+   *         not.
+   */
+  public static boolean isOrganizationSubAttr(final String s) {
+    return orgaSubAttrs.contains(toLowerCase(s));
   }
 
   /**

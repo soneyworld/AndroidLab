@@ -1,5 +1,7 @@
 package de.tubs.ibr.android.ldap.core;
 
+import java.util.Map;
+import java.util.Set;
 import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 import android.accounts.Account;
 import android.content.ContentProviderOperation;
@@ -413,5 +415,30 @@ public class ContactUtils {
         contact.putString(AttributeMapper.ISDN, c.getString(numberColumn));
         break;
     }
+  }
+
+  public static void createUpdateBatch(Set<String> insertKeys,
+      Set<String> deleteKeys, Map<String, String> updateMap,
+      BatchOperation batch, int rawcontactId) {
+    // Cleaning up the insertSet and the deleteSet with dependencies to
+    // updateMap
+    Set<String> updateSet = updateMap.keySet();
+    for (String key : updateSet) {
+      if (AttributeMapper.isNameSubAttr(key)) {
+        insertKeys.removeAll(AttributeMapper.getNameSubAttrs());
+        deleteKeys.removeAll(AttributeMapper.getNameSubAttrs());
+      } else if (AttributeMapper.isPostalHomeAddressAttr(key)) {
+        insertKeys.removeAll(AttributeMapper.getPostalHomeAddressAttrs());
+        deleteKeys.removeAll(AttributeMapper.getPostalHomeAddressAttrs());
+      } else if (AttributeMapper.isPostalWorkAddressAttr(key)) {
+        insertKeys.removeAll(AttributeMapper.getPostalWorkAddressAttrs());
+        deleteKeys.removeAll(AttributeMapper.getPostalWorkAddressAttrs());
+      } else if (AttributeMapper.isOrganizationSubAttr(key)) {
+        insertKeys.removeAll(AttributeMapper.getOrganizationSubAttrs());
+        deleteKeys.removeAll(AttributeMapper.getOrganizationSubAttrs());
+      }
+    }
+    // TODO Create INSERT DELETE and UPDATE statements 
+
   }
 }

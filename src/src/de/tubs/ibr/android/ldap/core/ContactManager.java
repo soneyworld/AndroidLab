@@ -1,6 +1,10 @@
 package de.tubs.ibr.android.ldap.core;
 
 import static com.unboundid.util.StaticUtils.EOL;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import android.accounts.Account;
 import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
@@ -549,5 +553,49 @@ public class ContactManager {
     } else {
       contact.putString(LDAP_SOURCE_ID_KEY, "");
     }
+  }
+
+  public static void saveLocallyEditedContact(int rawcontactId,
+      Bundle contactupdate, final Account account, final Context context) {
+    BatchOperation batch = new BatchOperation(context,
+        context.getContentResolver());
+    saveContact(rawcontactId, contactupdate, account, context, batch);
+    try {
+      batch.execute();
+    } catch (Exception e) {
+      // TODO Toast to User
+    }
+  }
+
+  private static void saveContact(int rawcontactId, Bundle contactupdate,
+      final Account account, final Context context, BatchOperation batch) {
+    Bundle localcontact = loadContact(rawcontactId, context);
+    Set<String> insertKeys = contactupdate.keySet();
+    Set<String> deleteKeys = localcontact.keySet();
+    Map<String, String> updateMap = new HashMap<String, String>();
+    for (String key : localcontact.keySet()) {
+      if (insertKeys.contains(key)) {
+        // Kann Update sein, oder keine Änderung und key muss gelöscht werden
+        if (!localcontact.getString(key).equals(contactupdate.getString(key))) {
+          updateMap.put(key, contactupdate.getString(key));
+        }
+        insertKeys.remove(key);
+      }
+    }
+    for (String key : contactupdate.keySet()) {
+      if (deleteKeys.contains(key)) {
+        // Kann Update sein, oder keine Änderung und key muss gelöscht werden
+        if (!contactupdate.getString(key).equals(localcontact.getString(key))) {
+          updateMap.put(key, contactupdate.getString(key));
+        }
+        deleteKeys.remove(key);
+      }
+    }
+    ContactUtils.createUpdateBatch(insertKeys, deleteKeys, updateMap, batch,
+        rawcontactId);
+  }
+
+  public static void markContactToBeDeleted() {
+    // TODO implement later
   }
 }
