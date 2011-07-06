@@ -590,4 +590,16 @@ public final class AttributeMapper {
 
     return true;
   }
+
+  public static boolean isContactAttr(String name) {
+    final String lowerName = toLowerCase(name);
+    if (emailAttrs.contains(lowerName) || phoneNumberAttrs.contains(lowerName)
+        || postalAddressAttrs.contains(lowerName)
+        || nameAttrs.contains(lowerName) || webAttrs.contains(lowerName)
+        || descAttrs.contains(lowerName) || orgaAttrs.contains(lowerName)
+        || lowerName.equalsIgnoreCase(UID)) {
+      return true;
+    }
+    return false;
+  }
 }

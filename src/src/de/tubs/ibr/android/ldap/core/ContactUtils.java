@@ -19,40 +19,36 @@ import android.provider.ContactsContract.RawContacts;
 
 public class ContactUtils {
 
-  static void createStructuredName(String sn, String cn, String initials,
-      String title, String givenName, BatchOperation batch, Uri dataUri) {
-    createStructuredName(sn, cn, initials, title, givenName, batch, dataUri, 0);
+  static void createStructuredName(Bundle b, BatchOperation batch, Uri dataUri) {
+    createStructuredName(b, batch, dataUri, 0);
   }
 
-  static void createStructuredName(String sn, String cn, String initials,
-      String title, String givenName, BatchOperation batch, Uri dataUri,
+  static void createStructuredName(Bundle b, BatchOperation batch, Uri dataUri,
       int rawContactIndex) {
-    batch.add(ContentProviderOperation.newInsert(dataUri)
+    batch.add(ContentProviderOperation
+        .newInsert(dataUri)
         .withValueBackReference(Data.RAW_CONTACT_ID, rawContactIndex)
         .withValue(Data.MIMETYPE, StructuredName.CONTENT_ITEM_TYPE)
-        .withValue(StructuredName.DISPLAY_NAME, cn)
-        .withValue(StructuredName.GIVEN_NAME, givenName)
-        .withValue(StructuredName.FAMILY_NAME, sn)
-        .withValue(StructuredName.PREFIX, title).build());
-    createInitials(initials, batch, dataUri, rawContactIndex);
+        .withValue(StructuredName.DISPLAY_NAME,
+            b.getString(AttributeMapper.DISPLAYNAME))
+        .withValue(StructuredName.GIVEN_NAME,
+            b.getString(AttributeMapper.FIRST_NAME))
+        .withValue(StructuredName.FAMILY_NAME,
+            b.getString(AttributeMapper.LAST_NAME))
+        .withValue(StructuredName.PREFIX, b.getString(AttributeMapper.TITLE))
+        .build());
+    createInitials(b, batch, dataUri, rawContactIndex);
   }
 
-  static void createMail(String mail, BatchOperation batch, Uri dataUri) {
-    createMail(mail, null, batch, dataUri, 0);
+  static void createMail(Bundle b, BatchOperation batch, Uri dataUri) {
+    createMail(b, batch, dataUri, 0);
   }
 
-  static void createMail(String mail, String alternateMail,
-      BatchOperation batch, Uri dataUri) {
-    createMail(mail, alternateMail, batch, dataUri, 0);
-  }
-
-  static void createMail(String mail, BatchOperation batch, Uri dataUri,
+  static void createMail(Bundle b, BatchOperation batch, Uri dataUri,
       int rawContactIndex) {
-    createMail(mail, null, batch, dataUri, rawContactIndex);
-  }
-
-  static void createMail(String mail, String alternateMail,
-      BatchOperation batch, Uri dataUri, int rawContactIndex) {
+    String mail = b.getString(AttributeMapper.PRIMARY_MAIL);
+    @SuppressWarnings("deprecation")
+    String alternateMail = b.getString(AttributeMapper.ALTERNATE_MAIL);
     if (mail != null && mail.length() > 0) {
       batch.add(ContentProviderOperation.newInsert(dataUri)
           .withValueBackReference(Data.RAW_CONTACT_ID, rawContactIndex)
@@ -69,31 +65,48 @@ public class ContactUtils {
     }
   }
 
-  static void createRawContact(final Account account, String dn,
-      String syncstatus, BatchOperation batch, Uri rawContactUri) {
-    createRawContact(account, dn, syncstatus, "", null, null, batch,
-        rawContactUri);
-  }
-
-  static void createRawContact(final Account account, String dn,
-      String syncstatus, String message, String ldif, String sourceId,
+  static void createRawContact(final Account account, Bundle b,
       BatchOperation batch, Uri rawContactUri) {
-    batch.add(ContentProviderOperation.newInsert(rawContactUri)
-        .withValue(RawContacts.ACCOUNT_TYPE, account.type)
-        .withValue(RawContacts.ACCOUNT_NAME, account.name)
-        .withValue(RawContacts.SOURCE_ID, sourceId)
-        .withValue(RawContacts.SYNC1, syncstatus)
-        .withValue(RawContacts.SYNC2, message).withValue(RawContacts.SYNC3, dn)
-        .withValue(RawContacts.SYNC4, ldif).build());
+    batch
+        .add(ContentProviderOperation
+            .newInsert(rawContactUri)
+            .withValue(RawContacts.ACCOUNT_TYPE, account.type)
+            .withValue(RawContacts.ACCOUNT_NAME, account.name)
+            .withValue(RawContacts.SOURCE_ID,
+                b.getString(AttributeMapper.ATTR_UID))
+            .withValue(RawContacts.SYNC1,
+                b.getString(ContactManager.LDAP_SYNC_STATUS_KEY))
+            .withValue(RawContacts.SYNC2,
+                b.getString(ContactManager.LDAP_ERROR_MESSAGE_KEY))
+            .withValue(RawContacts.SYNC3, b.getString(AttributeMapper.DN))
+            .withValue(RawContacts.SYNC4,
+                b.getString(ContactManager.LDAP_LDIF_DETAILS_KEY)).build());
   }
 
-  static void createDescription(String description, BatchOperation batch,
-      Uri dataUri) {
-    createDescription(description, batch, dataUri, 0);
+  static void createFullContact(final Account account, Bundle b,
+      BatchOperation batch, Uri rawContactUri, Uri dataUri, int rawContactIndex) {
+    createRawContact(account, b, batch, rawContactUri);
+    createStructuredName(b, batch, dataUri, rawContactIndex);
+    createDescription(b, batch, dataUri, rawContactIndex);
+    createPhoneNumbers(b, batch, dataUri, rawContactIndex);
+    createMail(b, batch, dataUri, rawContactIndex);
+    createAddresses(b, batch, dataUri, rawContactIndex);
+    createSeeAlso(b, batch, dataUri, rawContactIndex);
+    createOrganization(b, batch, dataUri, rawContactIndex);
   }
 
-  static void createDescription(String description, BatchOperation batch,
-      Uri dataUri, int rawContactIndex) {
+  static void createFullContact(final Account account, Bundle b,
+      BatchOperation batch, Uri rawContactUri, Uri dataUri) {
+    createFullContact(account, b, batch, rawContactUri, dataUri, 0);
+  }
+
+  static void createDescription(Bundle b, BatchOperation batch, Uri dataUri) {
+    createDescription(b, batch, dataUri, 0);
+  }
+
+  static void createDescription(Bundle b, BatchOperation batch, Uri dataUri,
+      int rawContactIndex) {
+    String description = b.getString(AttributeMapper.DESCRIPTION);
     if (description != null && description.length() > 0) {
       batch.add(ContentProviderOperation.newInsert(dataUri)
           .withValueBackReference(Data.RAW_CONTACT_ID, 0)
@@ -102,8 +115,9 @@ public class ContactUtils {
     }
   }
 
-  static void createInitials(String initials, BatchOperation batch,
-      Uri dataUri, int rawContactIndex) {
+  static void createInitials(Bundle b, BatchOperation batch, Uri dataUri,
+      int rawContactIndex) {
+    String initials = b.getString(AttributeMapper.INITIALS);
     if (initials != null && initials.length() > 0) {
       batch.add(ContentProviderOperation.newInsert(dataUri)
           .withValueBackReference(Data.RAW_CONTACT_ID, rawContactIndex)
@@ -113,10 +127,9 @@ public class ContactUtils {
     }
   }
 
-  static void createPhoneNumbers(String telephoneNumber, String homePhone,
-      String mobileNumber, String faxNumber, String pagerNumber,
-      String telexNumber, String isdnNumber, BatchOperation batch, Uri dataUri,
+  static void createPhoneNumbers(Bundle b, BatchOperation batch, Uri dataUri,
       int rawContactInsertIndex) {
+    String telephoneNumber = b.getString(AttributeMapper.PRIMARY_PHONE);
     if (telephoneNumber != null && telephoneNumber.length() > 0) {
       batch.add(ContentProviderOperation.newInsert(dataUri)
           .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
@@ -124,6 +137,7 @@ public class ContactUtils {
           .withValue(Phone.NUMBER, telephoneNumber)
           .withValue(Phone.TYPE, Phone.TYPE_MAIN).build());
     }
+    String homePhone = b.getString(AttributeMapper.HOME_PHONE);
     if (homePhone != null && homePhone.length() > 0) {
       batch.add(ContentProviderOperation.newInsert(dataUri)
           .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
@@ -131,6 +145,7 @@ public class ContactUtils {
           .withValue(Phone.NUMBER, homePhone)
           .withValue(Phone.TYPE, Phone.TYPE_HOME).build());
     }
+    String mobileNumber = b.getString(AttributeMapper.MOBILE_PHONE);
     if (mobileNumber != null && mobileNumber.length() > 0) {
       batch.add(ContentProviderOperation.newInsert(dataUri)
           .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
@@ -138,6 +153,7 @@ public class ContactUtils {
           .withValue(Phone.NUMBER, mobileNumber)
           .withValue(Phone.TYPE, Phone.TYPE_MOBILE).build());
     }
+    String faxNumber = b.getString(AttributeMapper.FAX);
     if (faxNumber != null && faxNumber.length() > 0) {
       batch.add(ContentProviderOperation.newInsert(dataUri)
           .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
@@ -145,6 +161,7 @@ public class ContactUtils {
           .withValue(Phone.NUMBER, faxNumber)
           .withValue(Phone.TYPE, Phone.TYPE_FAX_WORK).build());
     }
+    String pagerNumber = b.getString(AttributeMapper.PAGER);
     if (pagerNumber != null && pagerNumber.length() > 0) {
       batch.add(ContentProviderOperation.newInsert(dataUri)
           .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
@@ -152,6 +169,7 @@ public class ContactUtils {
           .withValue(Phone.NUMBER, pagerNumber)
           .withValue(Phone.TYPE, Phone.TYPE_PAGER).build());
     }
+    String telexNumber = b.getString(AttributeMapper.TELEX);
     if (telexNumber != null && telexNumber.length() > 0) {
       batch.add(ContentProviderOperation.newInsert(dataUri)
           .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
@@ -159,6 +177,7 @@ public class ContactUtils {
           .withValue(Phone.NUMBER, telexNumber)
           .withValue(Phone.TYPE, Phone.TYPE_TELEX).build());
     }
+    String isdnNumber = b.getString(AttributeMapper.ISDN);
     if (isdnNumber != null && isdnNumber.length() > 0) {
       batch.add(ContentProviderOperation.newInsert(dataUri)
           .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
@@ -168,13 +187,13 @@ public class ContactUtils {
     }
   }
 
-  public static void createSeeAlso(String seeAlso, BatchOperation batch,
-      Uri dataUri) {
-    createSeeAlso(seeAlso, batch, dataUri, 0);
+  public static void createSeeAlso(Bundle b, BatchOperation batch, Uri dataUri) {
+    createSeeAlso(b, batch, dataUri, 0);
   }
 
-  public static void createSeeAlso(String seeAlso, BatchOperation batch,
-      Uri dataUri, int rawContactInsertIndex) {
+  public static void createSeeAlso(Bundle b, BatchOperation batch, Uri dataUri,
+      int rawContactInsertIndex) {
+    String seeAlso = b.getString(AttributeMapper.SEE_ALSO);
     if (seeAlso != null && seeAlso.length() > 0) {
       batch.add(ContentProviderOperation.newInsert(dataUri)
           .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
@@ -186,20 +205,22 @@ public class ContactUtils {
 
   }
 
-  public static void createOrganization(String o, String ou,
-      String departmentNumber, String l, String roomNumber,
-      String preferredLanguage, String physicalDeliveryOfficeName,
-      String businessCategory, BatchOperation batch, Uri dataUri) {
-    createOrganization(o, ou, departmentNumber, l, roomNumber,
-        preferredLanguage, physicalDeliveryOfficeName, businessCategory, batch,
-        dataUri, 0);
+  public static void createOrganization(Bundle b, BatchOperation batch,
+      Uri dataUri) {
+    createOrganization(b, batch, dataUri, 0);
   }
 
-  public static void createOrganization(String o, String ou,
-      String departmentNumber, String l, String roomNumber,
-      String preferredLanguage, String physicalDeliveryOfficeName,
-      String businessCategory, BatchOperation batch, Uri dataUri,
-      int rawContactInsertIndex) {
+  public static void createOrganization(Bundle b, BatchOperation batch,
+      Uri dataUri, int rawContactInsertIndex) {
+    String o = b.getString(AttributeMapper.ORGANIZATION);
+    String ou = b.getString(AttributeMapper.ORGANIZATION_UNIT);
+    String departmentNumber = b.getString(AttributeMapper.DEPARTMENT_NUMBER);
+    String l = b.getString(AttributeMapper.LOCALITY);
+    String roomNumber = b.getString(AttributeMapper.ROOM_NUMBER);
+    String preferredLanguage = b.getString(AttributeMapper.PREFERRED_LANGUAGE);
+    String physicalDeliveryOfficeName = b
+        .getString(AttributeMapper.PHYSICAL_DELIVERY_OFFICE_NAME);
+    String businessCategory = b.getString(AttributeMapper.BUSINESS_CATEGORY);
     if ((o != null && o.length() > 0) || (ou != null && ou.length() > 0)
         || (l != null && l.length() > 0)
         || (businessCategory != null && businessCategory.length() > 0)) {
@@ -222,12 +243,20 @@ public class ContactUtils {
         physicalDeliveryOfficeName, batch, dataUri, rawContactInsertIndex);
   }
 
-  public static void createAddresses(String destinationIndicator,
-      String registeredAddress, String street, String preferredDeliveryMethod,
-      String postOfficeBox, String postalCode, String postalAddress,
-      String homePostalAddress, String st, BatchOperation batch, Uri dataUri,
-      int rawContactInsertIndex) {
+  public static void createAddresses(Bundle b, BatchOperation batch,
+      Uri dataUri, int rawContactInsertIndex) {
     // Create Home Address
+    String destinationIndicator = b
+        .getString(AttributeMapper.DESTINATION_INDICATOR);
+    String registeredAddress = b.getString(AttributeMapper.REGISTERED_ADDRESS);
+    String street = b.getString(AttributeMapper.STREET);
+    String preferredDeliveryMethod = b
+        .getString(AttributeMapper.PREFERRED_DELIVERY_METHOD);
+    String postOfficeBox = b.getString(AttributeMapper.POST_OFFICE_BOX);
+    String postalCode = b.getString(AttributeMapper.POSTAL_CODE);
+    String postalAddress = b.getString(AttributeMapper.POSTAL_ADDRESS);
+    String homePostalAddress = b.getString(AttributeMapper.HOME_ADDRESS);
+    String st = b.getString(AttributeMapper.STATE);
     if ((homePostalAddress != null && homePostalAddress.length() > 0)
         || (street != null && street.length() > 0)) {
       batch.add(ContentProviderOperation.newInsert(dataUri)
@@ -259,20 +288,13 @@ public class ContactUtils {
         preferredDeliveryMethod, batch, dataUri);
   }
 
-  public static void createPhoneNumbers(String telephoneNumber,
-      String homePhone, String mobile, String faxNumber, String pagerNumber,
-      String telexNumber, String isdnNumber, BatchOperation batch, Uri dataUri) {
-    createPhoneNumbers(telephoneNumber, homePhone, mobile, faxNumber,
-        pagerNumber, telexNumber, isdnNumber, batch, dataUri, 0);
+  public static void createPhoneNumbers(Bundle b, BatchOperation batch,
+      Uri dataUri) {
+    createPhoneNumbers(b, batch, dataUri, 0);
   }
 
-  public static void createAddresses(String destinationIndicator,
-      String registeredAddress, String street, String preferredDeliveryMethod,
-      String postOfficeBox, String postalCode, String postalAddress,
-      String homePostalAddress, String st, BatchOperation batch, Uri dataUri) {
-    createAddresses(destinationIndicator, registeredAddress, street,
-        preferredDeliveryMethod, postOfficeBox, postalCode, postalAddress,
-        homePostalAddress, st, batch, dataUri, 0);
+  public static void createAddresses(Bundle b, BatchOperation batch, Uri dataUri) {
+    createAddresses(b, batch, dataUri, 0);
 
   }
 

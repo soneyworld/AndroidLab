@@ -1,9 +1,6 @@
 package de.tubs.ibr.android.ldap.core;
 
 import static com.unboundid.util.StaticUtils.EOL;
-import java.util.Set;
-import java.util.StringTokenizer;
-import org.w3c.dom.Attr;
 import android.accounts.Account;
 import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
@@ -15,7 +12,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
-import android.provider.ContactsContract.CommonDataKinds.Im;
 import android.provider.ContactsContract.CommonDataKinds.Nickname;
 import android.provider.ContactsContract.CommonDataKinds.Note;
 import android.provider.ContactsContract.CommonDataKinds.Organization;
@@ -28,6 +24,7 @@ import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.RawContactsEntity;
 import android.widget.Toast;
+import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.DeleteRequest;
 import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.Filter;
@@ -39,7 +36,6 @@ import com.unboundid.ldap.sdk.SearchRequest;
 import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
-import com.unboundid.ldap.sdk.migrate.ldapjdk.LDAPEntry;
 import de.tubs.ibr.android.ldap.R;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
 import de.tubs.ibr.android.ldap.sync.AttributeMapper;
@@ -73,6 +69,7 @@ public class ContactManager {
   public static void addLDAPContactToAccount(Entry entry, Account account,
       BatchOperation batch) {
     int rawContactInsertIndex = batch.size();
+    Bundle contact = createBundleFromEntry(entry);
     // Check if the Entry is a Person and can be synchronized
     boolean isSyncable = false;
     String sourceId = entry.getAttributeValue(AttributeMapper.ATTR_UID);
@@ -84,37 +81,6 @@ public class ContactManager {
     if (!isSyncable) {
       return;
     }
-    String cn = entry.getAttributeValue(AttributeMapper.FULL_NAME);
-    String telephoneNumber = entry
-        .getAttributeValue(AttributeMapper.PRIMARY_PHONE);
-    String homePhone = entry.getAttributeValue(AttributeMapper.HOME_PHONE);
-    String mobileNumber = entry.getAttributeValue(AttributeMapper.MOBILE_PHONE);
-    String pagerNumber = entry.getAttributeValue(AttributeMapper.PAGER);
-    String faxNumber = entry.getAttributeValue(AttributeMapper.FAX);
-    String workEMail = entry.getAttributeValue(AttributeMapper.PRIMARY_MAIL);
-    String telexNumber = entry.getAttributeValue(AttributeMapper.TELEX);
-    @SuppressWarnings("deprecation")
-    String homeEMail = entry.getAttributeValue(AttributeMapper.ALTERNATE_MAIL);
-    String givenName = entry.getAttributeValue(AttributeMapper.FIRST_NAME);
-    String sn = entry.getAttributeValue(AttributeMapper.LAST_NAME);
-    String initials = entry.getAttributeValue(AttributeMapper.INITIALS);
-    String title = entry.getAttributeValue(AttributeMapper.TITLE);
-    String isdnNumber = entry.getAttributeValue(AttributeMapper.ISDN);
-    String st = entry.getAttributeValue(AttributeMapper.STATE);
-    String destinationIndicator = entry
-        .getAttributeValue(AttributeMapper.DESTINATION_INDICATOR);
-    String registeredAddress = entry
-        .getAttributeValue(AttributeMapper.REGISTERED_ADDRESS);
-    String street = entry.getAttributeValue(AttributeMapper.STREET);
-    String preferredDeliveryMethod = entry
-        .getAttributeValue(AttributeMapper.PREFERRED_DELIVERY_METHOD);
-    String postOfficeBox = entry
-        .getAttributeValue(AttributeMapper.POST_OFFICE_BOX);
-    String postalCode = entry.getAttributeValue(AttributeMapper.POSTAL_CODE);
-    String postalAddress = entry
-        .getAttributeValue(AttributeMapper.POSTAL_ADDRESS);
-    String homePostalAddress = entry
-        .getAttributeValue(AttributeMapper.HOME_ADDRESS);
     // List all LDAP ObjectClasses
     String objectClass = "";
     for (String objectClazz : entry.getAttributeValues("objectClass")) {
@@ -126,24 +92,32 @@ public class ContactManager {
     Uri dataAsSyncAdapter = Data.CONTENT_URI.buildUpon()
         .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
         .build();
-    ContactUtils.createRawContact(account, entry.getDN() + objectClass,
-        SYNC_STATUS_IN_SYNC, "", entry.toLDIFString(), sourceId, batch,
-        contentAsSyncAdapter);
-    ContactUtils.createStructuredName(sn, cn, initials, title, givenName,
-        batch, dataAsSyncAdapter, rawContactInsertIndex);
-    ContactUtils.createPhoneNumbers(telephoneNumber, homePhone, mobileNumber,
-        faxNumber, pagerNumber, telexNumber, isdnNumber, batch,
-        dataAsSyncAdapter, rawContactInsertIndex);
-    ContactUtils.createMail(workEMail, homeEMail, batch, dataAsSyncAdapter,
-        rawContactInsertIndex);
-    ContactUtils.createAddresses(destinationIndicator, registeredAddress,
-        street, preferredDeliveryMethod, postOfficeBox, postalCode,
-        postalAddress, homePostalAddress, st, batch, dataAsSyncAdapter,
-        rawContactInsertIndex);
+    addSyncFieldsToBundle(contact, sourceId, SYNC_STATUS_IN_SYNC, "",
+        entry.getDN() + objectClass, entry.toLDIFString());
+    ContactUtils.createFullContact(account, contact, batch,
+        contentAsSyncAdapter, dataAsSyncAdapter, rawContactInsertIndex);
     ContactUtils.createLDAPRow(AttributeMapper.UID,
         entry.getAttributeValue(AttributeMapper.UID), batch, dataAsSyncAdapter,
         rawContactInsertIndex);
     // TODO CREATE ORGANIZATION
+  }
+
+  private static void addSyncFieldsToBundle(Bundle b, String sourceId,
+      String syncstatus, String message, String dn, String ldif) {
+    b.putString(AttributeMapper.DN, dn);
+    b.putString(ContactManager.LDAP_SYNC_STATUS_KEY, syncstatus);
+    b.putString(ContactManager.LDAP_LDIF_DETAILS_KEY, ldif);
+    b.putString(AttributeMapper.ATTR_UID, sourceId);
+  }
+
+  private static Bundle createBundleFromEntry(Entry entry) {
+    Bundle contact = new Bundle();
+    for (Attribute attr : entry.getAttributes()) {
+      if (AttributeMapper.isContactAttr(attr.getName())) {
+        contact.putString(attr.getName(), attr.getValue());
+      }
+    }
+    return contact;
   }
 
   /**
@@ -154,22 +128,7 @@ public class ContactManager {
   public static void importLDAPContact(Entry entry, Account account,
       BatchOperation batch) {
     int rawContactInsertIndex = batch.size();
-
-    // Check if the Entry is a Person and can be synchronized
-    String name = entry.getAttributeValue(AttributeMapper.FULL_NAME);
-    String workPhone = entry.getAttributeValue(AttributeMapper.PRIMARY_PHONE);
-    String homePhone = entry.getAttributeValue(AttributeMapper.HOME_PHONE);
-    String mobile = entry.getAttributeValue(AttributeMapper.MOBILE_PHONE);
-    String pager = entry.getAttributeValue(AttributeMapper.PAGER);
-    String fax = entry.getAttributeValue(AttributeMapper.FAX);
-    String workEMail = entry.getAttributeValue(AttributeMapper.PRIMARY_MAIL);
-    @SuppressWarnings("deprecation")
-    String homeEMail = entry.getAttributeValue(AttributeMapper.ALTERNATE_MAIL);
-    String workAddress = entry
-        .getAttributeValue(AttributeMapper.POSTAL_ADDRESS);
-    String homeAddress = entry.getAttributeValue(AttributeMapper.HOME_ADDRESS);
-    String firstname = entry.getAttributeValue(AttributeMapper.FIRST_NAME);
-    String lastname = entry.getAttributeValue(AttributeMapper.LAST_NAME);
+    Bundle contact = createBundleFromEntry(entry);
     // List all LDAP ObjectClasses
     Uri contentAsSyncAdapter = RawContacts.CONTENT_URI.buildUpon()
         .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
@@ -177,51 +136,9 @@ public class ContactManager {
     Uri dataAsSyncAdapter = Data.CONTENT_URI.buildUpon()
         .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
         .build();
-    batch.add(ContentProviderOperation.newInsert(contentAsSyncAdapter)
-        .withValue(RawContacts.ACCOUNT_TYPE, account.type)
-        .withValue(RawContacts.ACCOUNT_NAME, account.name).build());
-    batch.add(ContentProviderOperation.newInsert(dataAsSyncAdapter)
-        .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-        .withValue(Data.MIMETYPE, StructuredName.CONTENT_ITEM_TYPE)
-        .withValue(StructuredName.DISPLAY_NAME, name)
-        .withValue(StructuredName.GIVEN_NAME, firstname)
-        .withValue(StructuredName.FAMILY_NAME, lastname).build());
-    if (workPhone != null) {
-      batch.add(addPhoneNumber(rawContactInsertIndex, workPhone,
-          Phone.TYPE_WORK, dataAsSyncAdapter));
-    }
-    if (homePhone != null) {
-      batch.add(addPhoneNumber(rawContactInsertIndex, homePhone,
-          Phone.TYPE_HOME, dataAsSyncAdapter));
-    }
-    if (mobile != null) {
-      batch.add(addPhoneNumber(rawContactInsertIndex, mobile,
-          Phone.TYPE_MOBILE, dataAsSyncAdapter));
-    }
-    if (pager != null) {
-      batch.add(addPhoneNumber(rawContactInsertIndex, pager, Phone.TYPE_PAGER,
-          dataAsSyncAdapter));
-    }
-    if (fax != null) {
-      batch.add(addPhoneNumber(rawContactInsertIndex, fax, Phone.TYPE_FAX_WORK,
-          dataAsSyncAdapter));
-    }
-    if (workEMail != null) {
-      batch.add(addEMailAddress(rawContactInsertIndex, workEMail,
-          Email.TYPE_WORK, dataAsSyncAdapter));
-    }
-    if (homeEMail != null) {
-      batch.add(addEMailAddress(rawContactInsertIndex, homeEMail,
-          Email.TYPE_HOME, dataAsSyncAdapter));
-    }
-    if (workAddress != null) {
-      batch.add(addPostalAddress(rawContactInsertIndex, workAddress,
-          Email.TYPE_WORK, dataAsSyncAdapter));
-    }
-    if (homeAddress != null) {
-      batch.add(addPostalAddress(rawContactInsertIndex, homeAddress,
-          StructuredPostal.TYPE_HOME, dataAsSyncAdapter));
-    }
+    ContactUtils.createFullContact(account, contact, batch,
+        contentAsSyncAdapter, dataAsSyncAdapter, rawContactInsertIndex);
+
   }
 
   // public static void exportContactToLDAP(long id, BatchOperation batch) {
@@ -305,114 +222,6 @@ public class ContactManager {
     } finally {
       c.close();
     }
-
-    // String name = entry.getAttributeValue(AttributeMapper.ATTR_FULL_NAME);
-    // String workPhone = entry
-    // .getAttributeValue(AttributeMapper.ATTR_PRIMARY_PHONE);
-    // String homePhone =
-    // entry.getAttributeValue(AttributeMapper.ATTR_HOME_PHONE);
-    // String mobile =
-    // entry.getAttributeValue(AttributeMapper.ATTR_MOBILE_PHONE);
-    // String pager = entry.getAttributeValue(AttributeMapper.ATTR_PAGER);
-    // String fax = entry.getAttributeValue(AttributeMapper.ATTR_FAX);
-    // String workEMail = entry
-    // .getAttributeValue(AttributeMapper.ATTR_PRIMARY_MAIL);
-    // String homeEMail = entry
-    // .getAttributeValue(AttributeMapper.ATTR_ALTERNATE_MAIL);
-    // String workAddress = entry
-    // .getAttributeValue(AttributeMapper.ATTR_PRIMARY_ADDRESS);
-    // String homeAddress = entry
-    // .getAttributeValue(AttributeMapper.ATTR_HOME_ADDRESS);
-    // String sourceId = entry.getAttributeValue(AttributeMapper.ATTR_UID);
-    // batch.add(ContentProviderOperation
-    // .newUpdate(RawContacts.CONTENT_URI)
-    // .withValue(RawContacts.ACCOUNT_TYPE, account.type)
-    // .withValue(RawContacts.ACCOUNT_NAME, account.name)
-    // .withValue(RawContacts.SOURCE_ID, sourceId)
-    // .withValue(RawContacts.CONTACT_ID, id).build());
-    // batch.add(ContentProviderOperation
-    // .newUpdate(Data.CONTENT_URI)
-    // .withValueBackReference(Data.RAW_CONTACT_ID, id)
-    // .withValue(Data.MIMETYPE,
-    // ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
-    // .withValue(
-    // ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name)
-    // .build());
-    // if (workPhone != null) {
-    // batch.add(addPhoneNumber(workPhone,
-    // ContactsContract.CommonDataKinds.Phone.TYPE_WORK));
-    // }
-    // if (homePhone != null) {
-    // batch.add(addPhoneNumber(homePhone,
-    // ContactsContract.CommonDataKinds.Phone.TYPE_HOME));
-    // }
-    // if (mobile != null) {
-    // batch.add(addPhoneNumber(mobile,
-    // ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE));
-    // }
-    // if (pager != null) {
-    // batch.add(addPhoneNumber(pager,
-    // ContactsContract.CommonDataKinds.Phone.TYPE_PAGER));
-    // }
-    // if (fax != null) {
-    // batch.add(addPhoneNumber(fax,
-    // ContactsContract.CommonDataKinds.Phone.TYPE_FAX_WORK));
-    // }
-    // if (workEMail != null) {
-    // batch.add(addEMailAddress(workEMail,
-    // ContactsContract.CommonDataKinds.Email.TYPE_WORK));
-    // }
-    // if (homeEMail != null) {
-    // batch.add(addEMailAddress(homeEMail,
-    // ContactsContract.CommonDataKinds.Email.TYPE_HOME));
-    // }
-    // if (workAddress != null) {
-    // batch.add(addPostalAddress(workAddress,
-    // ContactsContract.CommonDataKinds.Email.TYPE_WORK));
-    // }
-    // if (homeAddress != null) {
-    // batch.add(addPostalAddress(homeAddress,
-    // ContactsContract.CommonDataKinds.StructuredPostal.TYPE_HOME));
-    // }
-  }
-
-  /**
-   * Adds the provided phone number to the contact.
-   * 
-   * @param number
-   *          The number to add.
-   * @param type
-   *          The type of number to add.
-   * @param uri
-   *          The base URI for the contact.
-   * @return a addPhoneNumber Operation
-   */
-  private static ContentProviderOperation addPhoneNumber(
-      final int rawContactInsertIndex, final String number, final int type,
-      final Uri dataAsSyncAdapter) {
-    return ContentProviderOperation.newInsert(dataAsSyncAdapter)
-        .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-        .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
-        .withValue(Phone.NUMBER, number).withValue(Phone.TYPE, type).build();
-  }
-
-  /**
-   * Adds the provided phone number to the contact.
-   * 
-   * @param number
-   *          The number to add.
-   * @param type
-   *          The type of number to add.
-   * @param uri
-   *          The base URI for the contact.
-   * @return a addPhoneNumber Operation
-   */
-  private static ContentProviderOperation updatePhoneNumber(final int id,
-      final String number, final int type) {
-    return ContentProviderOperation.newUpdate(Data.CONTENT_URI)
-        .withValueBackReference(Data.RAW_CONTACT_ID, id)
-        .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
-        .withValue(Phone.NUMBER, number).withValue(Phone.TYPE, type).build();
   }
 
   /**
@@ -436,113 +245,6 @@ public class ContactManager {
         .withValue(RawContacts.SOURCE_ID, uuid)
         .withValue(RawContacts.DIRTY, "0").build();
   }
-
-  /**
-   * Adds the provided e-mail address to the contact.
-   * 
-   * @param address
-   *          The e-mail address to add.
-   * @param type
-   *          The type of address to add.
-   * @param uri
-   *          The base URI for the contact.
-   * @return a addEMailAdress Operation
-   */
-  private static ContentProviderOperation addEMailAddress(
-      final int rawContactInsertIndex, final String address, final int type,
-      final Uri dataAsSyncAdapter) {
-    return ContentProviderOperation.newInsert(dataAsSyncAdapter)
-        .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-        .withValue(Data.MIMETYPE, Email.CONTENT_ITEM_TYPE)
-        .withValue(Email.DATA, address).withValue(Email.TYPE, type).build();
-  }
-
-  /**
-   * Adds the provided e-mail address to the contact.
-   * 
-   * @param address
-   *          The e-mail address to add.
-   * @param type
-   *          The type of address to add.
-   * @param uri
-   *          The base URI for the contact.
-   * @return a addEMailAdress Operation
-   */
-  private static ContentProviderOperation updateEMailAddress(final int id,
-      final String address, final int type) {
-    return ContentProviderOperation.newUpdate(Data.CONTENT_URI)
-        .withValueBackReference(Data.RAW_CONTACT_ID, id)
-        .withValue(Data.MIMETYPE, Email.CONTENT_ITEM_TYPE)
-        .withValue(Email.DATA, address).withValue(Email.TYPE, type).build();
-  }
-
-  /**
-   * Adds the provided postal address to the contact.
-   * 
-   * @param address
-   *          The postal address to add.
-   * @param type
-   *          The type of address to add.
-   * @return a addPostalAdress Operation
-   */
-  private static ContentProviderOperation addPostalAddress(
-      final int rawContactInsertIndex, final String address, final int type,
-      final Uri dataAsSyncAdapter) {
-    final StringBuilder addr = new StringBuilder();
-    final StringTokenizer tokenizer = new StringTokenizer(address, "$");
-    while (tokenizer.hasMoreTokens()) {
-      addr.append(tokenizer.nextToken().trim());
-      if (tokenizer.hasMoreTokens()) {
-        addr.append(EOL);
-      }
-    }
-    return ContentProviderOperation.newInsert(dataAsSyncAdapter)
-        .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-        .withValue(Data.MIMETYPE, StructuredPostal.CONTENT_ITEM_TYPE)
-        .withValue(StructuredPostal.TYPE, type)
-        .withValue(StructuredPostal.FORMATTED_ADDRESS, addr.toString()).build();
-  }
-
-  // /**
-  // * Returns the LDAP DN of the given {@link RawContacts} id
-  // *
-  // * @param id
-  // * @param context
-  // * @return
-  // */
-  // private static String getDNofRawContact(final int id, Context context) {
-  // String dn = null;
-  // Uri rawContactUri = ContentUris.withAppendedId(RawContacts.CONTENT_URI,
-  // id);
-  // Cursor c = context.getContentResolver().query(rawContactUri,
-  // new String[] { RawContacts._ID, RawContacts.SYNC3 }, null, null, null);
-  // try {
-  // while (c.moveToNext()) {
-  // int Id = c.getInt(0);
-  // if (Id == id) {
-  // if (!c.isNull(1)) {
-  // String temp = c.getString(1);
-  // int endline = temp.indexOf(EOL);
-  // if (endline > 0) {
-  // dn = temp.substring(0, endline);
-  // } else {
-  // dn = temp;
-  // }
-  // }
-  // break;
-  // }
-  // }
-  // } finally {
-  // c.close();
-  // }
-  // return dn;
-  // }
-
-  // private static String buildLDIFFromContact(int id, Context context) {
-  // String dn = getDNofRawContact(id, context);
-  //
-  // return "";
-  // }
 
   /**
    * Adds a locally added Contact to the LDAP Server, if possible, and updates
@@ -648,141 +350,21 @@ public class ContactManager {
    * @param account
    * @param onlyImportNotSync
    */
-  private static void saveNewLocallyAddedContact(final Bundle b,
+  private static void saveNewLocallyAddedContact(Bundle b,
       final Context context, final Account account, BatchOperation batch,
       boolean onlyImportNotSync) {
-    // Name
-    String sn = null;
-    String cn = null;
-    String initials = null;
-    String title = null;
-    String displayName = null;
-    String givenName = null;
-    // Description
-    String description = null;
-    // Numbers
-    String telephoneNumber = null;
-    String homePhone = null;
-    String mobile = null;
-    String facsimileTelephoneNumber = null;
-    String pager = null;
-    String telexNumber = null;
-    String internationalISDNNumber = null;
-    // Mail
-    String mail = null;
-    // Addresses
-    String destinationIndicator = null;
-    String registeredAddress = null;
-    String street = null;
-    String preferredDeliveryMethod = null;
-    String postOfficeBox = null;
-    String postalCode = null;
-    String postalAddress = null;
-    String homePostalAddress = null;
-    String st = null;
-    // Website
-    String seeAlso = null;
-    // Organization
-    String o = null;
-    String ou = null;
-    String l = null;
-    String preferredLanguage = null;
-    String departmentNumber = null;
-    String physicalDeliveryOfficeName = null;
-    String roomNumber = null;
-    String businessCategory = null;
-    // Others
-    String uid = null;
-
-    String dn = null;
-    String syncstatus = null;
     int rawContactInsertIndex = 0;
     boolean executeDirectly = false;
     if (batch == null) {
       batch = new BatchOperation(context, context.getContentResolver());
       executeDirectly = true;
-    }else{
+    } else {
       rawContactInsertIndex = batch.size();
-    }
-    Set<String> keys = b.keySet();
-    for (String key : keys) {
-      if (key.equals(AttributeMapper.FIRST_NAME)) {
-        givenName = b.getString(key);
-      } else if (key.equals(AttributeMapper.LAST_NAME)) {
-        sn = b.getString(key);
-      } else if (key.equals(AttributeMapper.DN)) {
-        dn = b.getString(key);
-      } else if (key.equals(AttributeMapper.UID)) {
-        uid = b.getString(key);
-      } else if (key.equals(AttributeMapper.FAX)) {
-        facsimileTelephoneNumber = b.getString(key);
-      } else if (key.equals(AttributeMapper.DESCRIPTION)) {
-        description = b.getString(key);
-      } else if (key.equals(AttributeMapper.TITLE)) {
-        title = b.getString(key);
-      } else if (key.equals(AttributeMapper.REGISTERED_ADDRESS)) {
-        registeredAddress = b.getString(key);
-      } else if (key.equals(AttributeMapper.DESTINATION_INDICATOR)) {
-        destinationIndicator = b.getString(key);
-      } else if (key.equals(AttributeMapper.PREFERRED_DELIVERY_METHOD)) {
-        preferredDeliveryMethod = b.getString(key);
-      } else if (key.equals(AttributeMapper.PRIMARY_PHONE)) {
-        telephoneNumber = b.getString(key);
-      } else if (key.equals(AttributeMapper.INTERNATIONAL_ISDN_NUMBER)) {
-        internationalISDNNumber = b.getString(key);
-      } else if (key.equals(AttributeMapper.STREET)) {
-        street = b.getString(key);
-      } else if (key.equals(AttributeMapper.POST_OFFICE_BOX)) {
-        postOfficeBox = b.getString(key);
-      } else if (key.equals(AttributeMapper.POSTAL_CODE)) {
-        postalCode = b.getString(key);
-      } else if (key.equals(AttributeMapper.POSTAL_ADDRESS)) {
-        postalAddress = b.getString(key);
-      } else if (key.equals(AttributeMapper.PHYSICAL_DELIVERY_OFFICE_NAME)) {
-        physicalDeliveryOfficeName = b.getString(key);
-      } else if (key.equals(AttributeMapper.ORGANIZATION_UNIT)) {
-        ou = b.getString(key);
-      } else if (key.equals(AttributeMapper.STATE)) {
-        st = b.getString(key);
-      } else if (key.equals(AttributeMapper.LOCALITY)) {
-        l = b.getString(key);
-      } else if (key.equals(AttributeMapper.BUSINESS_CATEGORY)) {
-        businessCategory = b.getString(key);
-      } else if (key.equals(AttributeMapper.DEPARTMENT_NUMBER)) {
-        departmentNumber = b.getString(key);
-      } else if (key.equals(AttributeMapper.FULL_NAME)
-          || key.equals(AttributeMapper.DISPLAYNAME)) {
-        displayName = b.getString(key);
-        cn = b.getString(key);
-      } else if (key.equals(AttributeMapper.HOME_PHONE)) {
-        homePhone = b.getString(key);
-      } else if (key.equals(AttributeMapper.HOME_ADDRESS)) {
-        homePostalAddress = b.getString(key);
-      } else if (key.equals(AttributeMapper.INITIALS)) {
-        initials = b.getString(key);
-      } else if (key.equals(AttributeMapper.PRIMARY_MAIL)) {
-        mail = b.getString(key);
-      } else if (key.equals(AttributeMapper.MOBILE_PHONE)) {
-        mobile = b.getString(key);
-      } else if (key.equals(AttributeMapper.ORGANIZATION)) {
-        o = b.getString(key);
-      } else if (key.equals(AttributeMapper.PAGER)) {
-        pager = b.getString(key);
-      } else if (key.equals(AttributeMapper.ROOM_NUMBER)) {
-        roomNumber = b.getString(key);
-      } else if (key.equals(AttributeMapper.PREFERRED_LANGUAGE)) {
-        preferredLanguage = b.getString(key);
-      } else if (key.equals(AttributeMapper.TELEX)) {
-        telexNumber = b.getString(key);
-      } else if (key.equals(AttributeMapper.SEE_ALSO)) {
-        seeAlso = b.getString(key);
-      }
     }
     Uri rawContactUri = null;
     Uri dataUri = null;
     if (onlyImportNotSync) {
-      uid = null;
-      syncstatus = SYNC_STATUS_DO_NOT_SYNC;
+      b.putString(LDAP_SYNC_STATUS_KEY, SYNC_STATUS_DO_NOT_SYNC);
       rawContactUri = RawContacts.CONTENT_URI.buildUpon()
           .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
           .build();
@@ -790,36 +372,17 @@ public class ContactManager {
           .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
           .build();
     } else {
-      syncstatus = SYNC_STATUS_LOCALLY_ADDED;
+      b.putString(LDAP_SYNC_STATUS_KEY, SYNC_STATUS_LOCALLY_ADDED);
       rawContactUri = RawContacts.CONTENT_URI;
       dataUri = Data.CONTENT_URI;
     }
     // Prepare contact creation request
-    ContactUtils
-        .createRawContact(account, dn, syncstatus, batch, rawContactUri);
-    // Adding all Name values
-    ContactUtils.createStructuredName(sn, cn, initials, title, givenName,
-        batch, dataUri,rawContactInsertIndex);
-    // Adding Description
-    ContactUtils.createDescription(description, batch, dataUri,rawContactInsertIndex);
-    // Adding Numbers
-    ContactUtils.createPhoneNumbers(telephoneNumber, homePhone, mobile,
-        facsimileTelephoneNumber, pager, telexNumber, internationalISDNNumber,
-        batch, dataUri,rawContactInsertIndex);
-    // Adding Mail
-    ContactUtils.createMail(mail, batch, dataUri,rawContactInsertIndex);
-    // Adding Addresses
-    ContactUtils.createAddresses(destinationIndicator, registeredAddress,
-        street, preferredDeliveryMethod, postOfficeBox, postalCode,
-        postalAddress, homePostalAddress, st, batch, dataUri,rawContactInsertIndex);
-    // Adding SeeAlso as website
-    ContactUtils.createSeeAlso(seeAlso, batch, dataUri,rawContactInsertIndex);
-    // Adding Organization
-    ContactUtils.createOrganization(o, ou, departmentNumber, l, roomNumber,
-        preferredLanguage, physicalDeliveryOfficeName, businessCategory, batch,
-        dataUri,rawContactInsertIndex);
+    ContactUtils.createFullContact(account, b, batch, rawContactUri, dataUri,
+        rawContactInsertIndex);
     // Adding non mapped rows
-    ContactUtils.createLDAPRow(AttributeMapper.UID, uid, batch, dataUri,rawContactInsertIndex);
+    ContactUtils.createLDAPRow(AttributeMapper.UID,
+        b.getString(AttributeMapper.ATTR_UID), batch, dataUri,
+        rawContactInsertIndex);
     if (executeDirectly) {
       // Ask the Contact provider to create a new contact
       try {
