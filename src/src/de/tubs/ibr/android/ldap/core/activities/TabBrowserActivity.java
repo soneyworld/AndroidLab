@@ -147,6 +147,7 @@ public class TabBrowserActivity extends TabActivity implements
         break;
       case R.id.add_contact:
         Intent addContactView = new Intent(getBaseContext(), EditContactActivity.class);
+        addContactView.setAction(Intent.ACTION_INSERT);
         startActivity(addContactView);
         break;
       default:
