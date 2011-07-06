@@ -179,6 +179,12 @@ public final class AttributeMapper {
 
   public static final String PREFERRED_LANGUAGE = "preferredLanguage";
 
+  public static final String TELEX = "telexNumber";
+  
+  public static final String ISDN = "internationaliSDNNumber";
+
+  public static final String SEE_ALSO = "seeAlso";
+
   static {
     final HashMap<String, Integer> aMap = new HashMap<String, Integer>(10);
     final LinkedHashSet<String> aSet = new LinkedHashSet<String>(10);

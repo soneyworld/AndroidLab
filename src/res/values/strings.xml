@@ -689,6 +689,7 @@
     <string name="undefinedTypeLabel">(Undefined)</string>
     <string name="selectLabel">Select label</string>
     <string name="contactCreationFailure">Contact creation failed, check logs.</string>
+    <string name="contactLoadingFailure">Loading Contact failed, check logs.</string>
     <array name="accounts">
     <item>"Account A"</item>
     <item>"Account B"</item>
