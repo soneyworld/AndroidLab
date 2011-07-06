@@ -1,258 +1,344 @@
 <?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent" android:layout_height="match_parent"
+	android:orientation="vertical">
+	<ScrollView android:layout_width="match_parent"
+		android:layout_height="1px"
+		android:layout_weight="1"
+		android:fillViewport="true">
+		<LinearLayout android:layout_width="match_parent"
+					  android:layout_height="match_parent"
+					  android:orientation="vertical">
+		<TableLayout android:layout_width="match_parent"
+			android:layout_height="match_parent">
+			<TableRow>
+				<TextView android:id="@+id/targetAccountTextView"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="Target account" />
+			</TableRow>
+			<TableRow>
+				<Spinner android:layout_height="wrap_content"
+					android:layout_width="match_parent" android:layout_weight="1"
+					android:id="@+id/accountSpinner" />
+			</TableRow>
+			<TableRow>
+				<TextView android:id="@+id/targetLDAPDirectory"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="Target directory" />
+			</TableRow>
+			<TableRow>
+				<Spinner android:layout_height="wrap_content"
+					android:layout_width="match_parent" android:layout_weight="1"
+					android:id="@+id/directorySpinner" />
+			</TableRow>
+			<TableRow>
+				<TextView android:id="@+id/cnTextView" android:visibility="visible"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="Common Name" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/cnEditText" android:visibility="visible"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:id="@+id/displayNameTextView"
+					android:visibility="visible" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:text="Displayname" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/displayNameEditText"
+					android:visibility="visible" android:layout_height="wrap_content"
+					android:layout_width="wrap_content" android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:text="Firstname" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/contactFirstnameEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:id="@+id/nameTextView"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="Name" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/contactNameEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="Initials" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/initialsEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="Title" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/titleEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:id="@+id/userIdTextView"
+					android:visibility="visible" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" android:text="UserID" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/userIdEditText"
+					android:visibility="visible" android:layout_height="wrap_content"
+					android:layout_width="wrap_content" android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="Telephone number" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/contactTelephoneEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="Mobile number" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/mobileEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="Home phone number" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/homePhoneEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="Pager" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/pagerEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="Facsimile number" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/facsimileEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="Telex number" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/telexEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="International iSDN number" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/iSDNEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="E-mail address"
+					android:layout_width="wrap_content" android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/contactEmailEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+				<Spinner android:id="@+id/contactEmailTypeSpinner"
+					android:layout_width="wrap_content" android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="Description" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/descriptionEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="registered Address"
+					android:layout_width="wrap_content" android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/regAddressEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="Street" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/streetEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="postal Code" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/postalCodeEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="postal Address"
+					android:layout_width="wrap_content" android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/postalAddressEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="post Officebox"
+					android:layout_width="wrap_content" android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/postOfficeboxEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="physical Delivery Office Name"
+					android:layout_width="wrap_content" android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/officeNameEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="business Category"
+					android:layout_width="wrap_content" android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/businessCategoryEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="Department number"
+					android:layout_width="wrap_content" android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/departmentNumberEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="Home Postal Address"
+					android:layout_width="wrap_content" android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/homePostalAddressEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="State" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/stateEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="Organization" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/organizationEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="Organizational unit" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/organizationalUnitEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="Room number" android:layout_width="wrap_content"
+					android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/roomNumberEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="preferred Language"
+					android:layout_width="wrap_content" android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/prefLanguageEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<TextView android:text="Website"
+					android:layout_width="wrap_content" android:layout_height="wrap_content" />
+			</TableRow>
+			<TableRow>
+				<EditText android:id="@+id/webSiteEditText"
+					android:layout_height="wrap_content" android:layout_width="wrap_content"
+					android:layout_weight="1" />
+			</TableRow>
+			<TableRow>
+				<CheckBox android:id="@+id/syncCheckBox"
+					android:layout_width="wrap_content" android:layout_height="wrap_content"
+					android:text="Synchronize" />
+			</TableRow>
+			<TableRow>
+				
+			</TableRow>
+		</TableLayout>
+		</LinearLayout>
+	</ScrollView>
+	<LinearLayout android:layout_width="match_parent"
+					android:layout_height="wrap_content" android:orientation="horizontal"
+					style="@android:style/ButtonBar">
 
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="match_parent" android:layout_height="match_parent">
-	<TableLayout android:layout_width="match_parent"
-		android:layout_height="match_parent">
-		<TableRow>
-			<TextView android:id="@+id/targetAccountTextView"
-				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:text="Target account" />
-		</TableRow>
-		<TableRow>
-			<Spinner android:layout_height="wrap_content"
-				android:layout_width="match_parent" android:layout_weight="1"
-				android:id="@+id/accountSpinner" />
-		</TableRow>
-		<TableRow>
-			<TextView android:id="@+id/targetLDAPDirectory"
-				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:text="Target directory" />
-		</TableRow>
-		<TableRow>
-			<Spinner android:layout_height="wrap_content"
-				android:layout_width="match_parent" android:layout_weight="1"
-				android:id="@+id/directorySpinner" />
-		</TableRow>
-		<TableRow>
-			<TextView android:id="@+id/cnTextView" android:visibility="visible"
-				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:text="Common Name" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/cnEditText" android:visibility="visible"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:id="@+id/displayNameTextView"
-				android:visibility="visible" android:layout_width="wrap_content"
-				android:layout_height="wrap_content" android:text="Displayname" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/displayNameEditText"
-				android:visibility="visible" android:layout_height="wrap_content"
-				android:layout_width="wrap_content" android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:layout_width="wrap_content"
-				android:layout_height="wrap_content" android:text="Firstname" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/contactFirstnameEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:id="@+id/nameTextView"
-				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:text="Name" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/contactNameEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:text="Initials"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/initialsEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:text="Title"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/titleEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:id="@+id/userIdTextView"
-				android:visibility="visible" android:layout_width="wrap_content"
-				android:layout_height="wrap_content" android:text="UserID" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/userIdEditText"
-				android:visibility="visible" android:layout_height="wrap_content"
-				android:layout_width="wrap_content" android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:text="Phone number" android:layout_width="wrap_content"
-				android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/contactPhoneEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-			<Spinner android:id="@+id/contactPhoneTypeSpinner"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<TextView android:text="Pager"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/pagerEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:text="E-mail address"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/contactEmailEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-			<Spinner android:id="@+id/contactEmailTypeSpinner"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<TextView android:text="Description"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/descriptionEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:text="registered Address"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/regAddressEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:text="Street"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/streetEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:text="postal Code"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/postalCodeEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:text="postal Address"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/postalAddressEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:text="post Officebox"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/postOfficeboxEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:text="physical Delivery Office Name"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/officeNameEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:text="business Category"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/businessCategoryEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:text="Department number"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/departmentNumberEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:text="Home Postal Address"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/homePostalAddressEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:text="Organization"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/organizationEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:text="Room number"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/roomNumberEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<TextView android:text="preferred Language"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" />
-		</TableRow>
-		<TableRow>
-			<EditText android:id="@+id/prefLanguageEditText"
-				android:layout_height="wrap_content" android:layout_width="wrap_content"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<CheckBox android:id="@+id/syncCheckBox"
-				android:layout_width="wrap_content" android:layout_height="wrap_content"
-				android:text="Synchronize" />
-		</TableRow>
-		<TableRow>
-			<Button android:layout_height="wrap_content" android:text="Save"
-				android:id="@+id/contactSaveButton" android:layout_width="match_parent"
-				android:layout_weight="1" />
-		</TableRow>
-		<TableRow>
-			<Button android:layout_height="wrap_content" android:text="Export"
-				android:id="@+id/contactExportButton" android:layout_width="match_parent"
-				android:layout_weight="1" />
-		</TableRow>
-	</TableLayout>
-</ScrollView>
+					<Button android:id="@+id/btn_action" android:layout_width="0dip"
+						android:layout_height="wrap_content" android:layout_weight="1"
+						android:text="Action" />
+
+					<Button android:id="@+id/btn_revert" android:layout_width="0dip"
+						android:layout_height="wrap_content" android:layout_weight="1"
+						android:text="Revert" />
+
+				</LinearLayout>
+
+</LinearLayout>

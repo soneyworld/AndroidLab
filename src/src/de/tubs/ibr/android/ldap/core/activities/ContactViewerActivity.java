@@ -49,10 +49,10 @@ public class ContactViewerActivity extends Activity {
 
     final EditText mUserIdEditText = (EditText) findViewById(R.id.userIdEditText);
     final TextView mUserIdTextView = (TextView) findViewById(R.id.userIdTextView);
-    Spinner addrtype = (Spinner) findViewById(R.id.contactPhoneTypeSpinner);
+    //Spinner addrtype = (Spinner) findViewById(R.id.contactPhoneTypeSpinner);
     Spinner phonetype = (Spinner) findViewById(R.id.contactEmailTypeSpinner);
-    Button saveChanges = (Button) findViewById(R.id.contactSaveButton);
-    Button exportContact = (Button) findViewById(R.id.contactExportButton);
+    Button saveChanges = (Button) findViewById(R.id.btn_action);
+    Button exportContact = (Button) findViewById(R.id.btn_revert);
     CheckBox syncCheckBox = (CheckBox) findViewById(R.id.syncCheckBox);
 
     syncCheckBox.setOnClickListener(new OnClickListener() {
@@ -73,7 +73,7 @@ public class ContactViewerActivity extends Activity {
         this, R.array.emailTypeItems, android.R.layout.simple_spinner_item);
     adapteraddr
         .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    addrtype.setAdapter(adapteraddr);
+    //addrtype.setAdapter(adapteraddr);
 
     ArrayAdapter<CharSequence> adapterphone = ArrayAdapter.createFromResource(
         this, R.array.telefonnrTypeItems, android.R.layout.simple_spinner_item);
@@ -170,16 +170,16 @@ public class ContactViewerActivity extends Activity {
           EditText addr = (EditText) findViewById(R.id.contactEmailEditText);
           addr.setText(address);
 
-          if (addresstype == Email.TYPE_HOME) {
-            addrtype.setSelection(0);
-          } else if (addresstype == Email.TYPE_WORK) {
-            addrtype.setSelection(1);
-          } else if (addresstype == Email.TYPE_MOBILE) {
-            addrtype.setSelection(2);
-          } else if (addresstype == Email.TYPE_OTHER) {
-            addrtype.setSelection(3);
-          } else
-            addrtype.setSelection(3);
+//          if (addresstype == Email.TYPE_HOME) {
+//            addrtype.setSelection(0);
+//          } else if (addresstype == Email.TYPE_WORK) {
+//            addrtype.setSelection(1);
+//          } else if (addresstype == Email.TYPE_MOBILE) {
+//            addrtype.setSelection(2);
+//          } else if (addresstype == Email.TYPE_OTHER) {
+//            addrtype.setSelection(3);
+//          } else
+//            addrtype.setSelection(3);
 
         }
         if (cr.getString(cr.getColumnIndex(Contacts.HAS_PHONE_NUMBER))
@@ -193,8 +193,8 @@ public class ContactViewerActivity extends Activity {
           phone.moveToFirst();
           number = phone.getString(phone.getColumnIndex(Phone.NUMBER));
           numbertype = phone.getInt(phone.getColumnIndex(Phone.DATA2));
-          EditText nr = (EditText) findViewById(R.id.contactPhoneEditText);
-          nr.setText(number);
+          //EditText nr = (EditText) findViewById(R.id.contactPhoneEditText);
+          //nr.setText(number);
 
           if (numbertype == Phone.TYPE_HOME) {
             phonetype.setSelection(0);
@@ -222,15 +222,15 @@ public class ContactViewerActivity extends Activity {
 
     EditText firstnameField = (EditText) findViewById(R.id.contactFirstnameEditText);
     EditText lastnameField = (EditText) findViewById(R.id.contactNameEditText);
-    EditText phonenumberField = (EditText) findViewById(R.id.contactPhoneEditText);
-    Spinner phonetypeField = (Spinner) findViewById(R.id.contactPhoneTypeSpinner);
+    //EditText phonenumberField = (EditText) findViewById(R.id.contactPhoneEditText);
+    //Spinner phonetypeField = (Spinner) findViewById(R.id.contactPhoneTypeSpinner);
     EditText mailaddressField = (EditText) findViewById(R.id.contactEmailEditText);
     Spinner mailtypeField = (Spinner) findViewById(R.id.contactEmailTypeSpinner);
 
     firstname = firstnameField.getText().toString();
     lastname = lastnameField.getText().toString();
-    phonenumber = phonenumberField.getText().toString();
-    phonetype = phonetypeField.getSelectedItem();
+    //phonenumber = phonenumberField.getText().toString();
+    //phonetype = phonetypeField.getSelectedItem();
     mailaddress = mailaddressField.getText().toString();
     mailtype = mailtypeField.getSelectedItem();
 
