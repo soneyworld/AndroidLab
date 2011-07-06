@@ -20,8 +20,11 @@
 <ContactsSource xmlns:android="http://schemas.android.com/apk/res/android">
 
     <ContactsDataKind
+    	android:icon="@drawable/icon"
         android:mimeType="vnd.android.cursor.item/vnd.ldapsync.row"
         android:summaryColumn="data1"
-        android:detailColumn="data2" />
+        android:detailColumn="data2"
+        android:detailSocialSummary="true" 
+         />
 
 </ContactsSource>
