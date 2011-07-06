@@ -170,9 +170,14 @@ public class ContactUtils {
 
   public static void createSeeAlso(String seeAlso, BatchOperation batch,
       Uri dataUri) {
+    createSeeAlso(seeAlso, batch, dataUri, 0);
+  }
+
+  public static void createSeeAlso(String seeAlso, BatchOperation batch,
+      Uri dataUri, int rawContactInsertIndex) {
     if (seeAlso != null && seeAlso.length() > 0) {
       batch.add(ContentProviderOperation.newInsert(dataUri)
-          .withValueBackReference(Data.RAW_CONTACT_ID, 0)
+          .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
           .withValue(Data.MIMETYPE, Website.CONTENT_ITEM_TYPE)
           .withValue(Website.URL, seeAlso)
           .withValue(Website.TYPE, Website.TYPE_CUSTOM)
