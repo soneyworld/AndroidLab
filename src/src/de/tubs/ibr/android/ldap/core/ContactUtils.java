@@ -185,11 +185,21 @@ public class ContactUtils {
       String departmentNumber, String l, String roomNumber,
       String preferredLanguage, String physicalDeliveryOfficeName,
       String businessCategory, BatchOperation batch, Uri dataUri) {
+    createOrganization(o, ou, departmentNumber, l, roomNumber,
+        preferredLanguage, physicalDeliveryOfficeName, businessCategory, batch,
+        dataUri, 0);
+  }
+
+  public static void createOrganization(String o, String ou,
+      String departmentNumber, String l, String roomNumber,
+      String preferredLanguage, String physicalDeliveryOfficeName,
+      String businessCategory, BatchOperation batch, Uri dataUri,
+      int rawContactInsertIndex) {
     if ((o != null && o.length() > 0) || (ou != null && ou.length() > 0)
         || (l != null && l.length() > 0)
         || (businessCategory != null && businessCategory.length() > 0)) {
       batch.add(ContentProviderOperation.newInsert(dataUri)
-          .withValueBackReference(Data.RAW_CONTACT_ID, 0)
+          .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
           .withValue(Data.MIMETYPE, Organization.CONTENT_ITEM_TYPE)
           .withValue(Organization.COMPANY, o)
           .withValue(Organization.TYPE, Organization.TYPE_WORK)
@@ -197,6 +207,14 @@ public class ContactUtils {
           .withValue(Organization.OFFICE_LOCATION, l)
           .withValue(Organization.JOB_DESCRIPTION, businessCategory).build());
     }
+    ContactUtils.createLDAPRow(AttributeMapper.DEPARTMENT_NUMBER,
+        departmentNumber, batch, dataUri, rawContactInsertIndex);
+    ContactUtils.createLDAPRow(AttributeMapper.ROOM_NUMBER, roomNumber, batch,
+        dataUri, rawContactInsertIndex);
+    ContactUtils.createLDAPRow(AttributeMapper.PREFERRED_LANGUAGE,
+        preferredLanguage, batch, dataUri, rawContactInsertIndex);
+    ContactUtils.createLDAPRow(AttributeMapper.PHYSICAL_DELIVERY_OFFICE_NAME,
+        physicalDeliveryOfficeName, batch, dataUri, rawContactInsertIndex);
   }
 
   public static void createAddresses(String destinationIndicator,
@@ -228,6 +246,12 @@ public class ContactUtils {
           .withValue(StructuredPostal.POBOX, postOfficeBox)
           .withValue(StructuredPostal.REGION, st).build());
     }
+    ContactUtils.createLDAPRow(AttributeMapper.DESTINATION_INDICATOR,
+        destinationIndicator, batch, dataUri);
+    ContactUtils.createLDAPRow(AttributeMapper.REGISTERED_ADDRESS,
+        registeredAddress, batch, dataUri);
+    ContactUtils.createLDAPRow(AttributeMapper.PREFERRED_DELIVERY_METHOD,
+        preferredDeliveryMethod, batch, dataUri);
   }
 
   public static void createPhoneNumbers(String telephoneNumber,
@@ -251,117 +275,116 @@ public class ContactUtils {
       BatchOperation batch, Uri dataUri) {
     createLDAPRow(key, value, batch, dataUri, 0);
   }
-    public static void createLDAPRow(String key, String value,
-        BatchOperation batch, Uri dataUri, int rawContactInsertIndex) {
-    if(key!=null && key.length()>0 && value!=null && value.length()>0){
+
+  public static void createLDAPRow(String key, String value,
+      BatchOperation batch, Uri dataUri, int rawContactInsertIndex) {
+    if (key != null && key.length() > 0 && value != null && value.length() > 0) {
       batch.add(ContentProviderOperation.newInsert(dataUri)
           .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
           .withValue(Data.MIMETYPE, LDAPRow.CONTENT_TYPE)
-          .withValue(LDAPRow.KEY, key)
-          .withValue(LDAPRow.VALUE,value).build());
+          .withValue(LDAPRow.KEY, key).withValue(LDAPRow.VALUE, value).build());
     }
   }
 
-    static void loadLDAPRow(Bundle contact, Cursor c, int keyColumn,
-        int valueColumn) {
-      contact.putString(c.getString(keyColumn), c.getString(valueColumn));
-    }
+  static void loadLDAPRow(Bundle contact, Cursor c, int keyColumn,
+      int valueColumn) {
+    contact.putString(c.getString(keyColumn), c.getString(valueColumn));
+  }
 
-    static void loadAddress(Bundle contact, Cursor c, int typeColumn,
-        int formattedAddressColumn, int streetColumn, int postBoxColumn,
-        int regionColumn, int postalCodeColumn) {
-      int type = c.getInt(typeColumn);
-      switch (type) {
-        case StructuredPostal.TYPE_WORK:
-          contact.putString(AttributeMapper.PRIMARY_ADDRESS,
-              c.getString(formattedAddressColumn));
-          contact.putString(AttributeMapper.POST_OFFICE_BOX,
-              c.getString(postBoxColumn));
-          contact.putString(AttributeMapper.POSTAL_CODE,
-              c.getString(postalCodeColumn));
-          break;
-        case StructuredPostal.TYPE_HOME:
-          contact.putString(AttributeMapper.HOME_ADDRESS,
-              c.getString(formattedAddressColumn));
-          contact.putString(AttributeMapper.STREET, c.getString(streetColumn));
-          contact.putString(AttributeMapper.STATE, c.getString(regionColumn));
-          break;
-      }
+  static void loadAddress(Bundle contact, Cursor c, int typeColumn,
+      int formattedAddressColumn, int streetColumn, int postBoxColumn,
+      int regionColumn, int postalCodeColumn) {
+    int type = c.getInt(typeColumn);
+    switch (type) {
+      case StructuredPostal.TYPE_WORK:
+        contact.putString(AttributeMapper.POSTAL_ADDRESS,
+            c.getString(formattedAddressColumn));
+        contact.putString(AttributeMapper.POST_OFFICE_BOX,
+            c.getString(postBoxColumn));
+        contact.putString(AttributeMapper.POSTAL_CODE,
+            c.getString(postalCodeColumn));
+        break;
+      case StructuredPostal.TYPE_HOME:
+        contact.putString(AttributeMapper.HOME_ADDRESS,
+            c.getString(formattedAddressColumn));
+        contact.putString(AttributeMapper.STREET, c.getString(streetColumn));
+        contact.putString(AttributeMapper.STATE, c.getString(regionColumn));
+        break;
     }
+  }
 
-    static void loadName(Bundle contact, Cursor c, int displayColumn,
-        int givenNameColumn, int familyNameColumn, int prefixColumn) {
-      contact.putString(AttributeMapper.FULL_NAME, c.getString(displayColumn));
-      contact.putString(AttributeMapper.DISPLAYNAME, c.getString(displayColumn));
-      contact.putString(AttributeMapper.FIRST_NAME, c.getString(givenNameColumn));
-      contact.putString(AttributeMapper.LAST_NAME, c.getString(familyNameColumn));
-      contact.putString(AttributeMapper.TITLE, c.getString(prefixColumn));
-    }
+  static void loadName(Bundle contact, Cursor c, int displayColumn,
+      int givenNameColumn, int familyNameColumn, int prefixColumn) {
+    contact.putString(AttributeMapper.FULL_NAME, c.getString(displayColumn));
+    contact.putString(AttributeMapper.DISPLAYNAME, c.getString(displayColumn));
+    contact.putString(AttributeMapper.FIRST_NAME, c.getString(givenNameColumn));
+    contact.putString(AttributeMapper.LAST_NAME, c.getString(familyNameColumn));
+    contact.putString(AttributeMapper.TITLE, c.getString(prefixColumn));
+  }
 
-    @SuppressWarnings("deprecation")
-    static void loadMail(Bundle contact, Cursor c, int typeColumn,
-        int dataColumn) {
-      int type = c.getInt(typeColumn);
-      switch (type) {
-        case Email.TYPE_WORK:
-          contact
-              .putString(AttributeMapper.PRIMARY_MAIL, c.getString(dataColumn));
-          break;
-        default:
-          contact.putString(AttributeMapper.ALTERNATE_MAIL,
-              c.getString(dataColumn));
-          break;
-      }
+  @SuppressWarnings("deprecation")
+  static void loadMail(Bundle contact, Cursor c, int typeColumn, int dataColumn) {
+    int type = c.getInt(typeColumn);
+    switch (type) {
+      case Email.TYPE_WORK:
+        contact
+            .putString(AttributeMapper.PRIMARY_MAIL, c.getString(dataColumn));
+        break;
+      default:
+        contact.putString(AttributeMapper.ALTERNATE_MAIL,
+            c.getString(dataColumn));
+        break;
     }
+  }
 
-    static void loadInitials(Bundle contact, Cursor c, int typeColum,
-        int nameColumn) {
-      int type = c.getInt(typeColum);
-      switch (type) {
-        case Nickname.TYPE_INITIALS:
-          contact.putString(AttributeMapper.INITIALS, c.getString(2));
-          break;
-      }
+  static void loadInitials(Bundle contact, Cursor c, int typeColum,
+      int nameColumn) {
+    int type = c.getInt(typeColum);
+    switch (type) {
+      case Nickname.TYPE_INITIALS:
+        contact.putString(AttributeMapper.INITIALS, c.getString(2));
+        break;
     }
+  }
 
-    static void loadOrganization(Bundle contact, Cursor c, int oColumn,
-        int ouColumn) {
-      contact.putString(AttributeMapper.ORGANIZATION, c.getString(oColumn));
-      contact.putString(AttributeMapper.ORGANIZATION_UNIT, c.getString(ouColumn));
-    }
+  static void loadOrganization(Bundle contact, Cursor c, int oColumn,
+      int ouColumn) {
+    contact.putString(AttributeMapper.ORGANIZATION, c.getString(oColumn));
+    contact.putString(AttributeMapper.ORGANIZATION_UNIT, c.getString(ouColumn));
+  }
 
-    static void loadDescription(Bundle contact, Cursor c, int descColumn) {
-      contact.putString(AttributeMapper.DESCRIPTION, c.getString(descColumn));
-    }
+  static void loadDescription(Bundle contact, Cursor c, int descColumn) {
+    contact.putString(AttributeMapper.DESCRIPTION, c.getString(descColumn));
+  }
 
-    static void loadPhoneNumber(Bundle contact, Cursor c, int typeColumn,
-        int numberColumn) {
-      int type = c.getInt(typeColumn);
-      switch (type) {
-        case Phone.TYPE_HOME:
-          contact
-              .putString(AttributeMapper.HOME_PHONE, c.getString(numberColumn));
-          break;
-        case Phone.TYPE_WORK:
-          contact.putString(AttributeMapper.PRIMARY_PHONE,
-              c.getString(numberColumn));
-          break;
-        case Phone.TYPE_FAX_WORK:
-          contact.putString(AttributeMapper.FAX, c.getString(numberColumn));
-          break;
-        case Phone.TYPE_MOBILE:
-          contact.putString(AttributeMapper.MOBILE_PHONE,
-              c.getString(numberColumn));
-          break;
-        case Phone.TYPE_PAGER:
-          contact.putString(AttributeMapper.PAGER, c.getString(numberColumn));
-          break;
-        case Phone.TYPE_TELEX:
-          contact.putString(AttributeMapper.TELEX, c.getString(numberColumn));
-          break;
-        case Phone.TYPE_ISDN:
-          contact.putString(AttributeMapper.ISDN, c.getString(numberColumn));
-          break;
-      }
+  static void loadPhoneNumber(Bundle contact, Cursor c, int typeColumn,
+      int numberColumn) {
+    int type = c.getInt(typeColumn);
+    switch (type) {
+      case Phone.TYPE_HOME:
+        contact
+            .putString(AttributeMapper.HOME_PHONE, c.getString(numberColumn));
+        break;
+      case Phone.TYPE_WORK:
+        contact.putString(AttributeMapper.PRIMARY_PHONE,
+            c.getString(numberColumn));
+        break;
+      case Phone.TYPE_FAX_WORK:
+        contact.putString(AttributeMapper.FAX, c.getString(numberColumn));
+        break;
+      case Phone.TYPE_MOBILE:
+        contact.putString(AttributeMapper.MOBILE_PHONE,
+            c.getString(numberColumn));
+        break;
+      case Phone.TYPE_PAGER:
+        contact.putString(AttributeMapper.PAGER, c.getString(numberColumn));
+        break;
+      case Phone.TYPE_TELEX:
+        contact.putString(AttributeMapper.TELEX, c.getString(numberColumn));
+        break;
+      case Phone.TYPE_ISDN:
+        contact.putString(AttributeMapper.ISDN, c.getString(numberColumn));
+        break;
     }
+  }
 }

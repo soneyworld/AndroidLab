@@ -89,8 +89,6 @@ public class ContactManager {
     String telexNumber = entry.getAttributeValue(AttributeMapper.TELEX);
     @SuppressWarnings("deprecation")
     String homeEMail = entry.getAttributeValue(AttributeMapper.ALTERNATE_MAIL);
-    String workAddress = entry
-        .getAttributeValue(AttributeMapper.PRIMARY_ADDRESS);
     String givenName = entry.getAttributeValue(AttributeMapper.FIRST_NAME);
     String sn = entry.getAttributeValue(AttributeMapper.LAST_NAME);
     String initials = entry.getAttributeValue(AttributeMapper.INITIALS);
@@ -139,6 +137,7 @@ public class ContactManager {
     ContactUtils.createLDAPRow(AttributeMapper.UID,
         entry.getAttributeValue(AttributeMapper.UID), batch, dataAsSyncAdapter,
         rawContactInsertIndex);
+    //TODO CREATE ORGANIZATION
   }
 
   /**
@@ -160,7 +159,7 @@ public class ContactManager {
     @SuppressWarnings("deprecation")
     String homeEMail = entry.getAttributeValue(AttributeMapper.ALTERNATE_MAIL);
     String workAddress = entry
-        .getAttributeValue(AttributeMapper.PRIMARY_ADDRESS);
+        .getAttributeValue(AttributeMapper.POSTAL_ADDRESS);
     String homeAddress = entry.getAttributeValue(AttributeMapper.HOME_ADDRESS);
     String firstname = entry.getAttributeValue(AttributeMapper.FIRST_NAME);
     String lastname = entry.getAttributeValue(AttributeMapper.LAST_NAME);
@@ -803,7 +802,9 @@ public class ContactManager {
     ContactUtils.createOrganization(o, ou, departmentNumber, l, roomNumber,
         preferredLanguage, physicalDeliveryOfficeName, businessCategory, batch,
         dataUri);
+    // Adding non mapped rows
     ContactUtils.createLDAPRow(AttributeMapper.UID, uid, batch, dataUri);
+
     // Ask the Contact provider to create a new contact
     try {
       batch.execute();

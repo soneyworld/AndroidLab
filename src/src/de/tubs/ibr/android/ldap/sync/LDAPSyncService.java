@@ -190,7 +190,6 @@ public class LDAPSyncService extends Service {
       ContactManager.addLocalContactToLDAP(i, batchOperation,
           new ServerInstance(accountManager, account), context);
     }
-    int count = batchOperation.size();
     // A sync adapter should batch operations on multiple contacts,
     // because it will make a dramatic performance difference.
     batchOperation.execute();
