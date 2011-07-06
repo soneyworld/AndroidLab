@@ -1,5 +1,6 @@
 package de.tubs.ibr.android.ldap.provider;
 
+import java.util.LinkedList;
 import com.unboundid.ldap.sdk.AddRequest;
 import com.unboundid.ldap.sdk.DeleteRequest;
 import com.unboundid.ldap.sdk.Filter;
@@ -213,19 +214,22 @@ public class LDAPService extends Service {
             LDAPConnection conn = null;
             try {
               conn = instance.getConnection();
-              final Filter filter = Filter
-                  .create("(objectClass=organizationalUnit)");
+              final Filter filter = Filter.create("(objectClass=top)");
               final SearchRequest request = new SearchRequest(
                   instance.getBaseDN(), SearchScope.SUB, filter,
-                  SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
-                  SearchRequest.ALL_USER_ATTRIBUTES);
+                  SearchRequest.ALL_OPERATIONAL_ATTRIBUTES);
               request.setSizeLimit(SIZE_LIMIT);
               request.setTimeLimitSeconds(TIME_LIMIT_SECONDS);
               SearchResult result = conn.search(request);
-              mRunnable.dirsResult = new String[result.getEntryCount()];
-              int i = 0;
+              LinkedList<String> dirs = new LinkedList<String>();
               for (SearchResultEntry entry : result.getSearchEntries()) {
-                mRunnable.dirsResult[i] = entry.getDN();
+                if (!entry.getAttributeValue("hasSubordinates").equals("FALSE"))
+                  dirs.add(entry.getDN());
+              }
+              mRunnable.dirsResult = new String[dirs.size()];
+              int i = 0;
+              for (String dir : dirs) {
+                mRunnable.dirsResult[i] = dir;
                 i++;
               }
             } catch (LDAPSearchException lse) {
