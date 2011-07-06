@@ -161,14 +161,22 @@ public class EditContactActivity extends Activity implements
       setTitle("Edit Contact");
       mStatus = STATUS_EDIT;
       mContactActionButton.setText("Save");
-
-      // Read initial state from database
-      // TODO
+      int id = intent.getExtras().getInt("_id");
+      loadContactEntry(id);
+      
     } else if (Intent.ACTION_INSERT.equals(action) && !hasIncomingState) {
       setTitle("Add Contact");
       mStatus = STATUS_INSERT;
       mContactActionButton.setText("Add");
+
     }
+
+    mContactActionButton.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        onActionButtonClicked();
+      }
+    });
 
     // Prepare model for account spinner
     mAccounts = new ArrayList<AccountData>();
@@ -213,13 +221,16 @@ public class EditContactActivity extends Activity implements
    * Actions for when the Save button is clicked. Creates a contact entry and
    * terminates the activity.
    */
-  private void onActionButtonClicked(int status) {
+  private void onActionButtonClicked() {
     Log.v(TAG, "Save button clicked");
-    if (status == 1) {
+    if (mStatus == STATUS_INSERT) {
+      Log.v(TAG, "mStatus = STATUS_INSERT");
       createContactEntry();
       finish();
     } else {
-      // TODO
+      Log.v(TAG, "mStatus = STATUS_EDIT");
+      updateContactEntry();
+      finish();
     }
   }
 
@@ -231,8 +242,9 @@ public class EditContactActivity extends Activity implements
     // Get values from UI
     Bundle contactData = new Bundle();
 
-    String accountSpinnerValue = (String) mAccountSpinner.getSelectedItem();
-    String directorySpinnerValue = (String) mDirectorySpinner.getSelectedItem();
+    // String accountSpinnerValue = (String) mAccountSpinner.getSelectedItem();
+    // String directorySpinnerValue = (String)
+    // mDirectorySpinner.getSelectedItem();
     String commonNameValue = mCommonNameEditText.getText().toString();
     String displaynameValue = mDisplaynameEditText.getText().toString();
     String contactFirstnameValue = mContactFirstnameEditText.getText()
@@ -255,19 +267,19 @@ public class EditContactActivity extends Activity implements
     String postalCodeValue = mPostalCodeEditText.getText().toString();
     String postalAddressValue = mPostalAddressEditText.getText().toString();
     String postOfficeboxValue = mPostOfficeboxEditText.getText().toString();
-    String physicalDeliveryOfficeNameValue = mPhysicalDeliveryOfficeNameEditText
-        .getText().toString();
+    String physicalDeliveryOfficeNameValue =
+    mPhysicalDeliveryOfficeNameEditText.getText().toString();
     String businessCategoryValue = mBusinessCategoryEditText.getText()
         .toString();
-    String departmentNumberValue = mDepartmentNumberEditText.getText()
-        .toString();
+    String departmentNumberValue =
+    mDepartmentNumberEditText.getText().toString();
     String homePostalAddressValue = mHomePostalAddressEditText.getText()
         .toString();
     String stateValue = mStateEditText.getText().toString();
     String organizationValue = mOrganizationEditText.getText().toString();
     String organizationalUnitValue = mOrganizationalUnitEditText.getText()
         .toString();
-    String roomNummberValue = mRoomNumberEditText.getText().toString();
+    String roomNumberValue = mRoomNumberEditText.getText().toString();
     String prefLanguageValue = mPrefLanguageEditText.getText().toString();
     String webSiteValue = mWebSiteEditText.getText().toString();
     boolean syncCheckBoxValue = mSyncCheckBox.isChecked();
@@ -287,17 +299,22 @@ public class EditContactActivity extends Activity implements
     contactData.putString("telexNumber", telexValue);
     contactData.putString("internationaliSDNNumber", iSDNValue);
     contactData.putString("mail", contactEmailValue);
+    contactData.putString("registeredAddress", regAddressValue);
     contactData.putString("street", streetValue);
     contactData.putString("postOfficeBox", postOfficeboxValue);
     contactData.putString("postalCode", postalCodeValue);
     contactData.putString("postalAddress", postalAddressValue);
     contactData.putString("homePostalAddress", homePostalAddressValue);
-    contactData.putString("organization", organizationValue);
+    contactData.putString("o", organizationValue);
     contactData.putString("businessCategory", businessCategoryValue);
+    contactData.putString("departmentNumber", departmentNumberValue);
+    contactData.putString("physicalDeliveryOfficeName", physicalDeliveryOfficeNameValue);
     contactData.putString("uid", userIdValue);
     contactData.putString("st", stateValue);
     contactData.putString("ou", organizationalUnitValue);
     contactData.putString("seeAlso", webSiteValue);
+    contactData.putString("roomNumber", roomNumberValue);
+    contactData.putString("preferredLanguage", prefLanguageValue);
     Account[] accounts = AccountManager.get(this).getAccountsByType(
         ACCOUNT_TYPE);
     for (Account a : accounts) {
@@ -313,6 +330,46 @@ public class EditContactActivity extends Activity implements
         break;
       }
     }
+  }
+
+  protected void loadContactEntry(int id) {
+    
+    Bundle contactData = ContactManager.loadContact(id, mContext);
+    mContactNameEditText.setText(contactData.getString("sn"));
+    mCommonNameEditText.setText(contactData.getString("cn"));
+    mDisplaynameEditText.setText(contactData.getString("displayName"));
+    mInitialsEditText.setText(contactData.getString("initials"));
+    mContactFirstnameEditText.setText(contactData.getString("givenName"));
+    mTitleEditText.setText(contactData.getString("title"));
+    mDescriptionEditText.setText(contactData.getString("description"));
+    mContactTelephoneEditText.setText(contactData.getString("telephoneNumber"));
+    mHomePhoneEditText.setText(contactData.getString("homePhone"));
+    mMobileEditText.setText(contactData.getString("mobile"));
+    mPagerEditText.setText(contactData.getString("pager"));
+    mFacsimileEditText.setText(contactData.getString("facsimileTelephoneNumber"));
+    mTelexEditText.setText(contactData.getString("telexNumber"));
+    miSDNEditText.setText(contactData.getString("internationaliSDNNumber"));
+    mContactEmailEditText.setText(contactData.getString("mail"));
+    mRegAddressEditText.setText(contactData.getString("registeredAddress"));
+    mStreetEditText.setText(contactData.getString("street"));
+    mPostOfficeboxEditText.setText(contactData.getString("postOfficeBox"));
+    mPostalCodeEditText.setText(contactData.getString("postalCode"));
+    mPostalAddressEditText.setText(contactData.getString("postalAddress"));
+    mHomePostalAddressEditText.setText(contactData.getString("homePostalAddress"));
+    mOrganizationEditText.setText(contactData.getString("o"));
+    mBusinessCategoryEditText.setText(contactData.getString("businessCategory"));
+    mDepartmentNumberEditText.setText(contactData.getString("departmentNumber"));
+    mRoomNumberEditText.setText(contactData.getString("roomNumber"));
+    mUserIdEditText.setText(contactData.getString("uid"));
+    mStateEditText.setText(contactData.getString("st"));
+    mOrganizationalUnitEditText.setText(contactData.getString("ou"));
+    mPrefLanguageEditText.setText(contactData.getString("preferredLanguage"));
+    mWebSiteEditText.setText(contactData.getString("seeAlso"));
+
+  }
+
+  protected void updateContactEntry() {
+
   }
 
   /**
