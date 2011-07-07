@@ -2,7 +2,6 @@ package de.tubs.ibr.android.ldap.core;
 
 import static com.unboundid.util.StaticUtils.EOL;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import android.accounts.Account;
@@ -593,7 +592,7 @@ public class ContactManager {
       }
     }
     ContactUtils.createUpdateBatch(insertKeys, deleteKeys, updateMap, batch,
-        rawcontactId);
+        contactupdate, localcontact, Data.CONTENT_URI, rawcontactId);
   }
 
   public static void markContactToBeDeleted() {

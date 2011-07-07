@@ -88,6 +88,11 @@ public class ContactUtils {
   static void createFullContact(final Account account, Bundle b,
       BatchOperation batch, Uri rawContactUri, Uri dataUri, int rawContactIndex) {
     createRawContact(account, b, batch, rawContactUri);
+    insertDataForContact(b, batch, dataUri, rawContactIndex);
+  }
+
+  static void insertDataForContact(Bundle b, BatchOperation batch, Uri dataUri,
+      int rawContactIndex) {
     createStructuredName(b, batch, dataUri, rawContactIndex);
     createDescription(b, batch, dataUri, rawContactIndex);
     createPhoneNumbers(b, batch, dataUri, rawContactIndex);
@@ -419,7 +424,8 @@ public class ContactUtils {
 
   public static void createUpdateBatch(Set<String> insertKeys,
       Set<String> deleteKeys, Map<String, String> updateMap,
-      BatchOperation batch, int rawcontactId) {
+      BatchOperation batch, Bundle newcontact, Bundle oldcontact, Uri dataUri,
+      int rawcontactId) {
     // Cleaning up the insertSet and the deleteSet with dependencies to
     // updateMap
     Set<String> updateSet = updateMap.keySet();
@@ -438,7 +444,43 @@ public class ContactUtils {
         deleteKeys.removeAll(AttributeMapper.getOrganizationSubAttrs());
       }
     }
-    // TODO Create INSERT DELETE and UPDATE statements 
+    Bundle action = new Bundle();
+    for (String insert : insertKeys) {
+      action.putString(insert, newcontact.getString(insert));
+    }
+    insertDataForContact(action, batch, dataUri, rawcontactId);
+    action.clear();
+    for (String delete : deleteKeys) {
+      action.putString(delete, oldcontact.getString(delete));
+    }
+    deleteDataForContact(action, batch, dataUri, rawcontactId);
+    action.clear();
+    for (String modify : updateSet) {
+      action.putString(modify, newcontact.getString(modify));
+    }
+    updateDataForContact(action, batch, dataUri, rawcontactId);
+  }
 
+  private static void updateDataForContact(Bundle action, BatchOperation batch,
+      Uri dataUri, int rawcontactId) {
+    // TODO Auto-generated method stub
+    
+  }
+
+  private static void deleteDataForContact(Bundle b, BatchOperation batch,
+      Uri dataUri, int rawcontactId) {
+    for (String key : b.keySet()) {
+      if (AttributeMapper.isRowAttr(key)) {
+        deleteDataRow(Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE
+            + "='" + LDAPRow.CONTENT_ITEM_TYPE + "'",
+            new String[] { String.valueOf(rawcontactId) }, batch, dataUri);
+      }
+    }
+  }
+
+  private static void deleteDataRow(String selection, String selectionArgs[],
+      BatchOperation batch, Uri dataUri) {
+    batch.add(ContentProviderOperation.newDelete(dataUri).withExpectedCount(1)
+        .withSelection(selection, selectionArgs).build());
   }
 }
