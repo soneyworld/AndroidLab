@@ -6,7 +6,6 @@ import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 import android.accounts.Account;
 import android.content.ContentProviderOperation;
 import android.database.Cursor;
-import android.net.MailTo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract.CommonDataKinds.Email;
@@ -468,6 +467,7 @@ public class ContactUtils {
 
   }
 
+  @SuppressWarnings("deprecation")
   private static void deleteDataForContact(Bundle b, BatchOperation batch,
       Uri dataUri, int rawcontactId) {
     for (String key : b.keySet()) {

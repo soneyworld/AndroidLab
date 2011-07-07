@@ -31,6 +31,7 @@ import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 import de.tubs.ibr.android.ldap.provider.*;
+import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 
 public class LDAPTabActivity extends ListActivity implements OnClickListener,
     OnItemClickListener, OnItemLongClickListener {
@@ -213,20 +214,21 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
     for (int i = 0; i < entryStrings.length; i++) {
       final SearchResultEntry e = entries.get(i);
       if (e.hasObjectClass("person")) {
-        final String name = e.getAttributeValue("cn");
+        final String name = e.getAttributeValue(AttributeMapper.FULL_NAME);
         if (name == null) {
           entryStrings[i] = e.getDN();
         } else {
           buffer.setLength(0);
           buffer.append(name);
 
-          final String phone = e.getAttributeValue("telephoneNumber");
+          final String phone = e
+              .getAttributeValue(AttributeMapper.PRIMARY_PHONE);
           if (phone != null) {
             buffer.append(EOL);
             buffer.append(phone);
           }
 
-          final String mail = e.getAttributeValue("mail");
+          final String mail = e.getAttributeValue(AttributeMapper.PRIMARY_MAIL);
           if (mail != null) {
             buffer.append(EOL);
             buffer.append(mail);

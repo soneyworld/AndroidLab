@@ -2,6 +2,7 @@ package de.tubs.ibr.android.ldap.core;
 
 import static com.unboundid.util.StaticUtils.EOL;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import android.accounts.Account;
@@ -25,7 +26,6 @@ import android.provider.ContactsContract.CommonDataKinds.StructuredPostal;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.RawContacts;
-import android.provider.ContactsContract.RawContactsEntity;
 import android.widget.Toast;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.DeleteRequest;
@@ -66,6 +66,8 @@ public class ContactManager {
   public static final String LOCAL_ACCOUNT_TYPE_KEY = "ANDROID_LOCAL_ACCOUNT_TYPE";
 
   public static final String LOCAL_ACCOUNT_NAME_KEY = "ANDROID_LOCAL_ACCOUNT_NAME";
+
+  public static final String LOCAL_ACCOUNT_RAW_CONTACT_ID_KEY = "RAW_CONTACT_ID";
 
   public static final String LDAP_SOURCE_ID_KEY = AttributeMapper.ATTR_UID;
 
@@ -508,7 +510,7 @@ public class ContactManager {
     return contact;
   }
 
-  private static void loadSyncData(Bundle contact, Cursor c, int sync1,
+  public static void loadSyncData(Bundle contact, Cursor c, int sync1,
       int sync2, int sync3, int sync4, int accountname, int accounttype,
       int sourceid) {
     if (!c.isNull(sync1)) {
@@ -626,5 +628,59 @@ public class ContactManager {
 
   public static void markContactToBeDeleted() {
     // TODO implement later
+  }
+
+  /**
+   * Loads the list of all raw Contacts and its displayname also as its
+   * rawcontact ID
+   * 
+   * @param context
+   * @return
+   */
+  public static LinkedHashMap<Integer, Bundle> loadContactList(Context context) {
+    LinkedHashMap<Integer, Bundle> contacts = new LinkedHashMap<Integer, Bundle>();
+    Cursor c = context.getContentResolver()
+        .query(
+            RawContacts.CONTENT_URI,
+            new String[] { RawContacts._ID, RawContacts.SYNC1,
+                RawContacts.SYNC2, RawContacts.SYNC3, RawContacts.SYNC4,
+                RawContacts.ACCOUNT_NAME, RawContacts.ACCOUNT_TYPE,
+                RawContacts.SOURCE_ID }, null, null, null);
+    try {
+      while (c.moveToNext()) {
+        Bundle contact = new Bundle();
+        contact.putString(LOCAL_ACCOUNT_RAW_CONTACT_ID_KEY, c.getString(0));
+        loadSyncData(contact, c, 1, 2, 3, 4, 5, 6, 7);
+        contacts.put(c.getInt(0), contact);
+      }
+    } catch (Exception e) {
+      // Display warning
+      int duration = Toast.LENGTH_SHORT;
+      Toast toast = Toast.makeText(context.getApplicationContext(),
+          R.string.contactLoadingFailure, duration);
+      toast.show();
+    } finally {
+      c.close();
+    }
+    c = context.getContentResolver().query(Data.CONTENT_URI,
+        new String[] { Data.RAW_CONTACT_ID, Data.DATA1, Data.MIMETYPE },
+        Data.MIMETYPE + "='" + StructuredName.CONTENT_ITEM_TYPE + "'", null,
+        null);
+    try {
+      int id;
+      while (c.moveToNext()) {
+        id = c.getInt(0);
+        contacts.get(id).putString(AttributeMapper.FULL_NAME, c.getString(1));
+      }
+    } catch (Exception e) {
+      // Display warning
+      int duration = Toast.LENGTH_SHORT;
+      Toast toast = Toast.makeText(context.getApplicationContext(),
+          R.string.contactLoadingFailure, duration);
+      toast.show();
+    } finally {
+      c.close();
+    }
+    return contacts;
   }
 }
