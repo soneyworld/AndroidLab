@@ -454,7 +454,8 @@ public class ContactManager {
                 RawContacts.ACCOUNT_NAME, RawContacts.ACCOUNT_TYPE,
                 RawContacts.SOURCE_ID }, null, null, null);
     try {
-      loadSyncData(contact, c, 1, 2, 3, 4, 5, 6, 7);
+      if (c.moveToFirst())
+        loadSyncData(contact, c, 1, 2, 3, 4, 5, 6, 7);
     } catch (Exception e) {
       // Display warning
       int duration = Toast.LENGTH_SHORT;
