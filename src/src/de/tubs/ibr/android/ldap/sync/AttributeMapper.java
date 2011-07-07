@@ -147,6 +147,10 @@ public final class AttributeMapper {
   // The set of attributes (with lowercase names) used to hold organization
   // informations mapped together.
   private static final Set<String> orgaSubAttrs;
+
+  // The set of attributes (with lowercase names) used to hold informations
+  // mapped in a single row.
+  private static final Set<String> rowAttrs;
   /**
    * This attribute holds a postal address suitable for reception of telegrams
    * or expedited documents, where it is necessary to have the recipient accept
@@ -221,6 +225,7 @@ public final class AttributeMapper {
     final LinkedHashSet<String> dSet = new LinkedHashSet<String>(1);
     final LinkedHashSet<String> waSet = new LinkedHashSet<String>(4);
     final LinkedHashSet<String> haSet = new LinkedHashSet<String>(4);
+    final LinkedHashSet<String> rowSet = new LinkedHashSet<String>(4);
     aMap.put(toLowerCase("cn"), R.string.attribute_mapper_name_cn);
 
     aMap.put(toLowerCase("departmentNumber"),
@@ -380,6 +385,7 @@ public final class AttributeMapper {
     webAttrs = Collections.unmodifiableSet(wSet);
     orgaAttrs = Collections.unmodifiableSet(oSet);
     orgaSubAttrs = Collections.unmodifiableSet(oSubSet);
+    rowAttrs = Collections.unmodifiableSet(rowSet);
   }
 
   /**
@@ -705,6 +711,31 @@ public final class AttributeMapper {
    */
   public static boolean isOrganizationSubAttr(final String s) {
     return orgaSubAttrs.contains(toLowerCase(s));
+  }
+
+  /**
+   * Retrieves a set containing the lowercase names of the attributes that hold
+   * informations in a single row.
+   * 
+   * @return A set containing the lowercase names of the attributes that hold
+   *         informations in a single row.
+   */
+  public static Set<String> getRowAttrs() {
+    return rowAttrs;
+  }
+
+  /**
+   * Indicates whether the provided string is the name of one of the defined
+   * information attributes in a single row.
+   * 
+   * @param s
+   *          The name for which to make the determination. It must not be
+   *          {@code null}.
+   * @return {@code true} if the provided string is the name of one of the
+   *         defined single row information attributes, or {@code false} if not.
+   */
+  public static boolean isRowAttr(final String s) {
+    return rowAttrs.contains(toLowerCase(s));
   }
 
   /**
