@@ -255,19 +255,14 @@ public class EditContactActivity extends Activity implements
     // Get values from UI
     Bundle contactData = new Bundle();
     boolean syncCheckBoxValue = getValuesFromUI(contactData);
-    Account[] accounts = AccountManager.get(this).getAccountsByType(
-        ACCOUNT_TYPE);
-    for (Account a : accounts) {
-      if (a.name.equals(((AccountData) mAccountSpinner.getSelectedItem())
-          .getName())) {
-        if (syncCheckBoxValue) {
-          ContactManager.saveNewLocallyAddedContactAndSync(contactData, a,
-              mContext);
-        } else {
-          ContactManager.saveNewLocallyAddedContactAndDoNotSync(contactData, a,
-              mContext);
-        }
-        break;
+    Account account = getSelectedAccount();
+    if (account != null) {
+      if (syncCheckBoxValue) {
+        ContactManager.saveNewLocallyAddedContactAndSync(contactData, account,
+            mContext);
+      } else {
+        ContactManager.saveNewLocallyAddedContactAndDoNotSync(contactData,
+            account, mContext);
       }
     }
   }
@@ -334,6 +329,14 @@ public class EditContactActivity extends Activity implements
         .toString());
     b.putString(AttributeMapper.PREFERRED_LANGUAGE, mPrefLanguageEditText
         .getText().toString());
+    String key;
+    for (Object k : b.keySet().toArray()) {
+      key = (String) k;
+      String value = b.getString(key);
+      if (value == null || value.length()==0) {
+        b.remove(key);
+      }
+    }
     return mSyncCheckBox.isChecked();
   }
 
@@ -378,7 +381,28 @@ public class EditContactActivity extends Activity implements
   }
 
   protected void updateContactEntry() {
-//    ContactManager.saveLocallyEditedContact(rawContactId, Bundle, , this);
+    Bundle contact = new Bundle();
+    getValuesFromUI(contact);
+    Account account = getSelectedAccount();
+    if (account != null) {
+      ContactManager.saveLocallyEditedContact(mRawContactId, contact, account,
+          this);
+    }
+  }
+
+  /**
+   * @return the selected Account or null if no Account is selected
+   */
+  private Account getSelectedAccount() {
+    Account[] accounts = AccountManager.get(this).getAccountsByType(
+        ACCOUNT_TYPE);
+    for (Account a : accounts) {
+      if (a.name.equals(((AccountData) mAccountSpinner.getSelectedItem())
+          .getName())) {
+        return a;
+      }
+    }
+    return null;
   }
 
   /**

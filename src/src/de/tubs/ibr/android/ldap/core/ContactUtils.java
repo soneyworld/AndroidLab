@@ -6,6 +6,7 @@ import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 import android.accounts.Account;
 import android.content.ContentProviderOperation;
 import android.database.Cursor;
+import android.net.MailTo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract.CommonDataKinds.Email;
@@ -399,7 +400,7 @@ public class ContactUtils {
         contact
             .putString(AttributeMapper.HOME_PHONE, c.getString(numberColumn));
         break;
-      case Phone.TYPE_WORK:
+      case Phone.TYPE_MAIN:
         contact.putString(AttributeMapper.PRIMARY_PHONE,
             c.getString(numberColumn));
         break;
@@ -464,7 +465,7 @@ public class ContactUtils {
   private static void updateDataForContact(Bundle action, BatchOperation batch,
       Uri dataUri, int rawcontactId) {
     // TODO Auto-generated method stub
-    
+
   }
 
   private static void deleteDataForContact(Bundle b, BatchOperation batch,
@@ -472,7 +473,58 @@ public class ContactUtils {
     for (String key : b.keySet()) {
       if (AttributeMapper.isRowAttr(key)) {
         deleteDataRow(Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE
-            + "='" + LDAPRow.CONTENT_ITEM_TYPE + "'",
+            + "='" + LDAPRow.CONTENT_ITEM_TYPE + "' AND " + LDAPRow.KEY + "=?",
+            new String[] { String.valueOf(rawcontactId), key }, batch, dataUri);
+      } else if (AttributeMapper.isNameSubAttr(key)) {
+        deleteDataRow(Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE
+            + "='" + StructuredName.CONTENT_ITEM_TYPE + "'",
+            new String[] { String.valueOf(rawcontactId) }, batch, dataUri);
+      } else if (key.equalsIgnoreCase(AttributeMapper.INITIALS)) {
+        deleteDataRow(Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE
+            + "='" + Nickname.CONTENT_ITEM_TYPE + "' AND " + Nickname.TYPE
+            + "='" + Nickname.TYPE_INITIALS + "'",
+            new String[] { String.valueOf(rawcontactId) }, batch, dataUri);
+      } else if (AttributeMapper.isEMailAttr(key)) {
+        if (key.equalsIgnoreCase(AttributeMapper.PRIMARY_MAIL)) {
+          deleteDataRow(Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE
+              + "='" + Email.CONTENT_ITEM_TYPE + "' AND " + Email.TYPE + "='"
+              + Email.TYPE_WORK + "'",
+              new String[] { String.valueOf(rawcontactId) }, batch, dataUri);
+        } else if (key.equalsIgnoreCase(AttributeMapper.ALTERNATE_MAIL)) {
+          deleteDataRow(Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE
+              + "='" + Email.CONTENT_ITEM_TYPE + "' AND " + Email.TYPE + "='"
+              + Email.TYPE_HOME + "'",
+              new String[] { String.valueOf(rawcontactId) }, batch, dataUri);
+        }
+      } else if (AttributeMapper.isDescriptionAttr(key)) {
+        deleteDataRow(Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE
+            + "='" + Note.CONTENT_ITEM_TYPE + "'",
+            new String[] { String.valueOf(rawcontactId) }, batch, dataUri);
+      } else if (AttributeMapper.isPhoneNumberAttr(key)) {
+        deleteDataRow(Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE
+            + "='" + Phone.CONTENT_ITEM_TYPE + "' AND " + Phone.NUMBER + "='"
+            + b.getString(key) + "'",
+            new String[] { String.valueOf(rawcontactId) }, batch, dataUri);
+      } else if (AttributeMapper.isWebAttr(key)) {
+        deleteDataRow(Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE
+            + "='" + Website.CONTENT_ITEM_TYPE + "' AND " + Website.URL + "='"
+            + b.getString(key) + "'",
+            new String[] { String.valueOf(rawcontactId) }, batch, dataUri);
+      } else if (AttributeMapper.isOrganizationSubAttr(key)) {
+        deleteDataRow(Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE
+            + "='" + Organization.CONTENT_ITEM_TYPE + "'",
+            new String[] { String.valueOf(rawcontactId) }, batch, dataUri);
+      } else if (AttributeMapper.isPostalHomeAddressAttr(key)) {
+        deleteDataRow(Data.RAW_CONTACT_ID + "=?" + " AND "
+            + StructuredPostal.MIMETYPE + "='"
+            + StructuredPostal.CONTENT_ITEM_TYPE + "' AND "
+            + StructuredPostal.TYPE + "='" + StructuredPostal.TYPE_HOME + "'",
+            new String[] { String.valueOf(rawcontactId) }, batch, dataUri);
+      } else if (AttributeMapper.isPostalWorkAddressAttr(key)) {
+        deleteDataRow(Data.RAW_CONTACT_ID + "=?" + " AND "
+            + StructuredPostal.MIMETYPE + "='"
+            + StructuredPostal.CONTENT_ITEM_TYPE + "' AND "
+            + StructuredPostal.TYPE + "='" + StructuredPostal.TYPE_WORK + "'",
             new String[] { String.valueOf(rawcontactId) }, batch, dataUri);
       }
     }
@@ -480,6 +532,7 @@ public class ContactUtils {
 
   private static void deleteDataRow(String selection, String selectionArgs[],
       BatchOperation batch, Uri dataUri) {
+    // DEBUG If the count is !=1 there is a fault in the routine
     batch.add(ContentProviderOperation.newDelete(dataUri).withExpectedCount(1)
         .withSelection(selection, selectionArgs).build());
   }

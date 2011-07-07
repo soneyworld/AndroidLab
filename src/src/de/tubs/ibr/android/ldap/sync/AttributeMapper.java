@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import android.provider.Contacts.Intents.UI;
 import de.tubs.ibr.android.ldap.R;
 import de.tubs.ibr.android.ldap.provider.StringProvider;
 import static com.unboundid.util.StaticUtils.*;
@@ -359,7 +360,7 @@ public final class AttributeMapper {
     oSubSet.add(toLowerCase(ORGANIZATION_UNIT));
     oSubSet.add(toLowerCase(LOCALITY));
     oSubSet.add(toLowerCase(BUSINESS_CATEGORY));
-
+    
     hSet.add(toLowerCase("jpegPhoto"));
     hSet.add(toLowerCase("manager"));
     hSet.add(toLowerCase("objectClass"));
@@ -371,6 +372,15 @@ public final class AttributeMapper {
     hSet.add(toLowerCase("userPKCS12"));
     hSet.add(toLowerCase("userSMIMECertificate"));
 
+    rowSet.add(toLowerCase(UID));
+    rowSet.add(toLowerCase(PREFERRED_LANGUAGE));
+    rowSet.add(toLowerCase(PHYSICAL_DELIVERY_OFFICE_NAME));
+    rowSet.add(toLowerCase(DEPARTMENT_NUMBER));
+    rowSet.add(toLowerCase(ROOM_NUMBER));
+    rowSet.add(toLowerCase(DESTINATION_INDICATOR));
+    rowSet.add(toLowerCase(REGISTERED_ADDRESS));
+    rowSet.add(toLowerCase(PREFERRED_DELIVERY_METHOD));
+    
     attrMap = Collections.unmodifiableMap(aMap);
 
     descAttrs = Collections.unmodifiableSet(dSet);

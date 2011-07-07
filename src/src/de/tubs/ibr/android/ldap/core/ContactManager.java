@@ -466,15 +466,10 @@ public class ContactManager {
     }
     c = context.getContentResolver().query(
         Data.CONTENT_URI,
-        new String[] { RawContactsEntity._ID, RawContactsEntity.MIMETYPE,
-            RawContactsEntity.DATA1, RawContactsEntity.DATA2,
-            RawContactsEntity.DATA3, RawContactsEntity.DATA4,
-            RawContactsEntity.DATA5, RawContactsEntity.DATA6,
-            RawContactsEntity.DATA7, RawContactsEntity.DATA8,
-            RawContactsEntity.DATA9, RawContactsEntity.DATA10,
-            RawContactsEntity.DATA11, RawContactsEntity.DATA12,
-            RawContactsEntity.DATA13, RawContactsEntity.DATA14,
-            RawContactsEntity.DATA15 },
+        new String[] { Data._ID, Data.MIMETYPE, Data.DATA1, Data.DATA2,
+            Data.DATA3, Data.DATA4, Data.DATA5, Data.DATA6, Data.DATA7,
+            Data.DATA8, Data.DATA9, Data.DATA10, Data.DATA11, Data.DATA12,
+            Data.DATA13, Data.DATA14, Data.DATA15 },
         Data.RAW_CONTACT_ID + "=" + rawcontactId, null, null);
     try {
       while (c.moveToNext()) {
@@ -501,6 +496,12 @@ public class ContactManager {
           ContactUtils.loadLDAPRow(contact, c, 2, 3);
         }
       }
+    } catch (Exception e) {
+      // Display warning
+      int duration = Toast.LENGTH_SHORT;
+      Toast toast = Toast.makeText(context.getApplicationContext(),
+          R.string.contactLoadingFailure, duration);
+      toast.show();
     } finally {
       c.close();
     }
@@ -561,6 +562,7 @@ public class ContactManager {
         context.getContentResolver());
     saveContact(rawcontactId, contactupdate, account, context, batch);
     try {
+      int batchsize = batch.size();
       batch.execute();
     } catch (Exception e) {
       // TODO Toast to User
@@ -573,22 +575,33 @@ public class ContactManager {
     Set<String> insertKeys = contactupdate.keySet();
     Set<String> deleteKeys = localcontact.keySet();
     Map<String, String> updateMap = new HashMap<String, String>();
+    String value;
     for (String key : localcontact.keySet()) {
-      if (insertKeys.contains(key)) {
-        // Kann Update sein, oder keine Änderung und key muss gelöscht werden
-        if (!localcontact.getString(key).equals(contactupdate.getString(key))) {
-          updateMap.put(key, contactupdate.getString(key));
-        }
+      value = localcontact.getString(key);
+      if (value == null) {
         insertKeys.remove(key);
+      } else {
+        if (insertKeys.contains(key)) {
+          // Kann Update sein, oder keine Änderung und key muss gelöscht werden
+          if (!value.equals(contactupdate.getString(key))) {
+            updateMap.put(key, contactupdate.getString(key));
+          }
+          insertKeys.remove(key);
+        }
       }
     }
     for (String key : contactupdate.keySet()) {
-      if (deleteKeys.contains(key)) {
-        // Kann Update sein, oder keine Änderung und key muss gelöscht werden
-        if (!contactupdate.getString(key).equals(localcontact.getString(key))) {
-          updateMap.put(key, contactupdate.getString(key));
-        }
+      value = contactupdate.getString(key);
+      if (value == null) {
         deleteKeys.remove(key);
+      } else {
+        if (deleteKeys.contains(key)) {
+          // Kann Update sein, oder keine Änderung und key muss gelöscht werden
+          if (!value.equals(localcontact.getString(key))) {
+            updateMap.put(key, value);
+          }
+          deleteKeys.remove(key);
+        }
       }
     }
     ContactUtils.createUpdateBatch(insertKeys, deleteKeys, updateMap, batch,
