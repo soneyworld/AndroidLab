@@ -565,18 +565,33 @@ public class ContactManager {
       int batchsize = batch.size();
       batch.execute();
     } catch (Exception e) {
-      // TODO Toast to User
+      int duration = Toast.LENGTH_LONG;
+      Toast toast = Toast.makeText(context.getApplicationContext(),
+          e.getMessage(), duration);
+      toast.show();
     }
+  }
+
+  private static Bundle createMapableBundle(final Bundle b) {
+    Bundle result = new Bundle();
+    for (String key : b.keySet()) {
+      if (AttributeMapper.isContactAttr(key)) {
+        result.putString(key, b.getString(key));
+      }
+    }
+    return result;
   }
 
   private static void saveContact(int rawcontactId, Bundle contactupdate,
       final Account account, final Context context, BatchOperation batch) {
-    Bundle localcontact = loadContact(rawcontactId, context);
-    Set<String> insertKeys = contactupdate.keySet();
-    Set<String> deleteKeys = localcontact.keySet();
+    Bundle localcontact = createMapableBundle(loadContact(rawcontactId, context));
+    Set<String> insertKeys = createMapableBundle(contactupdate).keySet();
+    Set<String> deleteKeys = createMapableBundle(localcontact).keySet();
     Map<String, String> updateMap = new HashMap<String, String>();
     String value;
-    for (String key : localcontact.keySet()) {
+    String key;
+    for (Object k : localcontact.keySet().toArray()) {
+      key = (String) k;
       value = localcontact.getString(key);
       if (value == null) {
         insertKeys.remove(key);
@@ -590,7 +605,8 @@ public class ContactManager {
         }
       }
     }
-    for (String key : contactupdate.keySet()) {
+    for (Object k : contactupdate.keySet().toArray()) {
+      key = (String) k;
       value = contactupdate.getString(key);
       if (value == null) {
         deleteKeys.remove(key);

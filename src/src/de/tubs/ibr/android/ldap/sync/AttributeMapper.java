@@ -360,7 +360,7 @@ public final class AttributeMapper {
     oSubSet.add(toLowerCase(ORGANIZATION_UNIT));
     oSubSet.add(toLowerCase(LOCALITY));
     oSubSet.add(toLowerCase(BUSINESS_CATEGORY));
-    
+
     hSet.add(toLowerCase("jpegPhoto"));
     hSet.add(toLowerCase("manager"));
     hSet.add(toLowerCase("objectClass"));
@@ -380,7 +380,7 @@ public final class AttributeMapper {
     rowSet.add(toLowerCase(DESTINATION_INDICATOR));
     rowSet.add(toLowerCase(REGISTERED_ADDRESS));
     rowSet.add(toLowerCase(PREFERRED_DELIVERY_METHOD));
-    
+
     attrMap = Collections.unmodifiableMap(aMap);
 
     descAttrs = Collections.unmodifiableSet(dSet);
@@ -774,12 +774,10 @@ public final class AttributeMapper {
   }
 
   public static boolean isContactAttr(String name) {
-    final String lowerName = toLowerCase(name);
-    if (emailAttrs.contains(lowerName) || phoneNumberAttrs.contains(lowerName)
-        || postalAddressAttrs.contains(lowerName)
-        || nameAttrs.contains(lowerName) || webAttrs.contains(lowerName)
-        || descAttrs.contains(lowerName) || orgaAttrs.contains(lowerName)
-        || lowerName.equalsIgnoreCase(UID)) {
+    if (isEMailAttr(name) || isPhoneNumberAttr(name)
+        || isPostalAddressAttr(name) || isNameAttr(name) || isWebAttr(name)
+        || isDescriptionAttr(name) || isOrganizationAttr(name)
+        || name.equalsIgnoreCase(UID) || isRowAttr(name)) {
       return true;
     }
     return false;
