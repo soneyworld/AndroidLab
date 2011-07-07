@@ -21,11 +21,11 @@ public class SyncTabActivity extends ListActivity {
   private ArrayAdapter<EntityEntry> adapter;
 
   private class EntityEntry {
-    private final String displayname;
+    private final Bundle contact;
     private final int id;
 
-    public EntityEntry(String displayname, int id) {
-      this.displayname = displayname;
+    public EntityEntry(Bundle b, int id) {
+      contact = b;
       this.id = id;
     }
 
@@ -35,7 +35,11 @@ public class SyncTabActivity extends ListActivity {
 
     @Override
     public String toString() {
-      return displayname;
+      return contact.getString(AttributeMapper.FULL_NAME);
+    }
+
+    public String getStatus() {
+      return contact.getString(ContactManager.LDAP_SYNC_STATUS_KEY);
     }
   }
 
@@ -57,8 +61,7 @@ public class SyncTabActivity extends ListActivity {
       String status = contact.getValue().getString(
           ContactManager.LDAP_SYNC_STATUS_KEY);
       if (status != null && status.length() > 1)
-        entries.add(new EntityEntry(contact.getValue().getString(
-            AttributeMapper.FULL_NAME), contact.getKey()));
+        entries.add(new EntityEntry(contact.getValue(), contact.getKey()));
     }
     adapter = new ArrayAdapter<EntityEntry>(this,
         android.R.layout.simple_list_item_1, entries);

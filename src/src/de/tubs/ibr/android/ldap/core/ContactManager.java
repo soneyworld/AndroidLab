@@ -230,28 +230,6 @@ public class ContactManager {
   }
 
   /**
-   * Adds the provided phone number to the contact.
-   * 
-   * @param number
-   *          The number to add.
-   * @param type
-   *          The type of number to add.
-   * @param uri
-   *          The base URI for the contact.
-   * @return a addPhoneNumber Operation
-   */
-  private static ContentProviderOperation updateLocallyAddedToSyncStatus(
-      final int id, final String status, final Uri ContactAsSyncAdapter,
-      final String ldif, final String uuid, final String dn) {
-    return ContentProviderOperation
-        .newUpdate(ContentUris.withAppendedId(ContactAsSyncAdapter, id))
-        .withValue(RawContacts.SYNC1, status).withValue(RawContacts.SYNC3, dn)
-        .withValue(RawContacts.SYNC4, ldif)
-        .withValue(RawContacts.SOURCE_ID, uuid)
-        .withValue(RawContacts.DIRTY, "0").build();
-  }
-
-  /**
    * Adds a locally added Contact to the LDAP Server, if possible, and updates
    * the status of the local contact if successfully added
    * 
@@ -304,7 +282,7 @@ public class ContactManager {
               .buildUpon()
               .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER,
                   "true").build();
-          ContentProviderOperation update = updateLocallyAddedToSyncStatus(
+          ContentProviderOperation update = ContactUtils.updateLocallyAddedToSyncStatus(
               rawcontactId, status, contentAsSyncProvider, ldif, uuid,
               dnAndClasses);
           batchOperation.add(update);

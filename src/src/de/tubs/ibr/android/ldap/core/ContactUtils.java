@@ -5,6 +5,7 @@ import java.util.Set;
 import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 import android.accounts.Account;
 import android.content.ContentProviderOperation;
+import android.content.ContentUris;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -463,8 +464,64 @@ public class ContactUtils {
 
   private static void updateDataForContact(Bundle action, BatchOperation batch,
       Uri dataUri, int rawcontactId) {
+    boolean structuredName = false;
+    for (String key : action.keySet()) {
+      if (AttributeMapper.isNameAttr(key) && !structuredName) {
+        updateStructuredName(action, batch, dataUri, rawcontactId);
+        structuredName = true;
+      } else if (AttributeMapper.isDescriptionAttr(key)) {
+        updateDescription(action, batch, dataUri, rawcontactId);
+      }
+    }
     // TODO Auto-generated method stub
 
+  }
+
+  private static void updateDescription(Bundle action, BatchOperation batch,
+      Uri dataUri, int rawContactId) {
+    batch.add(ContentProviderOperation
+        .newUpdate(dataUri)
+        .withSelection(
+            Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
+                + Note.CONTENT_ITEM_TYPE + "'",
+            new String[] { String.valueOf(rawContactId) })
+        .withValue(Data.MIMETYPE, Note.CONTENT_ITEM_TYPE)
+        .withValue(Note.NOTE, action.get(AttributeMapper.DESCRIPTION)).build());
+  }
+
+  private static void updateStructuredName(Bundle b, BatchOperation batch,
+      Uri dataUri, int rawContactId) {
+    batch.add(ContentProviderOperation
+        .newUpdate(dataUri)
+        .withSelection(
+            Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
+                + StructuredName.CONTENT_ITEM_TYPE + "'",
+            new String[] { String.valueOf(rawContactId) })
+        .withValue(StructuredName.DISPLAY_NAME,
+            b.getString(AttributeMapper.DISPLAYNAME))
+        .withValue(StructuredName.GIVEN_NAME,
+            b.getString(AttributeMapper.FIRST_NAME))
+        .withValue(StructuredName.FAMILY_NAME,
+            b.getString(AttributeMapper.LAST_NAME))
+        .withValue(StructuredName.PREFIX, b.getString(AttributeMapper.TITLE))
+        .build());
+    updateInitials(b, batch, dataUri, rawContactId);
+  }
+
+  static void updateInitials(Bundle b, BatchOperation batch, Uri dataUri,
+      int rawContactId) {
+    String initials = b.getString(AttributeMapper.INITIALS);
+    if (initials != null && initials.length() > 0) {
+      batch.add(ContentProviderOperation
+          .newUpdate(dataUri)
+          .withSelection(
+              Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
+                  + Nickname.CONTENT_ITEM_TYPE + "' AND " + Nickname.TYPE
+                  + "='" + Nickname.TYPE_INITIALS + "'",
+              new String[] { String.valueOf(rawContactId) })
+          .withValue(Data.MIMETYPE, Nickname.CONTENT_ITEM_TYPE)
+          .withValue(Nickname.NAME, initials).build());
+    }
   }
 
   @SuppressWarnings("deprecation")
@@ -535,5 +592,60 @@ public class ContactUtils {
     // DEBUG If the count is !=1 there is a fault in the routine
     batch.add(ContentProviderOperation.newDelete(dataUri).withExpectedCount(1)
         .withSelection(selection, selectionArgs).build());
+  }
+
+  /**
+   * Updates the status of the given RawContact with the new values and marks
+   * the contact as cleaned up
+   * 
+   * @param id
+   * @param status
+   * @param rawContactUri
+   * @param ldif
+   * @param uuid
+   * @param dn
+   * @return
+   */
+  static ContentProviderOperation updateLocallyAddedToSyncStatus(final int id,
+      final String status, final Uri rawContactUri, final String ldif,
+      final String uuid, final String dn) {
+    return updateRawContactStatus(id, status, rawContactUri, ldif, "", uuid,
+        false, dn);
+  }
+
+  /**
+   * Updates the given RawContact with the new values.
+   * 
+   * @param rawContactId
+   * @param status
+   * @param rawContactUri
+   * @param ldif
+   * @param message
+   * @param uuid
+   * @param dirty
+   * @param dn
+   * @return
+   */
+  static ContentProviderOperation updateRawContactStatus(
+      final int rawContactId, final String status, final Uri rawContactUri,
+      final String ldif, final String message, final String uuid,
+      final boolean dirty, final String dn) {
+    if (dirty) {
+      return ContentProviderOperation
+          .newUpdate(ContentUris.withAppendedId(rawContactUri, rawContactId))
+          .withValue(RawContacts.SYNC1, status)
+          .withValue(RawContacts.SYNC2, message)
+          .withValue(RawContacts.SYNC3, dn).withValue(RawContacts.SYNC4, ldif)
+          .withValue(RawContacts.SOURCE_ID, uuid)
+          .withValue(RawContacts.DIRTY, "1").build();
+    } else {
+      return ContentProviderOperation
+          .newUpdate(ContentUris.withAppendedId(rawContactUri, rawContactId))
+          .withValue(RawContacts.SYNC1, status)
+          .withValue(RawContacts.SYNC2, message)
+          .withValue(RawContacts.SYNC3, dn).withValue(RawContacts.SYNC4, ldif)
+          .withValue(RawContacts.SOURCE_ID, uuid)
+          .withValue(RawContacts.DIRTY, "0").build();
+    }
   }
 }
