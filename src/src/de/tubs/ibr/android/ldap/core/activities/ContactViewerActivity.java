@@ -50,7 +50,7 @@ public class ContactViewerActivity extends Activity {
     final EditText mUserIdEditText = (EditText) findViewById(R.id.userIdEditText);
     final TextView mUserIdTextView = (TextView) findViewById(R.id.userIdTextView);
     //Spinner addrtype = (Spinner) findViewById(R.id.contactPhoneTypeSpinner);
-    Spinner phonetype = (Spinner) findViewById(R.id.contactEmailTypeSpinner);
+    //Spinner phonetype = (Spinner) findViewById(R.id.contactEmailTypeSpinner);
     Button saveChanges = (Button) findViewById(R.id.btn_action);
     Button exportContact = (Button) findViewById(R.id.btn_revert);
     CheckBox syncCheckBox = (CheckBox) findViewById(R.id.syncCheckBox);
@@ -79,7 +79,7 @@ public class ContactViewerActivity extends Activity {
         this, R.array.telefonnrTypeItems, android.R.layout.simple_spinner_item);
     adapterphone
         .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    phonetype.setAdapter(adapterphone);
+    //phonetype.setAdapter(adapterphone);
     // TODO Fallunterscheidung einführen, ob diese Activity überhaupt zuständig
     // ist, für den Intent, ansonsten den default Intent werfen
     final long id;
@@ -197,15 +197,14 @@ public class ContactViewerActivity extends Activity {
           //nr.setText(number);
 
           if (numbertype == Phone.TYPE_HOME) {
-            phonetype.setSelection(0);
+            //phonetype.setSelection(0);
           } else if (numbertype == Phone.TYPE_WORK) {
-            phonetype.setSelection(1);
+            //phonetype.setSelection(1);
           } else if (numbertype == Phone.TYPE_MOBILE) {
-            phonetype.setSelection(2);
+            //phonetype.setSelection(2);
           } else if (numbertype == Phone.TYPE_OTHER) {
-            phonetype.setSelection(3);
-          } else
-            phonetype.setSelection(3);
+            //phonetype.setSelection(3);
+          } 
         }
       } while (cr.moveToNext());
     }
@@ -225,14 +224,14 @@ public class ContactViewerActivity extends Activity {
     //EditText phonenumberField = (EditText) findViewById(R.id.contactPhoneEditText);
     //Spinner phonetypeField = (Spinner) findViewById(R.id.contactPhoneTypeSpinner);
     EditText mailaddressField = (EditText) findViewById(R.id.contactEmailEditText);
-    Spinner mailtypeField = (Spinner) findViewById(R.id.contactEmailTypeSpinner);
+    //Spinner mailtypeField = (Spinner) findViewById(R.id.contactEmailTypeSpinner);
 
     firstname = firstnameField.getText().toString();
     lastname = lastnameField.getText().toString();
     //phonenumber = phonenumberField.getText().toString();
     //phonetype = phonetypeField.getSelectedItem();
     mailaddress = mailaddressField.getText().toString();
-    mailtype = mailtypeField.getSelectedItem();
+    //mailtype = mailtypeField.getSelectedItem();
 
     values.put(StructuredName.GIVEN_NAME, firstname);
     values.put(StructuredName.FAMILY_NAME, lastname);
