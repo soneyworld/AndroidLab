@@ -6,7 +6,6 @@ import android.accounts.AuthenticatorDescription;
 import android.accounts.OnAccountsUpdateListener;
 import android.app.Activity;
 import android.content.ComponentName;
-import android.content.ContentProviderOperation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -15,9 +14,6 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.provider.ContactsContract;
-import android.provider.ContactsContract.CommonDataKinds.Email;
-import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.RawContacts;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -30,12 +26,11 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.AdapterView.OnItemSelectedListener;
 import java.util.ArrayList;
-import java.util.Iterator;
 import de.tubs.ibr.android.ldap.R;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
 import de.tubs.ibr.android.ldap.provider.LDAPResultRunnable;
@@ -105,6 +100,15 @@ public class EditContactActivity extends Activity implements
   private CheckBox mSyncCheckBox;
   private Button mContactActionButton;
   private Button mContactRevertButton;
+  
+  private TextView mAdditionalNameInfoTextView;
+  private LinearLayout mAdditionalNameInfoLinearLayout;
+  private TextView mAdditionalContactInfoTextView;
+  private LinearLayout mAdditionalContactInfoLinearLayout;
+  private TextView mAdditionalAddressInfoTextView;
+  private LinearLayout mAdditionalAddressInfoLinearLayout;
+  private TextView mAdditionalInfoTextView;
+  private LinearLayout mAdditionalInfoLinearLayout;
 
   /**
    * Called when the activity is first created. Responsible for initializing the
@@ -160,6 +164,15 @@ public class EditContactActivity extends Activity implements
     mSyncCheckBox = (CheckBox) findViewById(R.id.syncCheckBox);
     mContactActionButton = (Button) findViewById(R.id.btn_action);
     mContactRevertButton = (Button) findViewById(R.id.btn_revert);
+    
+    mAdditionalNameInfoTextView = (TextView) findViewById(R.id.additionalNameInfoTextView);
+    mAdditionalNameInfoLinearLayout = (LinearLayout) findViewById(R.id.additionalNameInfoLinearLayout);
+    mAdditionalContactInfoTextView = (TextView) findViewById(R.id.additionalContactInfoTextView);
+    mAdditionalContactInfoLinearLayout = (LinearLayout) findViewById(R.id.additionalContactInfoLinearLayout);
+    mAdditionalAddressInfoTextView = (TextView) findViewById(R.id.additionalAddressInfoTextView);
+    mAdditionalAddressInfoLinearLayout = (LinearLayout) findViewById(R.id.additionalAddressInfoLinearLayout);
+    mAdditionalInfoTextView = (TextView) findViewById(R.id.additionalInfoTextView);
+    mAdditionalInfoLinearLayout = (LinearLayout) findViewById(R.id.additionalInfoLinearLayout);
 
     final boolean hasIncomingState = savedInstanceState != null
         && savedInstanceState.containsKey(KEY_EDIT_STATE);
@@ -188,6 +201,59 @@ public class EditContactActivity extends Activity implements
       @Override
       public void onClick(View v) {
         finish();
+      }
+    });
+    
+    mAdditionalNameInfoTextView.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        if (mAdditionalNameInfoLinearLayout.getVisibility() == LinearLayout.VISIBLE) {
+          mAdditionalNameInfoLinearLayout.setVisibility(LinearLayout.GONE);
+          mAdditionalNameInfoTextView.setText("Show additional name info");
+        }
+        else {
+          mAdditionalNameInfoLinearLayout.setVisibility(LinearLayout.VISIBLE);
+          mAdditionalNameInfoTextView.setText("Hide additional name info");
+        }
+      }
+    });
+    mAdditionalContactInfoTextView.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        if (mAdditionalContactInfoLinearLayout.getVisibility() == LinearLayout.VISIBLE) {
+          mAdditionalContactInfoLinearLayout.setVisibility(LinearLayout.GONE);
+          mAdditionalContactInfoTextView.setText("Show additional contact info");
+        }
+        else {
+          mAdditionalContactInfoLinearLayout.setVisibility(LinearLayout.VISIBLE);
+          mAdditionalContactInfoTextView.setText("Hide additional contact info");
+        }
+      }
+    });
+    mAdditionalAddressInfoTextView.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        if (mAdditionalAddressInfoLinearLayout.getVisibility() == LinearLayout.VISIBLE) {
+          mAdditionalAddressInfoLinearLayout.setVisibility(LinearLayout.GONE);
+          mAdditionalAddressInfoTextView.setText("Show additional address info");
+        }
+        else {
+          mAdditionalAddressInfoLinearLayout.setVisibility(LinearLayout.VISIBLE);
+          mAdditionalAddressInfoTextView.setText("Hide additional address info");
+        }
+      }
+    });
+    mAdditionalInfoTextView.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        if (mAdditionalInfoLinearLayout.getVisibility() == LinearLayout.VISIBLE) {
+          mAdditionalInfoLinearLayout.setVisibility(LinearLayout.GONE);
+          mAdditionalInfoTextView.setText("Show additional info");
+        }
+        else {
+          mAdditionalInfoLinearLayout.setVisibility(LinearLayout.VISIBLE);
+          mAdditionalInfoTextView.setText("Hide additional info");
+        }
       }
     });
 

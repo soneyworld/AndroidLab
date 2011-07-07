@@ -54,16 +54,19 @@ public class LocalTabActivity extends ListActivity {
     Cursor c = getContentResolver().query(
         entityUri,
         new String[] { RawContactsEntity._ID, RawContactsEntity.MIMETYPE,
-            RawContactsEntity.DATA1, }, null, null, null);
+            RawContactsEntity.DATA1, RawContactsEntity.SYNC1 }, null, null, null);
     try {
       while (c.moveToNext()) {
         int id = c.getInt(0);
+        String syncstatus = c.getString(3);
         String displayname;
         if (!c.isNull(1)
             && c.getString(1)
                 .equalsIgnoreCase(StructuredName.CONTENT_ITEM_TYPE)) {
           displayname = c.getString(2);
-          entries.add(new EntityEntry(displayname, id));
+          if (!c.isNull(3) && !((syncstatus.equalsIgnoreCase("locally added")) || (syncstatus.equalsIgnoreCase("change conflict")) || (syncstatus.equalsIgnoreCase("in sync")))) {
+            entries.add(new EntityEntry(displayname, id));
+          }
         }
       }
     } finally {
