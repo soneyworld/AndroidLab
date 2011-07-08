@@ -32,22 +32,12 @@
 				<TableRow>
 					<TextView android:id="@+id/cnTextView" android:visibility="visible"
 						android:layout_width="wrap_content" android:layout_height="wrap_content"
-						android:text="Common Name" />
+						android:text="Common Name / Displayname" />
 				</TableRow>
 				<TableRow>
 					<EditText android:id="@+id/cnEditText" android:visibility="visible"
 						android:layout_height="wrap_content" android:layout_width="wrap_content"
 						android:layout_weight="1" />
-				</TableRow>
-				<TableRow>
-					<TextView android:id="@+id/displayNameTextView"
-						android:visibility="visible" android:layout_width="wrap_content"
-						android:layout_height="wrap_content" android:text="Displayname" />
-				</TableRow>
-				<TableRow>
-					<EditText android:id="@+id/displayNameEditText"
-						android:visibility="visible" android:layout_height="wrap_content"
-						android:layout_width="wrap_content" android:layout_weight="1" />
 				</TableRow>
 				<TableRow>
 					<TextView android:layout_width="wrap_content"

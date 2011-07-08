@@ -60,7 +60,7 @@
 			</intent-filter>
 		</activity>
 		<activity android:name=".auth.PopUp"></activity>
-		<activity android:name=".core.activities.ContactViewerActivity">
+		<activity android:name=".core.ContactViewerActivity">
 			<intent-filter>
 				<action android:name="android.intent.action.EDIT" />
 				<category android:name="android.intent.category.DEFAULT" />
