@@ -494,9 +494,9 @@ public class ContactUtils {
     batch.add(ContentProviderOperation
         .newUpdate(dataUri)
         .withSelection(
-            Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
-                + StructuredName.CONTENT_ITEM_TYPE + "'",
-            new String[] { String.valueOf(rawContactId) })
+            Data.RAW_CONTACT_ID + "='" + String.valueOf(rawContactId) + "'"
+                + " AND " + Data.MIMETYPE + "='"
+                + StructuredName.CONTENT_ITEM_TYPE + "'", null)
         .withValue(StructuredName.DISPLAY_NAME,
             b.getString(AttributeMapper.DISPLAYNAME))
         .withValue(StructuredName.GIVEN_NAME,

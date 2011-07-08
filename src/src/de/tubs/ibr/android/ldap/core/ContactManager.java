@@ -71,6 +71,8 @@ public class ContactManager {
 
   public static final String LDAP_SOURCE_ID_KEY = AttributeMapper.ATTR_UID;
 
+  public static final String LOCAL_ACCOUNT_DIRTY_KEY = "ANDROID_LOCAL_ACCOUNT_DIRTY";
+
   public static void addLDAPContactToAccount(Entry entry, Account account,
       BatchOperation batch) {
     int rawContactInsertIndex = batch.size();
@@ -115,7 +117,7 @@ public class ContactManager {
     b.putString(AttributeMapper.ATTR_UID, sourceId);
   }
 
-  private static Bundle createBundleFromEntry(Entry entry) {
+  public static Bundle createBundleFromEntry(Entry entry) {
     Bundle contact = new Bundle();
     for (Attribute attr : entry.getAttributes()) {
       if (AttributeMapper.isContactAttr(attr.getName())) {
@@ -204,31 +206,6 @@ public class ContactManager {
     }
   }
 
-  public static void updateLDAPContact(int id, Context context,
-      Account account, Entry entry, BatchOperation batch) {
-    if (entry.getAttribute(AttributeMapper.ATTR_UID) == null) {
-      return;
-    }
-    Uri rawContactUri = ContentUris.withAppendedId(RawContacts.CONTENT_URI, id);
-    Uri entityUri = Uri.withAppendedPath(rawContactUri,
-        Entity.CONTENT_DIRECTORY);
-    Cursor c = context.getContentResolver().query(
-        entityUri,
-        new String[] { RawContacts.SOURCE_ID, Entity.DATA_ID, Entity.MIMETYPE,
-            Entity.DATA1 }, null, null, null);
-    try {
-      while (c.moveToNext()) {
-        String sourceId = c.getString(0);
-        if (!c.isNull(1)) {
-          String mimeType = c.getString(2);
-          String data = c.getString(3);
-        }
-      }
-    } finally {
-      c.close();
-    }
-  }
-
   /**
    * Adds a locally added Contact to the LDAP Server, if possible, and updates
    * the status of the local contact if successfully added
@@ -282,9 +259,9 @@ public class ContactManager {
               .buildUpon()
               .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER,
                   "true").build();
-          ContentProviderOperation update = ContactUtils.updateLocallyAddedToSyncStatus(
-              rawcontactId, status, contentAsSyncProvider, ldif, uuid,
-              dnAndClasses);
+          ContentProviderOperation update = ContactUtils
+              .updateLocallyAddedToSyncStatus(rawcontactId, status,
+                  contentAsSyncProvider, ldif, uuid, dnAndClasses);
           batchOperation.add(update);
           updateLDAPMessage(rawcontactId, "", batchOperation);
         }
@@ -431,10 +408,10 @@ public class ContactManager {
             new String[] { RawContacts._ID, RawContacts.SYNC1,
                 RawContacts.SYNC2, RawContacts.SYNC3, RawContacts.SYNC4,
                 RawContacts.ACCOUNT_NAME, RawContacts.ACCOUNT_TYPE,
-                RawContacts.SOURCE_ID }, null, null, null);
+                RawContacts.SOURCE_ID, RawContacts.DIRTY }, null, null, null);
     try {
       if (c.moveToFirst())
-        loadSyncData(contact, c, 1, 2, 3, 4, 5, 6, 7);
+        loadSyncData(contact, c, 1, 2, 3, 4, 5, 6, 7, 8);
     } catch (Exception e) {
       // Display warning
       int duration = Toast.LENGTH_SHORT;
@@ -490,7 +467,7 @@ public class ContactManager {
 
   public static void loadSyncData(Bundle contact, Cursor c, int sync1,
       int sync2, int sync3, int sync4, int accountname, int accounttype,
-      int sourceid) {
+      int sourceid, int dirty) {
     if (!c.isNull(sync1)) {
       String status = c.getString(sync1);
       if (status.length() > 0) {
@@ -552,7 +529,7 @@ public class ContactManager {
     }
   }
 
-  private static Bundle createMapableBundle(final Bundle b) {
+  public static Bundle createMapableBundle(final Bundle b) {
     Bundle result = new Bundle();
     for (String key : b.keySet()) {
       if (AttributeMapper.isContactAttr(key)) {
@@ -623,12 +600,12 @@ public class ContactManager {
             new String[] { RawContacts._ID, RawContacts.SYNC1,
                 RawContacts.SYNC2, RawContacts.SYNC3, RawContacts.SYNC4,
                 RawContacts.ACCOUNT_NAME, RawContacts.ACCOUNT_TYPE,
-                RawContacts.SOURCE_ID }, null, null, null);
+                RawContacts.SOURCE_ID, RawContacts.DIRTY }, null, null, null);
     try {
       while (c.moveToNext()) {
         Bundle contact = new Bundle();
         contact.putString(LOCAL_ACCOUNT_RAW_CONTACT_ID_KEY, c.getString(0));
-        loadSyncData(contact, c, 1, 2, 3, 4, 5, 6, 7);
+        loadSyncData(contact, c, 1, 2, 3, 4, 5, 6, 7, 8);
         contacts.put(c.getInt(0), contact);
       }
     } catch (Exception e) {

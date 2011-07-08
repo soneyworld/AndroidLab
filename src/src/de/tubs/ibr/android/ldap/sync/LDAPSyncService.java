@@ -1,10 +1,13 @@
 package de.tubs.ibr.android.ldap.sync;
 
-//import java.util.ArrayList;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map.Entry;
+import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
@@ -12,6 +15,8 @@ import com.unboundid.ldap.sdk.LDAPSearchException;
 import com.unboundid.ldap.sdk.SearchRequest;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
+import com.unboundid.ldif.LDIFException;
+import com.unboundid.ldif.LDIFReader;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
 import de.tubs.ibr.android.ldap.core.BatchOperation;
 import de.tubs.ibr.android.ldap.core.ContactManager;
@@ -20,11 +25,8 @@ import android.accounts.AccountManager;
 import android.accounts.OperationCanceledException;
 import android.app.Service;
 import android.content.ContentProviderClient;
-//import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
-//import android.content.ContentUris;
 import android.content.Context;
-//import android.provider.ContactsContract.RawContacts.Entity;
 import android.content.Intent;
 import android.content.SyncResult;
 import android.database.Cursor;
@@ -32,7 +34,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.BaseColumns;
-//import android.provider.ContactsContract;
 import android.provider.ContactsContract.RawContacts;
 
 public class LDAPSyncService extends Service {
@@ -55,6 +56,60 @@ public class LDAPSyncService extends Service {
   @Override
   public IBinder onBind(Intent arg0) {
     return sSyncAdapter.getSyncAdapterBinder();
+  }
+
+  public static void updateLDAPContact(int id, Context context,
+      Account account, Entry entry, BatchOperation batch) {
+    if (entry.getAttribute(AttributeMapper.ATTR_UID) == null) {
+      return;
+    }
+    Bundle localcontact = ContactManager.loadContact(id, context);
+    SyncStatus status = SyncStatus.IN_SYNC;
+    String statusmsg = localcontact
+        .getString(ContactManager.LDAP_SYNC_STATUS_KEY);
+    String dirty = localcontact
+        .getString(ContactManager.LOCAL_ACCOUNT_DIRTY_KEY);
+    if (statusmsg != null && statusmsg.length() > 0) {
+      if (statusmsg.equalsIgnoreCase(ContactManager.SYNC_STATUS_CONFLICT)) {
+        status = SyncStatus.CONFLICT;
+      } else if (statusmsg.equalsIgnoreCase(ContactManager.SYNC_STATUS_IN_SYNC)) {
+        if (dirty != null) {
+          if (dirty.equalsIgnoreCase("1")) {
+            status = SyncStatus.LOCALLY_MODIFIED;
+          } else if (dirty.equalsIgnoreCase("0")) {
+            status = SyncStatus.IN_SYNC;
+          }
+        } else {
+          return;
+        }
+      }
+    }
+    String ldif = localcontact.getString(ContactManager.LDAP_LDIF_DETAILS_KEY);
+    if (ldif == null) {
+      throw new IllegalArgumentException("LDIF File is NULL!!!");
+    }
+    LDIFReader reader = new LDIFReader(new BufferedReader(
+        new StringReader(ldif)));
+    Entry lastSyncState = null;
+    try {
+      lastSyncState = reader.readEntry();
+    } catch (LDIFException e) {
+      e.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    Bundle actualremotestate = ContactManager.createMapableBundle(ContactManager.createBundleFromEntry(entry));
+    if (status == SyncStatus.IN_SYNC) {
+      // TODO Check if ldap has new Data
+      if(lastSyncState!=null){
+        Bundle lastsyncstate = ContactManager.createMapableBundle(ContactManager.createBundleFromEntry(lastSyncState));
+        // TODO Bundle vergleichen
+      }
+    } else if (status == SyncStatus.LOCALLY_MODIFIED) {
+      // TODO Check if ldap has new Data and merge is possible
+    } else if (status == SyncStatus.CONFLICT) {
+      // TODO try to solve conflict
+    }
   }
 
   /**
@@ -97,7 +152,10 @@ public class LDAPSyncService extends Service {
         // "locally added", this contact has to be added and synced with the
         // LDAP Directory
         String status = c1.getString(3);
-        if (status != null && status.equalsIgnoreCase("locally added") && c1.getInt(2) != 1) {
+        if (status != null
+            && status
+                .equalsIgnoreCase(ContactManager.SYNC_STATUS_LOCALLY_ADDED)
+            && c1.getInt(2) != 1) {
           shouldBeAdded.add(c1.getInt(0));
         }
       }
@@ -121,7 +179,7 @@ public class LDAPSyncService extends Service {
       // If a filter was saved for this account, respect him, otherwise use
       // default filter
       String f = instance.getFilter();
-      if (f == null || f.length()==0) {
+      if (f == null || f.length() == 0) {
         f = "(cn=*)";
       }
       final Filter filter = Filter.create(f);
@@ -161,7 +219,7 @@ public class LDAPSyncService extends Service {
       if (localContacts.containsKey(ldapuid)) {
         rawContactId = localContacts.get(ldapuid);
         // update contact
-        ContactManager.updateLDAPContact(rawContactId, context, account, user,
+        LDAPSyncService.updateLDAPContact(rawContactId, context, account, user,
             batchOperation);
         localContacts.remove(ldapuid);
       } else {
@@ -172,7 +230,8 @@ public class LDAPSyncService extends Service {
     // Falls es noch lokale Kontakte gibt, die entfernt nicht mehr vorhanden
     // sind, sollen diese aus dem Kontaktbuch gelöscht werden.
     if (!localContacts.isEmpty()) {
-      for (Entry<String, Integer> deletelocal : localContacts.entrySet()) {
+      for (java.util.Map.Entry<String, Integer> deletelocal : localContacts
+          .entrySet()) {
         ContactManager.deleteLocalContact(deletelocal.getValue(),
             context.getContentResolver());
         // If it is also locally marked to be deleted, the above call have done
@@ -195,46 +254,6 @@ public class LDAPSyncService extends Service {
     batchOperation.execute();
 
   }
-
-  // private static void addContact(Account account, String name, String uuid) {
-  // ArrayList<ContentProviderOperation> operationList = new
-  // ArrayList<ContentProviderOperation>();
-  // // Create our RawContact
-  // ContentProviderOperation.Builder builder = ContentProviderOperation
-  // .newInsert(RawContacts.CONTENT_URI);
-  // builder.withValue(RawContacts.ACCOUNT_NAME, account.name);
-  // builder.withValue(RawContacts.SYNC1, uuid);
-  // operationList.add(builder.build());
-  // // Create a Data record of common type 'StructuredName' for our RawContact
-  // builder = ContentProviderOperation
-  // .newInsert(ContactsContract.Data.CONTENT_URI);
-  // builder.withValueBackReference(
-  // ContactsContract.CommonDataKinds.StructuredName.RAW_CONTACT_ID, 0);
-  // builder.withValue(ContactsContract.Data.MIMETYPE,
-  // ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE);
-  // builder.withValue(
-  // ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name);
-  // operationList.add(builder.build());
-  //
-  // // Create a Data record of custom type
-  // // "vnd.android.cursor.item/vnd.fm.last.android.profile" to display a link
-  // // to the Last.fm profile
-  // builder = ContentProviderOperation
-  // .newInsert(ContactsContract.Data.CONTENT_URI);
-  // builder.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0);
-  // builder.withValue(ContactsContract.Data.MIMETYPE,
-  // "vnd.android.cursor.item/vnd.fm.last.android.profile");
-  // builder.withValue(ContactsContract.Data.DATA1, uuid);
-  // builder.withValue(ContactsContract.Data.DATA2, "LDAP Profile");
-  // builder.withValue(ContactsContract.Data.DATA3, "View profile");
-  // operationList.add(builder.build());
-  //
-  // try {
-  // mContentResolver.applyBatch(ContactsContract.AUTHORITY, operationList);
-  // } catch (Exception e) {
-  // e.printStackTrace();
-  // }
-  // }
 
   private static List<SearchResultEntry> scanImportedContacts()
       throws LDAPException {
