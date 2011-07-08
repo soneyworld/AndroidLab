@@ -67,9 +67,10 @@ public class EditContactActivity extends Activity implements
 
   /* UI elements */
   private Spinner mAccountSpinner;
+  private TextView mAccountTextView;
   private Spinner mDirectorySpinner;
+  private TextView mDirectoryTextView;
   private EditText mCommonNameEditText;
-  private EditText mDisplaynameEditText;
   private EditText mContactFirstnameEditText;
   private EditText mContactNameEditText;
   private EditText mInitialsEditText;
@@ -131,9 +132,10 @@ public class EditContactActivity extends Activity implements
 
     // Obtain handles to UI objects
     mAccountSpinner = (Spinner) findViewById(R.id.accountSpinner);
+    mAccountTextView = (TextView) findViewById(R.id.targetAccountTextView);
     mDirectorySpinner = (Spinner) findViewById(R.id.directorySpinner);
+    mDirectoryTextView = (TextView) findViewById(R.id.targetLDAPDirectory);
     mCommonNameEditText = (EditText) findViewById(R.id.cnEditText);
-    mDisplaynameEditText = (EditText) findViewById(R.id.displayNameEditText);
     mContactFirstnameEditText = (EditText) findViewById(R.id.contactFirstnameEditText);
     mContactNameEditText = (EditText) findViewById(R.id.contactNameEditText);
     mInitialsEditText = (EditText) findViewById(R.id.initialsEditText);
@@ -186,12 +188,20 @@ public class EditContactActivity extends Activity implements
       final Uri data = intent.getData();
       mRawContactId = (int) ContentUris.parseId(data);
       loadContactEntry(mRawContactId);
+      mAccountSpinner.setEnabled(false);
+      mAccountTextView.setEnabled(false);
+      mDirectorySpinner.setEnabled(false);
+      mDirectoryTextView.setEnabled(false);
 
     } else if (Intent.ACTION_INSERT.equals(action) && !hasIncomingState) {
       setTitle("Add Contact");
       mStatus = STATUS_INSERT;
       mContactActionButton.setText("Add");
       mRawContactId = -1;
+      mAccountSpinner.setEnabled(true);
+      mAccountTextView.setEnabled(true);
+      mDirectorySpinner.setEnabled(true);
+      mDirectoryTextView.setEnabled(true);
     }
 
     mContactActionButton.setOnClickListener(new OnClickListener() {
@@ -203,7 +213,7 @@ public class EditContactActivity extends Activity implements
     mContactRevertButton.setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {
-        finish();
+        onRevertButtonClicked(mRawContactId);
       }
     });
     
@@ -352,7 +362,7 @@ public class EditContactActivity extends Activity implements
     b.putString(AttributeMapper.INITIALS, mInitialsEditText.getText()
         .toString());
     b.putString(AttributeMapper.TITLE, mTitleEditText.getText().toString());
-    b.putString(AttributeMapper.DISPLAYNAME, mDisplaynameEditText.getText()
+    b.putString(AttributeMapper.DISPLAYNAME, mCommonNameEditText.getText()
         .toString());
     b.putString(AttributeMapper.FIRST_NAME, mContactFirstnameEditText.getText()
         .toString());
@@ -414,7 +424,6 @@ public class EditContactActivity extends Activity implements
     Bundle contactData = ContactManager.loadContact(id, mContext);
     mContactNameEditText.setText(contactData.getString("sn"));
     mCommonNameEditText.setText(contactData.getString("cn"));
-    mDisplaynameEditText.setText(contactData.getString("displayName"));
     mInitialsEditText.setText(contactData.getString("initials"));
     mContactFirstnameEditText.setText(contactData.getString("givenName"));
     mTitleEditText.setText(contactData.getString("title"));
@@ -457,6 +466,49 @@ public class EditContactActivity extends Activity implements
       ContactManager.saveLocallyEditedContact(mRawContactId, contact, account,
           this);
     }
+  }
+  
+  protected void onRevertButtonClicked(int id) {
+    if (mStatus == STATUS_INSERT) {
+      revertChanges();
+    }
+    else {
+      loadContactEntry(id);
+    }
+  }
+  
+  protected void revertChanges() {
+    mContactNameEditText.setText("");
+    mCommonNameEditText.setText("");
+    mInitialsEditText.setText("");
+    mContactFirstnameEditText.setText("");
+    mTitleEditText.setText("");
+    mDescriptionEditText.setText("");
+    mContactTelephoneEditText.setText("");
+    mHomePhoneEditText.setText("");
+    mMobileEditText.setText("");
+    mPagerEditText.setText("");
+    mFacsimileEditText.setText("");
+    mTelexEditText.setText("");
+    miSDNEditText.setText("");
+    mContactEmailEditText.setText("");
+    mRegAddressEditText.setText("");
+    mStreetEditText.setText("");
+    mPostOfficeboxEditText.setText("");
+    mPostalCodeEditText.setText("");
+    mPostalAddressEditText.setText("");
+    mHomePostalAddressEditText.setText("");
+    mOrganizationEditText.setText("");
+    mBusinessCategoryEditText
+        .setText("");
+    mDepartmentNumberEditText
+        .setText("");
+    mRoomNumberEditText.setText("");
+    mUserIdEditText.setText("");
+    mStateEditText.setText("");
+    mOrganizationalUnitEditText.setText("");
+    mPrefLanguageEditText.setText("");
+    mWebSiteEditText.setText("");
   }
 
   /**
