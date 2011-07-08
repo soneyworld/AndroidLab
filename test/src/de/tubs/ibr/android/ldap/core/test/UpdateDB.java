@@ -12,8 +12,6 @@ import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 
 public class UpdateDB extends android.test.AndroidTestCase {
 
-	private int rawid = -1;
-
 	protected void setUp() throws Exception {
 		super.setUp();
 		cleanUpDatabase();
@@ -44,40 +42,40 @@ public class UpdateDB extends android.test.AndroidTestCase {
 		return result;
 	}
 
+	private int localInsert(Bundle b, Account account) {
+		String searchForName = b.getString(AttributeMapper.FULL_NAME);
+		ContactManager.saveNewLocallyAddedContactAndSync(b,
+				account, getContext());
+		LinkedHashMap<Integer, Bundle> contacts = ContactManager
+				.loadContactList(getContext());
+		int id = -1;
+		boolean inserted_found = false;
+		for (Entry<Integer, Bundle> entry : contacts.entrySet()) {
+			String name = entry.getValue().getString(AttributeMapper.FULL_NAME);
+			if (name != null
+					&& name.equalsIgnoreCase(searchForName)) {
+				if (inserted_found) {
+					fail("Multiple Entries found!");
+				} else {
+					inserted_found = true;
+					id = entry.getKey();
+				}
+			}
+		}
+		assertEquals(inserted_found, true);
+		return id;
+	}
+
 	@SuppressWarnings("deprecation")
 	public void testCreateUpdateDeleteContact() {
 		cleanUpDatabase();
 		Account[] accounts = AccountManager.get(getContext()).getAccounts();
 		for (Account account : accounts) {
-			Bundle insertContact = createDefaultContact("");
-			ContactManager.saveNewLocallyAddedContactAndSync(insertContact,
-					account, getContext());
-			LinkedHashMap<Integer, Bundle> contacts = ContactManager
-					.loadContactList(getContext());
-			boolean inserted_found = false;
-			for (Entry<Integer, Bundle> entry : contacts.entrySet()) {
-				String name = entry.getValue().getString(
-						AttributeMapper.FULL_NAME);
-				if (name != null
-						&& name.equalsIgnoreCase(AttributeMapper.FULL_NAME)) {
-					if (inserted_found) {
-						 fail("Multiple Entries found!");
-					} else {
-						inserted_found = true;
-						rawid = entry.getKey();
-					}
-				}
-			}
+			Bundle insertContact = createDefaultContact("1");
+			int rawid = localInsert(insertContact, account);
 			Bundle insertedContact = ContactManager.loadContact(rawid,
 					getContext());
-			for (String key : AttributeMapper.getContactAttrs()) {
-				if (!key.equalsIgnoreCase(AttributeMapper.DISPLAYNAME)) {
-					String o = insertContact.getString(key);
-					String n = insertedContact.getString(key);
-					assertEquals(o, n);
-				}
-			}
-
+			checkContactAttributes(insertContact, insertedContact);
 			BatchOperation batch = new BatchOperation(getContext(),
 					getContext().getContentResolver());
 			for (String key : AttributeMapper.getContactAttrs()) {
@@ -93,13 +91,7 @@ public class UpdateDB extends android.test.AndroidTestCase {
 			batch.execute();
 			Bundle updatedcontact = ContactManager.loadContact(rawid,
 					getContext());
-			for (String key : AttributeMapper.getContactAttrs()) {
-				if (!key.equalsIgnoreCase(AttributeMapper.DISPLAYNAME)) {
-					String o = insertedContact.getString(key);
-					String n = updatedcontact.getString(key);
-					assertEquals(o, n);
-				}
-			}
+			checkContactAttributes(insertedContact, updatedcontact);
 			ContactManager.deleteLocalContact(rawid, getContext()
 					.getContentResolver());
 			cleanUpDatabase();
@@ -107,41 +99,30 @@ public class UpdateDB extends android.test.AndroidTestCase {
 	}
 
 	@SuppressWarnings("deprecation")
+	private void checkContactAttributes(Bundle insertContact,
+			Bundle insertedContact) {
+		for (String key : AttributeMapper.getContactAttrs()) {
+			if (!key.equalsIgnoreCase(AttributeMapper.DISPLAYNAME)) {
+				String o = insertContact.getString(key);
+				String n = insertedContact.getString(key);
+				assertEquals(o, n);
+			}
+		}
+	}
+
+
 	public void testLocalInsertContact() {
 		cleanUpDatabase();
 		Account[] accounts = AccountManager.get(getContext()).getAccounts();
 		for (Account account : accounts) {
-			Bundle insertContact = createDefaultContact("");
-			ContactManager.saveNewLocallyAddedContactAndSync(insertContact,
-					account, getContext());
-			LinkedHashMap<Integer, Bundle> contacts = ContactManager
-					.loadContactList(getContext());
-			boolean inserted_found = false;
-			for (Entry<Integer, Bundle> entry : contacts.entrySet()) {
-				String name = entry.getValue().getString(
-						AttributeMapper.FULL_NAME);
-				if (name != null
-						&& name.equalsIgnoreCase(AttributeMapper.FULL_NAME)) {
-					if (inserted_found) {
-						 fail("Multiple Entries found!");
-					} else {
-						inserted_found = true;
-						rawid = entry.getKey();
-					}
-				}
-			}
+			Bundle insertContact = createDefaultContact("1");
+			int rawid = localInsert(insertContact, account);
 			Bundle insertedContact = ContactManager.loadContact(rawid,
 					getContext());
-			String dirty = insertedContact.getString(ContactManager.LOCAL_ACCOUNT_DIRTY_KEY);
+			String dirty = insertedContact
+					.getString(ContactManager.LOCAL_ACCOUNT_DIRTY_KEY);
 			assertEquals(dirty, "1");
-			for (String key : AttributeMapper.getContactAttrs()) {
-				if (!key.equalsIgnoreCase(AttributeMapper.DISPLAYNAME)) {
-					String o = insertContact.getString(key);
-					String n = insertedContact.getString(key);
-					assertEquals(o, n);
-
-				}
-			}
+			checkContactAttributes(insertContact, insertedContact);
 			cleanUpDatabase();
 		}
 	}
