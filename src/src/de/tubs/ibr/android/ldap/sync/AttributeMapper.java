@@ -9,10 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import android.provider.Contacts.Intents.UI;
 import de.tubs.ibr.android.ldap.R;
 import de.tubs.ibr.android.ldap.provider.StringProvider;
-import static com.unboundid.util.StaticUtils.*;
 
 /**
  * This class provides a mechanism for mapping LDAP attribute names to
@@ -152,6 +150,10 @@ public final class AttributeMapper {
   // The set of attributes (with lowercase names) used to hold informations
   // mapped in a single row.
   private static final Set<String> rowAttrs;
+
+  // The set of all attributes (with lowercase names) used to hold informations
+  // containing contact information.
+  private static final Set<String> contactAttrs;
   /**
    * This attribute holds a postal address suitable for reception of telegrams
    * or expedited documents, where it is necessary to have the recipient accept
@@ -196,6 +198,7 @@ public final class AttributeMapper {
 
   public static final String BUSINESS_CATEGORY = "businessCategory";
 
+  @Deprecated
   public static final String DISPLAYNAME = "displayName";
 
   public static final String DEPARTMENT_NUMBER = "departmentNumber";
@@ -227,159 +230,160 @@ public final class AttributeMapper {
     final LinkedHashSet<String> waSet = new LinkedHashSet<String>(4);
     final LinkedHashSet<String> haSet = new LinkedHashSet<String>(4);
     final LinkedHashSet<String> rowSet = new LinkedHashSet<String>(4);
-    aMap.put(toLowerCase("cn"), R.string.attribute_mapper_name_cn);
+    final LinkedHashSet<String> cSet = new LinkedHashSet<String>();
+    aMap.put("cn", R.string.attribute_mapper_name_cn);
 
-    aMap.put(toLowerCase("departmentNumber"),
+    aMap.put("departmentNumber",
         R.string.attribute_mapper_name_departmentNumber);
 
-    aMap.put(toLowerCase("description"),
+    aMap.put("description",
         R.string.attribute_mapper_name_description);
 
-    aMap.put(toLowerCase("displayName"),
+    aMap.put("displayName",
         R.string.attribute_mapper_name_displayName);
 
-    aMap.put(toLowerCase("employeeNumber"),
+    aMap.put("employeeNumber",
         R.string.attribute_mapper_name_employeeNumber);
 
-    aMap.put(toLowerCase("facsimileTelephoneNumber"),
+    aMap.put("facsimileTelephoneNumber",
         R.string.attribute_mapper_name_facsimileTelephoneNumber);
 
-    aMap.put(toLowerCase("givenName"), R.string.attribute_mapper_name_givenName);
+    aMap.put("givenName", R.string.attribute_mapper_name_givenName);
 
-    aMap.put(toLowerCase("homePhone"), R.string.attribute_mapper_name_homePhone);
+    aMap.put("homePhone", R.string.attribute_mapper_name_homePhone);
 
-    aMap.put(toLowerCase("homePostalAddress"),
+    aMap.put("homePostalAddress",
         R.string.attribute_mapper_name_homePostalAddress);
 
-    aMap.put(toLowerCase("initials"), R.string.attribute_mapper_name_initials);
+    aMap.put("initials", R.string.attribute_mapper_name_initials);
 
-    aMap.put(toLowerCase("jpegPhoto"), R.string.attribute_mapper_name_jpegPhoto);
+    aMap.put("jpegPhoto", R.string.attribute_mapper_name_jpegPhoto);
 
-    aMap.put(toLowerCase("l"), R.string.attribute_mapper_name_l);
+    aMap.put("l", R.string.attribute_mapper_name_l);
 
-    aMap.put(toLowerCase("labeledURI"),
+    aMap.put("labeledURI",
         R.string.attribute_mapper_name_labeledURI);
 
-    aMap.put(toLowerCase("mail"), R.string.attribute_mapper_name_mail);
+    aMap.put("mail", R.string.attribute_mapper_name_mail);
 
-    aMap.put(toLowerCase("mailAlternateAddress"),
+    aMap.put("mailAlternateAddress",
         R.string.attribute_mapper_name_mailAlternateAddress);
 
-    aMap.put(toLowerCase("mobile"), R.string.attribute_mapper_name_mobile);
+    aMap.put("mobile", R.string.attribute_mapper_name_mobile);
 
-    aMap.put(toLowerCase("o"), R.string.attribute_mapper_name_o);
+    aMap.put("o", R.string.attribute_mapper_name_o);
 
-    aMap.put(toLowerCase("pager"), R.string.attribute_mapper_name_pager);
+    aMap.put("pager", R.string.attribute_mapper_name_pager);
 
-    aMap.put(toLowerCase("photo"), R.string.attribute_mapper_name_photo);
+    aMap.put("photo", R.string.attribute_mapper_name_photo);
 
-    aMap.put(toLowerCase("postalAddress"),
+    aMap.put("postalAddress",
         R.string.attribute_mapper_name_postalAddress);
 
-    aMap.put(toLowerCase("postalCode"),
+    aMap.put("postalCode",
         R.string.attribute_mapper_name_postalCode);
 
-    aMap.put(toLowerCase("postOfficeBox"),
+    aMap.put("postOfficeBox",
         R.string.attribute_mapper_name_postOfficeBox);
 
-    aMap.put(toLowerCase("preferredLanguage"),
+    aMap.put("preferredLanguage",
         R.string.attribute_mapper_name_preferredLanguage);
 
-    aMap.put(toLowerCase("roomNumber"),
+    aMap.put("roomNumber",
         R.string.attribute_mapper_name_roomNumber);
 
-    aMap.put(toLowerCase("sn"), R.string.attribute_mapper_name_sn);
+    aMap.put("sn", R.string.attribute_mapper_name_sn);
 
-    aMap.put(toLowerCase("st"), R.string.attribute_mapper_name_st);
+    aMap.put("st", R.string.attribute_mapper_name_st);
 
-    aMap.put(toLowerCase("street"), R.string.attribute_mapper_name_street);
+    aMap.put("street", R.string.attribute_mapper_name_street);
 
-    aMap.put(toLowerCase("telephoneNumber"),
+    aMap.put("telephoneNumber",
         R.string.attribute_mapper_name_telephoneNumber);
 
-    aMap.put(toLowerCase("title"), R.string.attribute_mapper_name_title);
+    aMap.put("title", R.string.attribute_mapper_name_title);
 
-    aMap.put(toLowerCase("uid"), R.string.attribute_mapper_name_uid);
+    aMap.put("uid", R.string.attribute_mapper_name_uid);
 
-    eSet.add(toLowerCase(PRIMARY_MAIL));
-    eSet.add(toLowerCase(ALTERNATE_MAIL));
+    eSet.add(PRIMARY_MAIL);
+    eSet.add(ALTERNATE_MAIL);
 
-    nSet.add(toLowerCase(FIRST_NAME));
-    nSet.add(toLowerCase(DISPLAYNAME));
-    nSet.add(toLowerCase(LAST_NAME));
-    nSet.add(toLowerCase(INITIALS));
-    nSet.add(toLowerCase(TITLE));
-    nSet.add(toLowerCase(FULL_NAME));
+    nSet.add(FIRST_NAME);
+    nSet.add(DISPLAYNAME);
+    nSet.add(LAST_NAME);
+    nSet.add(INITIALS);
+    nSet.add(TITLE);
+    nSet.add(FULL_NAME);
 
-    nSubSet.add(toLowerCase(FIRST_NAME));
-    nSubSet.add(toLowerCase(DISPLAYNAME));
-    nSubSet.add(toLowerCase(LAST_NAME));
-    nSubSet.add(toLowerCase(TITLE));
-    nSubSet.add(toLowerCase(FULL_NAME));
+    nSubSet.add(FIRST_NAME);
+    nSubSet.add(DISPLAYNAME);
+    nSubSet.add(LAST_NAME);
+    nSubSet.add(TITLE);
+    nSubSet.add(FULL_NAME);
 
-    dSet.add(toLowerCase(DESCRIPTION));
+    dSet.add(DESCRIPTION);
 
-    tSet.add(toLowerCase(PRIMARY_PHONE));
-    tSet.add(toLowerCase(HOME_PHONE));
-    tSet.add(toLowerCase(MOBILE_PHONE));
-    tSet.add(toLowerCase(FAX));
-    tSet.add(toLowerCase(PAGER));
-    tSet.add(toLowerCase(TELEX));
-    tSet.add(toLowerCase(ISDN));
+    tSet.add(PRIMARY_PHONE);
+    tSet.add(HOME_PHONE);
+    tSet.add(MOBILE_PHONE);
+    tSet.add(FAX);
+    tSet.add(PAGER);
+    tSet.add(TELEX);
+    tSet.add(ISDN);
 
-    aSet.add(toLowerCase(DESTINATION_INDICATOR));
-    aSet.add(toLowerCase(REGISTERED_ADDRESS));
-    aSet.add(toLowerCase(STREET));
-    aSet.add(toLowerCase(PREFERRED_DELIVERY_METHOD));
-    aSet.add(toLowerCase(POST_OFFICE_BOX));
-    aSet.add(toLowerCase(POSTAL_CODE));
-    aSet.add(toLowerCase(POSTAL_ADDRESS));
-    aSet.add(toLowerCase(HOME_ADDRESS));
-    aSet.add(toLowerCase(STATE));
+    aSet.add(DESTINATION_INDICATOR);
+    aSet.add(REGISTERED_ADDRESS);
+    aSet.add(STREET);
+    aSet.add(PREFERRED_DELIVERY_METHOD);
+    aSet.add(POST_OFFICE_BOX);
+    aSet.add(POSTAL_CODE);
+    aSet.add(POSTAL_ADDRESS);
+    aSet.add(HOME_ADDRESS);
+    aSet.add(STATE);
 
-    waSet.add(toLowerCase(POST_OFFICE_BOX));
-    waSet.add(toLowerCase(POSTAL_CODE));
-    waSet.add(toLowerCase(POSTAL_ADDRESS));
-    waSet.add(toLowerCase(STATE));
+    waSet.add(POST_OFFICE_BOX);
+    waSet.add(POSTAL_CODE);
+    waSet.add(POSTAL_ADDRESS);
+    waSet.add(STATE);
 
-    haSet.add(toLowerCase(STREET));
-    haSet.add(toLowerCase(HOME_ADDRESS));
+    haSet.add(STREET);
+    haSet.add(HOME_ADDRESS);
 
-    wSet.add(toLowerCase(SEE_ALSO));
+    wSet.add(SEE_ALSO);
 
-    oSet.add(toLowerCase(ORGANIZATION));
-    oSet.add(toLowerCase(ORGANIZATION_UNIT));
-    oSet.add(toLowerCase(LOCALITY));
-    oSet.add(toLowerCase(PREFERRED_LANGUAGE));
-    oSet.add(toLowerCase(PHYSICAL_DELIVERY_OFFICE_NAME));
-    oSet.add(toLowerCase(DEPARTMENT_NUMBER));
-    oSet.add(toLowerCase(ROOM_NUMBER));
-    oSet.add(toLowerCase(BUSINESS_CATEGORY));
+    oSet.add(ORGANIZATION);
+    oSet.add(ORGANIZATION_UNIT);
+    oSet.add(LOCALITY);
+    oSet.add(PREFERRED_LANGUAGE);
+    oSet.add(PHYSICAL_DELIVERY_OFFICE_NAME);
+    oSet.add(DEPARTMENT_NUMBER);
+    oSet.add(ROOM_NUMBER);
+    oSet.add(BUSINESS_CATEGORY);
 
-    oSubSet.add(toLowerCase(ORGANIZATION));
-    oSubSet.add(toLowerCase(ORGANIZATION_UNIT));
-    oSubSet.add(toLowerCase(LOCALITY));
-    oSubSet.add(toLowerCase(BUSINESS_CATEGORY));
+    oSubSet.add(ORGANIZATION);
+    oSubSet.add(ORGANIZATION_UNIT);
+    oSubSet.add(LOCALITY);
+    oSubSet.add(BUSINESS_CATEGORY);
 
-    hSet.add(toLowerCase("jpegPhoto"));
-    hSet.add(toLowerCase("manager"));
-    hSet.add(toLowerCase("objectClass"));
-    hSet.add(toLowerCase("photo"));
-    hSet.add(toLowerCase("secretary"));
-    hSet.add(toLowerCase("seeAlso"));
-    hSet.add(toLowerCase("userCertificate"));
-    hSet.add(toLowerCase("userPassword"));
-    hSet.add(toLowerCase("userPKCS12"));
-    hSet.add(toLowerCase("userSMIMECertificate"));
+    hSet.add("jpegPhoto");
+    hSet.add("manager");
+    hSet.add("objectClass");
+    hSet.add("photo");
+    hSet.add("secretary");
+    hSet.add("seeAlso");
+    hSet.add("userCertificate");
+    hSet.add("userPassword");
+    hSet.add("userPKCS12");
+    hSet.add("userSMIMECertificate");
 
-    rowSet.add(toLowerCase(UID));
-    rowSet.add(toLowerCase(PREFERRED_LANGUAGE));
-    rowSet.add(toLowerCase(PHYSICAL_DELIVERY_OFFICE_NAME));
-    rowSet.add(toLowerCase(DEPARTMENT_NUMBER));
-    rowSet.add(toLowerCase(ROOM_NUMBER));
-    rowSet.add(toLowerCase(DESTINATION_INDICATOR));
-    rowSet.add(toLowerCase(REGISTERED_ADDRESS));
-    rowSet.add(toLowerCase(PREFERRED_DELIVERY_METHOD));
+    rowSet.add(UID);
+    rowSet.add(PREFERRED_LANGUAGE);
+    rowSet.add(PHYSICAL_DELIVERY_OFFICE_NAME);
+    rowSet.add(DEPARTMENT_NUMBER);
+    rowSet.add(ROOM_NUMBER);
+    rowSet.add(DESTINATION_INDICATOR);
+    rowSet.add(REGISTERED_ADDRESS);
+    rowSet.add(PREFERRED_DELIVERY_METHOD);
 
     attrMap = Collections.unmodifiableMap(aMap);
 
@@ -396,6 +400,17 @@ public final class AttributeMapper {
     orgaAttrs = Collections.unmodifiableSet(oSet);
     orgaSubAttrs = Collections.unmodifiableSet(oSubSet);
     rowAttrs = Collections.unmodifiableSet(rowSet);
+
+    cSet.addAll(emailAttrs);
+    cSet.addAll(phoneNumberAttrs);
+    cSet.addAll(postalAddressAttrs);
+    cSet.addAll(nameAttrs);
+    cSet.addAll(webAttrs);
+    cSet.addAll(descAttrs);
+    cSet.addAll(orgaAttrs);
+    cSet.addAll(rowAttrs);
+    contactAttrs = Collections.unmodifiableSet(cSet);
+
   }
 
   /**
@@ -412,7 +427,7 @@ public final class AttributeMapper {
       final String attrName) {
     // logEnter(LOG_TAG, "getDisplayName", invoker, attrName);
 
-    final Integer displayNameID = attrMap.get(toLowerCase(attrName));
+    final Integer displayNameID = attrMap.get(attrName);
     if (displayNameID != null) {
       return invoker.getString(displayNameID);
     }
@@ -442,7 +457,7 @@ public final class AttributeMapper {
    *         defined e-mail address attributes, or {@code false} if not.
    */
   public static boolean isEMailAttr(final String s) {
-    return emailAttrs.contains(toLowerCase(s));
+    return emailAttrs.contains(s);
   }
 
   /**
@@ -468,7 +483,7 @@ public final class AttributeMapper {
    *         {@code false} if not.
    */
   public static boolean isHiddenAttr(final String s) {
-    return hiddenAttrs.contains(toLowerCase(s));
+    return hiddenAttrs.contains(s);
   }
 
   /**
@@ -493,7 +508,7 @@ public final class AttributeMapper {
    *         information containing attributes, or {@code false} if not.
    */
   public static boolean isNameAttr(final String s) {
-    return nameAttrs.contains(toLowerCase(s));
+    return nameAttrs.contains(s);
   }
 
   /**
@@ -518,7 +533,7 @@ public final class AttributeMapper {
    *         information containing attributes, or {@code false} if not.
    */
   public static boolean isNameSubAttr(final String s) {
-    return nameSubAttrs.contains(toLowerCase(s));
+    return nameSubAttrs.contains(s);
   }
 
   /**
@@ -543,7 +558,7 @@ public final class AttributeMapper {
    *         defined postal address attributes, or {@code false} if not.
    */
   public static boolean isPostalAddressAttr(final String s) {
-    return postalAddressAttrs.contains(toLowerCase(s));
+    return postalAddressAttrs.contains(s);
   }
 
   /**
@@ -568,7 +583,7 @@ public final class AttributeMapper {
    *         defined postal address attributes, or {@code false} if not.
    */
   public static boolean isPostalHomeAddressAttr(final String s) {
-    return postalHomeAddressAttrs.contains(toLowerCase(s));
+    return postalHomeAddressAttrs.contains(s);
   }
 
   /**
@@ -593,7 +608,7 @@ public final class AttributeMapper {
    *         defined postal address attributes, or {@code false} if not.
    */
   public static boolean isPostalWorkAddressAttr(final String s) {
-    return postalWorkAddressAttrs.contains(toLowerCase(s));
+    return postalWorkAddressAttrs.contains(s);
   }
 
   /**
@@ -618,7 +633,7 @@ public final class AttributeMapper {
    *         defined phone number attributes, or {@code false} if not.
    */
   public static boolean isPhoneNumberAttr(final String s) {
-    return phoneNumberAttrs.contains(toLowerCase(s));
+    return phoneNumberAttrs.contains(s);
   }
 
   /**
@@ -643,7 +658,7 @@ public final class AttributeMapper {
    *         defined description attributes, or {@code false} if not.
    */
   public static boolean isDescriptionAttr(final String s) {
-    return descAttrs.contains(toLowerCase(s));
+    return descAttrs.contains(s);
   }
 
   /**
@@ -668,7 +683,7 @@ public final class AttributeMapper {
    *         defined web address attributes, or {@code false} if not.
    */
   public static boolean isWebAttr(final String s) {
-    return webAttrs.contains(toLowerCase(s));
+    return webAttrs.contains(s);
   }
 
   /**
@@ -694,7 +709,7 @@ public final class AttributeMapper {
    *         not.
    */
   public static boolean isOrganizationAttr(final String s) {
-    return orgaAttrs.contains(toLowerCase(s));
+    return orgaAttrs.contains(s);
   }
 
   /**
@@ -720,7 +735,7 @@ public final class AttributeMapper {
    *         not.
    */
   public static boolean isOrganizationSubAttr(final String s) {
-    return orgaSubAttrs.contains(toLowerCase(s));
+    return orgaSubAttrs.contains(s);
   }
 
   /**
@@ -745,7 +760,7 @@ public final class AttributeMapper {
    *         defined single row information attributes, or {@code false} if not.
    */
   public static boolean isRowAttr(final String s) {
-    return rowAttrs.contains(toLowerCase(s));
+    return rowAttrs.contains(s);
   }
 
   /**
@@ -761,7 +776,7 @@ public final class AttributeMapper {
    */
   public static boolean isGenericAttr(final String s) {
 
-    final String lowerName = toLowerCase(s);
+    final String lowerName = s;
     if (emailAttrs.contains(lowerName) || hiddenAttrs.contains(lowerName)
         || phoneNumberAttrs.contains(lowerName)
         || postalAddressAttrs.contains(lowerName)
@@ -774,12 +789,13 @@ public final class AttributeMapper {
   }
 
   public static boolean isContactAttr(String name) {
-    if (isEMailAttr(name) || isPhoneNumberAttr(name)
-        || isPostalAddressAttr(name) || isNameAttr(name) || isWebAttr(name)
-        || isDescriptionAttr(name) || isOrganizationAttr(name)
-        || name.equalsIgnoreCase(UID) || isRowAttr(name)) {
+    if (contactAttrs.contains(name)) {
       return true;
     }
     return false;
+  }
+
+  public static Set<String> getContactAttrs() {
+    return contactAttrs;
   }
 }

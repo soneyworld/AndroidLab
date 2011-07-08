@@ -11,7 +11,6 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.os.Bundle;
-import android.provider.ContactsContract.RawContacts.Entity;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
@@ -23,6 +22,7 @@ import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.CommonDataKinds.StructuredPostal;
+import android.provider.ContactsContract.CommonDataKinds.Website;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.RawContacts;
@@ -444,13 +444,15 @@ public class ContactManager {
         } else if (mimetype.equalsIgnoreCase(Phone.CONTENT_ITEM_TYPE)) {
           ContactUtils.loadPhoneNumber(contact, c, 3, 2);
         } else if (mimetype.equalsIgnoreCase(Organization.CONTENT_ITEM_TYPE)) {
-          ContactUtils.loadOrganization(contact, c, 2, 6);
+          ContactUtils.loadOrganization(contact, c, 3, 2, 6, 10, 7);
         } else if (mimetype.equalsIgnoreCase(Nickname.CONTENT_ITEM_TYPE)) {
           ContactUtils.loadInitials(contact, c, 3, 2);
         } else if (mimetype.equalsIgnoreCase(Email.CONTENT_ITEM_TYPE)) {
           ContactUtils.loadMail(contact, c, 3, 2);
         } else if (mimetype.equalsIgnoreCase(LDAPRow.CONTENT_ITEM_TYPE)) {
           ContactUtils.loadLDAPRow(contact, c, 2, 3);
+        } else if (mimetype.equalsIgnoreCase(Website.CONTENT_ITEM_TYPE)) {
+          ContactUtils.loadSeeAlso(contact, c, 3, 4, 2);
         }
       }
     } catch (Exception e) {
@@ -511,6 +513,9 @@ public class ContactManager {
     } else {
       contact.putString(LDAP_SOURCE_ID_KEY, "");
     }
+    if (!c.isNull(dirty)) {
+      contact.putString(LOCAL_ACCOUNT_DIRTY_KEY, String.valueOf(c.getInt(dirty)));
+    }
   }
 
   public static void saveLocallyEditedContact(int rawcontactId,
@@ -519,7 +524,7 @@ public class ContactManager {
         context.getContentResolver());
     saveContact(rawcontactId, contactupdate, account, context, batch);
     try {
-      int batchsize = batch.size();
+      // int batchsize = batch.size();
       batch.execute();
     } catch (Exception e) {
       int duration = Toast.LENGTH_LONG;

@@ -102,6 +102,8 @@ public class ContactUtils {
     createAddresses(b, batch, dataUri, rawContactIndex);
     createSeeAlso(b, batch, dataUri, rawContactIndex);
     createOrganization(b, batch, dataUri, rawContactIndex);
+    createLDAPRow(AttributeMapper.UID, b.getString(AttributeMapper.UID), batch,
+        dataUri);
   }
 
   static void createFullContact(final Account account, Bundle b,
@@ -209,9 +211,8 @@ public class ContactUtils {
           .withValue(Data.MIMETYPE, Website.CONTENT_ITEM_TYPE)
           .withValue(Website.URL, seeAlso)
           .withValue(Website.TYPE, Website.TYPE_CUSTOM)
-          .withValue(Website.LABEL, "SeeAlso").build());
+          .withValue(Website.LABEL, AttributeMapper.SEE_ALSO).build());
     }
-
   }
 
   public static void createOrganization(Bundle b, BatchOperation batch,
@@ -270,7 +271,7 @@ public class ContactUtils {
         || (street != null && street.length() > 0)) {
       batch.add(ContentProviderOperation.newInsert(dataUri)
           .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-          .withValue(Data.MIMETYPE, StructuredPostal.CONTENT_TYPE)
+          .withValue(Data.MIMETYPE, StructuredPostal.CONTENT_ITEM_TYPE)
           .withValue(StructuredPostal.TYPE, StructuredPostal.TYPE_HOME)
           .withValue(StructuredPostal.FORMATTED_ADDRESS, homePostalAddress)
           .withValue(StructuredPostal.STREET, street).build());
@@ -282,7 +283,7 @@ public class ContactUtils {
         || (postOfficeBox != null && postOfficeBox.length() > 0)) {
       batch.add(ContentProviderOperation.newInsert(dataUri)
           .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-          .withValue(Data.MIMETYPE, StructuredPostal.CONTENT_TYPE)
+          .withValue(Data.MIMETYPE, StructuredPostal.CONTENT_ITEM_TYPE)
           .withValue(StructuredPostal.TYPE, StructuredPostal.TYPE_WORK)
           .withValue(StructuredPostal.FORMATTED_ADDRESS, postalAddress)
           .withValue(StructuredPostal.POSTCODE, postalCode)
@@ -317,7 +318,7 @@ public class ContactUtils {
     if (key != null && key.length() > 0 && value != null && value.length() > 0) {
       batch.add(ContentProviderOperation.newInsert(dataUri)
           .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-          .withValue(Data.MIMETYPE, LDAPRow.CONTENT_TYPE)
+          .withValue(Data.MIMETYPE, LDAPRow.CONTENT_ITEM_TYPE)
           .withValue(LDAPRow.KEY, key).withValue(LDAPRow.VALUE, value).build());
     }
   }
@@ -339,16 +340,18 @@ public class ContactUtils {
             c.getString(postBoxColumn));
         contact.putString(AttributeMapper.POSTAL_CODE,
             c.getString(postalCodeColumn));
+        contact.putString(AttributeMapper.STATE, c.getString(regionColumn));
         break;
       case StructuredPostal.TYPE_HOME:
         contact.putString(AttributeMapper.HOME_ADDRESS,
             c.getString(formattedAddressColumn));
         contact.putString(AttributeMapper.STREET, c.getString(streetColumn));
-        contact.putString(AttributeMapper.STATE, c.getString(regionColumn));
+
         break;
     }
   }
 
+  @SuppressWarnings("deprecation")
   static void loadName(Bundle contact, Cursor c, int displayColumn,
       int givenNameColumn, int familyNameColumn, int prefixColumn) {
     contact.putString(AttributeMapper.FULL_NAME, c.getString(displayColumn));
@@ -383,10 +386,17 @@ public class ContactUtils {
     }
   }
 
-  static void loadOrganization(Bundle contact, Cursor c, int oColumn,
-      int ouColumn) {
-    contact.putString(AttributeMapper.ORGANIZATION, c.getString(oColumn));
-    contact.putString(AttributeMapper.ORGANIZATION_UNIT, c.getString(ouColumn));
+  static void loadOrganization(Bundle contact, Cursor c, int typeColumn,
+      int oColumn, int ouColumn, int lColumn, int categoryColumn) {
+    int type = c.getInt(typeColumn);
+    if (type == Organization.TYPE_WORK) {
+      contact.putString(AttributeMapper.ORGANIZATION, c.getString(oColumn));
+      contact.putString(AttributeMapper.ORGANIZATION_UNIT,
+          c.getString(ouColumn));
+      contact.putString(AttributeMapper.LOCALITY, c.getString(lColumn));
+      contact.putString(AttributeMapper.BUSINESS_CATEGORY,
+          c.getString(categoryColumn));
+    }
   }
 
   static void loadDescription(Bundle contact, Cursor c, int descColumn) {
@@ -421,6 +431,18 @@ public class ContactUtils {
       case Phone.TYPE_ISDN:
         contact.putString(AttributeMapper.ISDN, c.getString(numberColumn));
         break;
+    }
+  }
+
+  static void loadSeeAlso(Bundle b, Cursor c, int typeColumn, int labelColumn,
+      int urlColumn) {
+    int type = c.getInt(typeColumn);
+    if (type == Website.TYPE_CUSTOM) {
+      String label = c.getString(labelColumn);
+      String seeAlso = c.getString(urlColumn);
+      if (label != null && label.equalsIgnoreCase(AttributeMapper.SEE_ALSO)) {
+        b.putString(AttributeMapper.SEE_ALSO, seeAlso);
+      }
     }
   }
 
@@ -510,15 +532,15 @@ public class ContactUtils {
       builder = builder.withValue(StructuredName.GIVEN_NAME, s);
     }
     s = b.getString(AttributeMapper.LAST_NAME);
-    if(s!=null){
+    if (s != null) {
       builder = builder.withValue(StructuredName.FAMILY_NAME, s);
     }
     batch.add(builder.build());
     updateInitials(b, batch, dataUri, rawContactId);
   }
 
-  public static void updateInitials(Bundle b, BatchOperation batch, Uri dataUri,
-      int rawContactId) {
+  public static void updateInitials(Bundle b, BatchOperation batch,
+      Uri dataUri, int rawContactId) {
     String initials = b.getString(AttributeMapper.INITIALS);
     if (initials != null && initials.length() > 0) {
       batch.add(ContentProviderOperation
