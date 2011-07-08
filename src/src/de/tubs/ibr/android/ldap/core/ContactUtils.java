@@ -517,7 +517,7 @@ public class ContactUtils {
     updateInitials(b, batch, dataUri, rawContactId);
   }
 
-  static void updateInitials(Bundle b, BatchOperation batch, Uri dataUri,
+  public static void updateInitials(Bundle b, BatchOperation batch, Uri dataUri,
       int rawContactId) {
     String initials = b.getString(AttributeMapper.INITIALS);
     if (initials != null && initials.length() > 0) {
