@@ -5,6 +5,7 @@ import java.util.Set;
 import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 import android.accounts.Account;
 import android.content.ContentProviderOperation;
+import android.content.ContentProviderOperation.Builder;
 import android.content.ContentUris;
 import android.database.Cursor;
 import android.net.Uri;
@@ -33,7 +34,7 @@ public class ContactUtils {
         .withValueBackReference(Data.RAW_CONTACT_ID, rawContactIndex)
         .withValue(Data.MIMETYPE, StructuredName.CONTENT_ITEM_TYPE)
         .withValue(StructuredName.DISPLAY_NAME,
-            b.getString(AttributeMapper.DISPLAYNAME))
+            b.getString(AttributeMapper.FULL_NAME))
         .withValue(StructuredName.GIVEN_NAME,
             b.getString(AttributeMapper.FIRST_NAME))
         .withValue(StructuredName.FAMILY_NAME,
@@ -491,20 +492,28 @@ public class ContactUtils {
 
   private static void updateStructuredName(Bundle b, BatchOperation batch,
       Uri dataUri, int rawContactId) {
-    batch.add(ContentProviderOperation
-        .newUpdate(dataUri)
+    Builder builder = ContentProviderOperation.newUpdate(dataUri)
         .withSelection(
             Data.RAW_CONTACT_ID + "='" + String.valueOf(rawContactId) + "'"
                 + " AND " + Data.MIMETYPE + "='"
-                + StructuredName.CONTENT_ITEM_TYPE + "'", null)
-        .withValue(StructuredName.DISPLAY_NAME,
-            b.getString(AttributeMapper.DISPLAYNAME))
-        .withValue(StructuredName.GIVEN_NAME,
-            b.getString(AttributeMapper.FIRST_NAME))
-        .withValue(StructuredName.FAMILY_NAME,
-            b.getString(AttributeMapper.LAST_NAME))
-        .withValue(StructuredName.PREFIX, b.getString(AttributeMapper.TITLE))
-        .build());
+                + StructuredName.CONTENT_ITEM_TYPE + "'", null);
+    String s = b.getString(AttributeMapper.TITLE);
+    if (s != null) {
+      builder = builder.withValue(StructuredName.PREFIX, s);
+    }
+    s = b.getString(AttributeMapper.FULL_NAME);
+    if (s != null) {
+      builder = builder.withValue(StructuredName.DISPLAY_NAME, s);
+    }
+    s = b.getString(AttributeMapper.FIRST_NAME);
+    if (s != null) {
+      builder = builder.withValue(StructuredName.GIVEN_NAME, s);
+    }
+    s = b.getString(AttributeMapper.LAST_NAME);
+    if(s!=null){
+      builder = builder.withValue(StructuredName.FAMILY_NAME, s);
+    }
+    batch.add(builder.build());
     updateInitials(b, batch, dataUri, rawContactId);
   }
 

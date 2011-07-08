@@ -8,9 +8,11 @@ import de.tubs.ibr.android.ldap.core.ContactManager;
 import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 import android.app.Activity;
 import android.app.ListActivity;
+import android.content.ContentUris;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.ContactsContract.RawContacts;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -69,7 +71,7 @@ public class LocalTabActivity extends ListActivity {
       public void onItemClick(AdapterView<?> arg0, View arg1, int row, long id) {
         Intent i = new Intent(getBaseContext(), EditContactActivity.class);
         i.setAction(Intent.ACTION_EDIT);
-        i.putExtra("_id", ((EntityEntry) arg0.getItemAtPosition(row)).getId());
+        i.setData(ContentUris.withAppendedId(RawContacts.CONTENT_URI,((EntityEntry) arg0.getItemAtPosition(row)).getId()));
         startActivityForResult(i, 0);
       }
     });

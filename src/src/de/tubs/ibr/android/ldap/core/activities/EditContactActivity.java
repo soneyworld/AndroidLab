@@ -6,11 +6,13 @@ import android.accounts.AuthenticatorDescription;
 import android.accounts.OnAccountsUpdateListener;
 import android.app.Activity;
 import android.content.ComponentName;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -181,7 +183,8 @@ public class EditContactActivity extends Activity implements
       setTitle("Edit Contact");
       mStatus = STATUS_EDIT;
       mContactActionButton.setText("Save");
-      mRawContactId = intent.getExtras().getInt("_id");
+      final Uri data = intent.getData();
+      mRawContactId = (int) ContentUris.parseId(data);
       loadContactEntry(mRawContactId);
 
     } else if (Intent.ACTION_INSERT.equals(action) && !hasIncomingState) {
