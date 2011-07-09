@@ -2,6 +2,7 @@ package de.tubs.ibr.android.ldap.core;
 
 import java.util.Map;
 import java.util.Set;
+import org.w3c.dom.Attr;
 import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 import android.accounts.Account;
 import android.content.ContentProviderOperation;
@@ -29,18 +30,33 @@ public class ContactUtils {
 
   static void createStructuredName(Bundle b, BatchOperation batch, Uri dataUri,
       int rawContactIndex) {
-    batch.add(ContentProviderOperation
-        .newInsert(dataUri)
+    boolean insert = false;
+    Builder contact = ContentProviderOperation.newInsert(dataUri)
         .withValueBackReference(Data.RAW_CONTACT_ID, rawContactIndex)
-        .withValue(Data.MIMETYPE, StructuredName.CONTENT_ITEM_TYPE)
-        .withValue(StructuredName.DISPLAY_NAME,
-            b.getString(AttributeMapper.FULL_NAME))
-        .withValue(StructuredName.GIVEN_NAME,
-            b.getString(AttributeMapper.FIRST_NAME))
-        .withValue(StructuredName.FAMILY_NAME,
-            b.getString(AttributeMapper.LAST_NAME))
-        .withValue(StructuredName.PREFIX, b.getString(AttributeMapper.TITLE))
-        .build());
+        .withValue(Data.MIMETYPE, StructuredName.CONTENT_ITEM_TYPE);
+    String s = b.getString(AttributeMapper.FULL_NAME);
+    if (s != null) {
+      contact = contact.withValue(StructuredName.DISPLAY_NAME, s);
+      insert = true;
+    }
+    s = b.getString(AttributeMapper.FIRST_NAME);
+    if (s != null) {
+      contact = contact.withValue(StructuredName.GIVEN_NAME, s);
+      insert = true;
+    }
+    s = b.getString(AttributeMapper.LAST_NAME);
+    if (s != null) {
+      contact = contact.withValue(StructuredName.FAMILY_NAME, s);
+      insert = true;
+    }
+    s = b.getString(AttributeMapper.TITLE);
+    if (s != null) {
+      contact = contact.withValue(StructuredName.PREFIX, s);
+      insert = true;
+    }
+    if (insert) {
+      batch.add(contact.build());
+    }
     createInitials(b, batch, dataUri, rawContactIndex);
   }
 
@@ -487,62 +503,284 @@ public class ContactUtils {
 
   private static void updateDataForContact(Bundle action, BatchOperation batch,
       Uri dataUri, int rawcontactId) {
-    boolean structuredName = false;
+    updateStructuredName(action, batch, dataUri, rawcontactId);
+    updateDescription(action, batch, dataUri, rawcontactId);
+    updateMail(action, batch, dataUri, rawcontactId);
+    updateLDAPRows(action, batch, dataUri, rawcontactId);
+    updatePhoneNumbers(action, batch, dataUri, rawcontactId);
+    updateSeeAlso(action, batch, dataUri, rawcontactId);
+    updateOrganization(action, batch, dataUri, rawcontactId);
+    updatePostalAdresses(action, batch, dataUri, rawcontactId);
+  }
+
+  private static void updatePostalAdresses(Bundle action, BatchOperation batch,
+      Uri dataUri, int rawcontactId) {
+    // TODO Auto-generated method stub
+    boolean updatehome = false;
+    boolean updatework = false;
+    Builder home = ContentProviderOperation.newUpdate(dataUri).withSelection(
+        Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
+            + StructuredPostal.CONTENT_ITEM_TYPE + "' AND "
+            + StructuredPostal.TYPE + "='" + StructuredPostal.TYPE_HOME + "'",
+        new String[] { String.valueOf(rawcontactId) });
+    Builder work = ContentProviderOperation.newUpdate(dataUri).withSelection(
+        Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
+            + StructuredPostal.CONTENT_ITEM_TYPE + "' AND "
+            + StructuredPostal.TYPE + "='" + StructuredPostal.TYPE_WORK + "'",
+        new String[] { String.valueOf(rawcontactId) });
+    String s = action.getString(AttributeMapper.HOME_ADDRESS);
+    if (action.containsKey(AttributeMapper.HOME_ADDRESS)) {
+      home = home.withValue(StructuredPostal.FORMATTED_ADDRESS, s);
+      updatehome = true;
+    }
+    s = action.getString(AttributeMapper.STREET);
+    if (action.containsKey(AttributeMapper.STREET)) {
+      home = home.withValue(StructuredPostal.STREET, s);
+      updatehome = true;
+    }
+    s = action.getString(AttributeMapper.POSTAL_ADDRESS);
+    if (action.containsKey(AttributeMapper.POSTAL_ADDRESS)) {
+      work = work.withValue(StructuredPostal.FORMATTED_ADDRESS, s);
+      updatework = true;
+    }
+    s = action.getString(AttributeMapper.POSTAL_CODE);
+    if (action.containsKey(AttributeMapper.POSTAL_CODE)) {
+      work = work.withValue(StructuredPostal.POSTCODE, s);
+      updatework = true;
+    }
+    s = action.getString(AttributeMapper.POST_OFFICE_BOX);
+    if (action.containsKey(AttributeMapper.POST_OFFICE_BOX)) {
+      work = work.withValue(StructuredPostal.POBOX, s);
+      updatework = true;
+    }
+    s = action.getString(AttributeMapper.STATE);
+    if (action.containsKey(AttributeMapper.STATE)) {
+      work = work.withValue(StructuredPostal.REGION, s);
+      updatework = true;
+    }
+    if (updatehome)
+      batch.add(home.build());
+    if (updatework)
+      batch.add(work.build());
+  }
+
+  private static void updateOrganization(Bundle action, BatchOperation batch,
+      Uri dataUri, int rawcontactId) {
+    boolean update = false;
+    Builder orga = ContentProviderOperation.newUpdate(dataUri).withSelection(
+        Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
+            + Organization.CONTENT_ITEM_TYPE + "' AND " + Organization.TYPE
+            + "='" + Organization.TYPE_WORK + "'",
+        new String[] { String.valueOf(rawcontactId) });
+    String s = action.getString(AttributeMapper.ORGANIZATION);
+    if (action.containsKey(AttributeMapper.ORGANIZATION)) {
+      orga.withValue(Organization.COMPANY, s);
+      update = true;
+    }
+    s = action.getString(AttributeMapper.ORGANIZATION_UNIT);
+    if (action.containsKey(AttributeMapper.ORGANIZATION_UNIT)) {
+      orga.withValue(Organization.DEPARTMENT, s);
+      update = true;
+    }
+    s = action.getString(AttributeMapper.BUSINESS_CATEGORY);
+    if (action.containsKey(AttributeMapper.BUSINESS_CATEGORY)) {
+      orga.withValue(Organization.JOB_DESCRIPTION, s);
+      update = true;
+    }
+    s = action.getString(AttributeMapper.LOCALITY);
+    if (action.containsKey(AttributeMapper.LOCALITY)) {
+      orga.withValue(Organization.OFFICE_LOCATION, s);
+      update = true;
+    }
+    if (update) {
+      batch.add(orga.build());
+    }
+  }
+
+  private static void updateSeeAlso(Bundle action, BatchOperation batch,
+      Uri dataUri, int rawcontactId) {
+    String seeAlso = action.getString(AttributeMapper.SEE_ALSO);
+    if (action.containsKey(AttributeMapper.SEE_ALSO)) {
+      batch.add(ContentProviderOperation
+          .newUpdate(dataUri)
+          .withSelection(
+              Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
+                  + Website.CONTENT_ITEM_TYPE + "' AND " + Website.TYPE + "='"
+                  + Website.TYPE_CUSTOM + "' AND " + Website.LABEL + "='"
+                  + AttributeMapper.SEE_ALSO + "'",
+              new String[] { String.valueOf(rawcontactId) })
+          .withValue(Website.URL, seeAlso).build());
+    }
+  }
+
+  private static void updatePhoneNumbers(Bundle action, BatchOperation batch,
+      Uri dataUri, int rawcontactId) {
     for (String key : action.keySet()) {
-      if (AttributeMapper.isNameAttr(key) && !structuredName) {
-        updateStructuredName(action, batch, dataUri, rawcontactId);
-        structuredName = true;
-      } else if (AttributeMapper.isDescriptionAttr(key)) {
-        updateDescription(action, batch, dataUri, rawcontactId);
+      String number = action.getString(key);
+      if (key.equalsIgnoreCase(AttributeMapper.HOME_PHONE)) {
+        batch.add(ContentProviderOperation
+            .newUpdate(dataUri)
+            .withSelection(
+                Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
+                    + Phone.CONTENT_ITEM_TYPE + "' AND " + Phone.TYPE + "='"
+                    + Phone.TYPE_HOME + "'",
+                new String[] { String.valueOf(rawcontactId) })
+            .withValue(Phone.NUMBER, number).build());
+      } else if (key.equalsIgnoreCase(AttributeMapper.PRIMARY_PHONE)) {
+        batch.add(ContentProviderOperation
+            .newUpdate(dataUri)
+            .withSelection(
+                Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
+                    + Phone.CONTENT_ITEM_TYPE + "' AND " + Phone.TYPE + "='"
+                    + Phone.TYPE_MAIN + "'",
+                new String[] { String.valueOf(rawcontactId) })
+            .withValue(Phone.NUMBER, number).build());
+      } else if (key.equalsIgnoreCase(AttributeMapper.FAX)) {
+        batch.add(ContentProviderOperation
+            .newUpdate(dataUri)
+            .withSelection(
+                Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
+                    + Phone.CONTENT_ITEM_TYPE + "' AND " + Phone.TYPE + "='"
+                    + Phone.TYPE_FAX_WORK + "'",
+                new String[] { String.valueOf(rawcontactId) })
+            .withValue(Phone.NUMBER, number).build());
+      } else if (key.equalsIgnoreCase(AttributeMapper.MOBILE_PHONE)) {
+        batch.add(ContentProviderOperation
+            .newUpdate(dataUri)
+            .withSelection(
+                Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
+                    + Phone.CONTENT_ITEM_TYPE + "' AND " + Phone.TYPE + "='"
+                    + Phone.TYPE_MOBILE + "'",
+                new String[] { String.valueOf(rawcontactId) })
+            .withValue(Phone.NUMBER, number).build());
+      } else if (key.equalsIgnoreCase(AttributeMapper.PAGER)) {
+        batch.add(ContentProviderOperation
+            .newUpdate(dataUri)
+            .withSelection(
+                Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
+                    + Phone.CONTENT_ITEM_TYPE + "' AND " + Phone.TYPE + "='"
+                    + Phone.TYPE_PAGER + "'",
+                new String[] { String.valueOf(rawcontactId) })
+            .withValue(Phone.NUMBER, number).build());
+      } else if (key.equalsIgnoreCase(AttributeMapper.TELEX)) {
+        batch.add(ContentProviderOperation
+            .newUpdate(dataUri)
+            .withSelection(
+                Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
+                    + Phone.CONTENT_ITEM_TYPE + "' AND " + Phone.TYPE + "='"
+                    + Phone.TYPE_TELEX + "'",
+                new String[] { String.valueOf(rawcontactId) })
+            .withValue(Phone.NUMBER, number).build());
+      } else if (key.equalsIgnoreCase(AttributeMapper.ISDN)) {
+        batch.add(ContentProviderOperation
+            .newUpdate(dataUri)
+            .withSelection(
+                Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
+                    + Phone.CONTENT_ITEM_TYPE + "' AND " + Phone.TYPE + "='"
+                    + Phone.TYPE_ISDN + "'",
+                new String[] { String.valueOf(rawcontactId) })
+            .withValue(Phone.NUMBER, number).build());
       }
     }
-    // TODO Auto-generated method stub
 
+  }
+
+  private static void updateLDAPRows(Bundle action, BatchOperation batch,
+      Uri dataUri, int rawcontactId) {
+    for (String key : action.keySet()) {
+      if (AttributeMapper.isRowAttr(key)) {
+        String value = action.getString(key);
+        batch
+            .add(ContentProviderOperation
+                .newUpdate(dataUri)
+                .withSelection(
+                    Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
+                        + LDAPRow.CONTENT_ITEM_TYPE + "' AND " + LDAPRow.KEY
+                        + "=?",
+                    new String[] { String.valueOf(rawcontactId), key })
+                .withValue(LDAPRow.VALUE, value).build());
+      }
+    }
+  }
+
+  @SuppressWarnings("deprecation")
+  private static void updateMail(Bundle action, BatchOperation batch,
+      Uri dataUri, int rawcontactId) {
+    Builder contact = ContentProviderOperation.newUpdate(dataUri);
+    Builder alternativecontact = ContentProviderOperation.newUpdate(dataUri);
+    String s = action.getString(AttributeMapper.PRIMARY_MAIL);
+    if (action.containsKey(AttributeMapper.PRIMARY_MAIL)) {
+      batch.add(contact
+          .withSelection(
+              Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
+                  + Email.CONTENT_ITEM_TYPE + "' AND " + Email.TYPE + "='"
+                  + Email.TYPE_WORK + "'",
+              new String[] { String.valueOf(rawcontactId) })
+          .withValue(Email.DATA, s).build());
+    }
+    s = action.getString(AttributeMapper.ALTERNATE_MAIL);
+    if (action.containsKey(AttributeMapper.ALTERNATE_MAIL)) {
+      batch.add(alternativecontact
+          .withSelection(
+              Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "=? AND "
+                  + Email.TYPE + "='" + Email.TYPE_HOME + "'",
+              new String[] { String.valueOf(rawcontactId),
+                  Email.CONTENT_ITEM_TYPE }).withValue(Email.DATA, s).build());
+    }
   }
 
   private static void updateDescription(Bundle action, BatchOperation batch,
       Uri dataUri, int rawContactId) {
-    batch.add(ContentProviderOperation
-        .newUpdate(dataUri)
-        .withSelection(
-            Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
-                + Note.CONTENT_ITEM_TYPE + "'",
-            new String[] { String.valueOf(rawContactId) })
-        .withValue(Data.MIMETYPE, Note.CONTENT_ITEM_TYPE)
-        .withValue(Note.NOTE, action.get(AttributeMapper.DESCRIPTION)).build());
+    String desc = action.getString(AttributeMapper.DESCRIPTION);
+    if (action.containsKey(AttributeMapper.DESCRIPTION)) {
+      batch.add(ContentProviderOperation
+          .newUpdate(dataUri)
+          .withSelection(
+              Data.RAW_CONTACT_ID + "=?" + " AND " + Data.MIMETYPE + "='"
+                  + Note.CONTENT_ITEM_TYPE + "'",
+              new String[] { String.valueOf(rawContactId) })
+          .withValue(Data.MIMETYPE, Note.CONTENT_ITEM_TYPE)
+          .withValue(Note.NOTE, desc).build());
+    }
   }
 
   private static void updateStructuredName(Bundle b, BatchOperation batch,
       Uri dataUri, int rawContactId) {
+    boolean update = false;
     Builder builder = ContentProviderOperation.newUpdate(dataUri)
         .withSelection(
             Data.RAW_CONTACT_ID + "='" + String.valueOf(rawContactId) + "'"
                 + " AND " + Data.MIMETYPE + "='"
                 + StructuredName.CONTENT_ITEM_TYPE + "'", null);
     String s = b.getString(AttributeMapper.TITLE);
-    if (s != null) {
-      builder = builder.withValue(StructuredName.PREFIX, s);
+    if (b.containsKey(AttributeMapper.TITLE)) {
+       builder.withValue(StructuredName.PREFIX, s);
+      update = true;
     }
     s = b.getString(AttributeMapper.FULL_NAME);
-    if (s != null) {
-      builder = builder.withValue(StructuredName.DISPLAY_NAME, s);
+    if (b.containsKey(AttributeMapper.FULL_NAME)) {
+       builder.withValue(StructuredName.DISPLAY_NAME, s);
+      update = true;
     }
     s = b.getString(AttributeMapper.FIRST_NAME);
-    if (s != null) {
-      builder = builder.withValue(StructuredName.GIVEN_NAME, s);
+    if (b.containsKey(AttributeMapper.FIRST_NAME)) {
+       builder.withValue(StructuredName.GIVEN_NAME, s);
+      update = true;
     }
     s = b.getString(AttributeMapper.LAST_NAME);
-    if (s != null) {
-      builder = builder.withValue(StructuredName.FAMILY_NAME, s);
+    if (b.containsKey(AttributeMapper.LAST_NAME)) {
+       builder.withValue(StructuredName.FAMILY_NAME, s);
+      update = true;
     }
-    batch.add(builder.build());
+    if (update)
+      batch.add(builder.build());
     updateInitials(b, batch, dataUri, rawContactId);
   }
 
   public static void updateInitials(Bundle b, BatchOperation batch,
       Uri dataUri, int rawContactId) {
     String initials = b.getString(AttributeMapper.INITIALS);
-    if (initials != null && initials.length() > 0) {
+    if (b.containsKey(AttributeMapper.INITIALS)) {
       batch.add(ContentProviderOperation
           .newUpdate(dataUri)
           .withSelection(
