@@ -1,5 +1,5 @@
 \beamer@endinputifotherversion {3.10pt}
 \beamer@sectionintoc {1}{Projektziel}{3}{0}{1}
 \beamer@sectionintoc {2}{Stand der Dinge}{6}{0}{2}
-\beamer@sectionintoc {3}{\"Anderungen}{8}{0}{3}
+\beamer@sectionintoc {3}{Grundlagen}{8}{0}{3}
 \beamer@sectionintoc {4}{Ausblick}{12}{0}{4}
