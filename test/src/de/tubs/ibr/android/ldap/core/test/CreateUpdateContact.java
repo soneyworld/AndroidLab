@@ -1,6 +1,7 @@
 package de.tubs.ibr.android.ldap.core.test;
 
 import de.tubs.ibr.android.ldap.core.BatchOperation;
+import de.tubs.ibr.android.ldap.core.ContactManager;
 import de.tubs.ibr.android.ldap.core.ContactUtils;
 import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 import android.accounts.Account;
@@ -38,7 +39,7 @@ public class CreateUpdateContact extends AndroidTestCase {
 		b.putString(AttributeMapper.ISDN, "");
 		b.putString(AttributeMapper.PRIMARY_MAIL, "");
 		b.putString(AttributeMapper.REGISTERED_ADDRESS, "");
-		b.putString(AttributeMapper.STREET, "Hans-Meyer-Stra§e");
+		b.putString(AttributeMapper.STREET, "Hans-Meyer-Straï¿½e");
 		b.putString(AttributeMapper.POST_OFFICE_BOX, "");
 		b.putString(AttributeMapper.POSTAL_CODE, "31319");
 		b.putString(AttributeMapper.POSTAL_ADDRESS, "");
@@ -70,7 +71,6 @@ public class CreateUpdateContact extends AndroidTestCase {
 
 	public void testCreateFullContactAccountBundleBatchOperationUriUri(final Account account, Bundle b,
 		      BatchOperation batch, Uri rawContactUri, Uri dataUri) {
-		ContactUtils.createFullContact(account, b,
-			      batch, rawContactUri, dataUri);
+		ContactManager.saveNewLocallyAddedContactAndSync(b, account, getContext());
 	}
 }
