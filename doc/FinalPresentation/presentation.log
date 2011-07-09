@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.11 (TeX Live 2010) (format=pdflatex 2011.5.13)  26 JUN 2011 22:14
+This is pdfTeX, Version 3.1415926-1.40.11 (TeX Live 2010) (format=pdflatex 2011.5.13)  9 JUL 2011 16:24
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -968,36 +968,44 @@ LaTeX Font Warning: Font shape `OT1/cmss/m/n' in size <4> not available
 
 ] [5
 
+] [6
+
+] [7
+
+] [8
+
 ]
-<contacts-2.png, id=90, 354.57469pt x 191.9672pt>
+<contacts-2.png, id=108, 354.57469pt x 191.9672pt>
 File: contacts-2.png Graphic file (type png)
- <use contacts-2.png> [6
+ <use contacts-2.png>
+[9
 
- <./contacts-2.png>] [7
-
-] <TabView.png, id=114, 330.23375pt x 489.83pt>
+ <./contacts-2.png>] <TabView.png, id=121, 330.23375pt x 489.83pt>
 File: TabView.png Graphic file (type png)
 
-<use TabView.png> <DetailView.png, id=115, 329.23pt x 488.82625pt>
+<use TabView.png> <DetailView.png, id=122, 329.23pt x 488.82625pt>
 File: DetailView.png Graphic file (type png)
 
-<use DetailView.png> <AddContact.png, id=116, 328.22626pt x 489.83pt>
+<use DetailView.png> <AddContact.png, id=123, 328.22626pt x 489.83pt>
 File: AddContact.png Graphic file (type png)
 
 <use AddContact.png>
-Overfull \vbox (24.9074pt too high) detected at line 122
+Overfull \vbox (24.9074pt too high) detected at line 167
  []
 
-[8
+[10
 
  <./TabView.png (PNG copy)> <./DetailView.png (PNG copy)> <./AddContact.png (PN
-G copy)>] <git.png, id=127, 824.07875pt x 99.37125pt>
+G copy)>] <git.png, id=134, 820.06375pt x 156.585pt>
 File: git.png Graphic file (type png)
- <use git.png> [9
+ <use git.png>
+<status.png, id=135, 651.43375pt x 78.2925pt>
+File: status.png Graphic file (type png)
+ <use status.png> [11
 
- <./git.png (PNG copy)>] [10
+ <./git.png (PNG copy)> <./status.png (PNG copy)>] [12
 
-] [11
+] [13
 
 ]
 \tf@nav=\write6
@@ -1009,13 +1017,19 @@ File: git.png Graphic file (type png)
 \tf@snm=\write8
 \openout8 = `presentation.snm'.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 167.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 167.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 212.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 212.
  (./presentation.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 167.
-Package rerunfilecheck Info: File `presentation.out' has not changed.
-(rerunfilecheck)             Checksum: 0AAD28AFC642748EF3AE4A800F85BE22;191.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 212.
 
+
+Package rerunfilecheck Warning: File `presentation.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+Package rerunfilecheck Info: Checksums for `presentation.out':
+(rerunfilecheck)             Before: D41D8CD98F00B204E9800998ECF8427E;0
+(rerunfilecheck)             After:  0AAD28AFC642748EF3AE4A800F85BE22;191.
 
 LaTeX Font Warning: Size substitutions with differences
 (Font)              up to 1.0pt have occurred.
@@ -1025,10 +1039,10 @@ LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
  ) 
 Here is how much of TeX's memory you used:
- 14387 strings out of 493747
- 259534 string characters out of 3143546
- 348334 words of memory out of 3000000
- 17232 multiletter control sequences out of 15000+200000
+ 14393 strings out of 493747
+ 259607 string characters out of 3143546
+ 349334 words of memory out of 3000000
+ 17233 multiletter control sequences out of 15000+200000
  7201 words of font info for 26 fonts, out of 3000000 for 9000
  714 hyphenation exceptions out of 8191
  48i,13n,51p,320b,536s stack positions out of 5000i,500n,10000p,200000b,50000s
@@ -1037,10 +1051,10 @@ Here is how much of TeX's memory you used:
 </usr/local/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmss8.pfb></
 usr/local/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmssbx10.pfb><
 /usr/local/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb>
-Output written on presentation.pdf (11 pages, 339843 bytes).
+Output written on presentation.pdf (13 pages, 349864 bytes).
 PDF statistics:
- 184 PDF objects out of 1000 (max. 8388607)
- 148 compressed objects within 2 object streams
- 26 named destinations out of 1000 (max. 500000)
- 115 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 193 PDF objects out of 1000 (max. 8388607)
+ 154 compressed objects within 2 object streams
+ 30 named destinations out of 1000 (max. 500000)
+ 88 words of extra memory for PDF output out of 10000 (max. 10000000)
 
