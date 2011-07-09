@@ -103,10 +103,6 @@ public class ContactManager {
         entry.getDN() + objectClass, entry.toLDIFString());
     ContactUtils.createFullContact(account, contact, batch,
         contentAsSyncAdapter, dataAsSyncAdapter, rawContactInsertIndex);
-    ContactUtils.createLDAPRow(AttributeMapper.UID,
-        entry.getAttributeValue(AttributeMapper.UID), batch, dataAsSyncAdapter,
-        rawContactInsertIndex);
-    // TODO CREATE ORGANIZATION
   }
 
   private static void addSyncFieldsToBundle(Bundle b, String sourceId,

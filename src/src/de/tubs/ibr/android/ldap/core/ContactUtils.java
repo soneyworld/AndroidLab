@@ -2,7 +2,6 @@ package de.tubs.ibr.android.ldap.core;
 
 import java.util.Map;
 import java.util.Set;
-import org.w3c.dom.Attr;
 import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 import android.accounts.Account;
 import android.content.ContentProviderOperation;
@@ -119,7 +118,7 @@ public class ContactUtils {
     createSeeAlso(b, batch, dataUri, rawContactIndex);
     createOrganization(b, batch, dataUri, rawContactIndex);
     createLDAPRow(AttributeMapper.UID, b.getString(AttributeMapper.UID), batch,
-        dataUri);
+        dataUri, rawContactIndex);
   }
 
   static void createFullContact(final Account account, Bundle b,
@@ -754,22 +753,22 @@ public class ContactUtils {
                 + StructuredName.CONTENT_ITEM_TYPE + "'", null);
     String s = b.getString(AttributeMapper.TITLE);
     if (b.containsKey(AttributeMapper.TITLE)) {
-       builder.withValue(StructuredName.PREFIX, s);
+      builder.withValue(StructuredName.PREFIX, s);
       update = true;
     }
     s = b.getString(AttributeMapper.FULL_NAME);
     if (b.containsKey(AttributeMapper.FULL_NAME)) {
-       builder.withValue(StructuredName.DISPLAY_NAME, s);
+      builder.withValue(StructuredName.DISPLAY_NAME, s);
       update = true;
     }
     s = b.getString(AttributeMapper.FIRST_NAME);
     if (b.containsKey(AttributeMapper.FIRST_NAME)) {
-       builder.withValue(StructuredName.GIVEN_NAME, s);
+      builder.withValue(StructuredName.GIVEN_NAME, s);
       update = true;
     }
     s = b.getString(AttributeMapper.LAST_NAME);
     if (b.containsKey(AttributeMapper.LAST_NAME)) {
-       builder.withValue(StructuredName.FAMILY_NAME, s);
+      builder.withValue(StructuredName.FAMILY_NAME, s);
       update = true;
     }
     if (update)
