@@ -1,12 +1,14 @@
 package de.tubs.ibr.android.ldap.sync;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnection;
@@ -20,6 +22,7 @@ import com.unboundid.ldif.LDIFReader;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
 import de.tubs.ibr.android.ldap.core.BatchOperation;
 import de.tubs.ibr.android.ldap.core.ContactManager;
+import de.tubs.ibr.android.ldap.core.ContactUtils;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.OperationCanceledException;
@@ -34,6 +37,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.BaseColumns;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.RawContacts;
 
 public class LDAPSyncService extends Service {
@@ -58,7 +63,7 @@ public class LDAPSyncService extends Service {
     return sSyncAdapter.getSyncAdapterBinder();
   }
 
-  public static void updateLDAPContact(int id, Context context,
+  private static void updateLDAPContact(int id, Context context,
       Account account, Entry entry, BatchOperation batch) {
     if (entry.getAttribute(AttributeMapper.ATTR_UID) == null) {
       return;
@@ -98,18 +103,82 @@ public class LDAPSyncService extends Service {
     } catch (IOException e) {
       e.printStackTrace();
     }
-    Bundle actualremotestate = ContactManager.createMapableBundle(ContactManager.createBundleFromEntry(entry));
+    Bundle actualremotestate = ContactManager
+        .createMapableBundle(ContactManager.createBundleFromEntry(entry));
     if (status == SyncStatus.IN_SYNC) {
-      // TODO Check if ldap has new Data
-      if(lastSyncState!=null){
-        Bundle lastsyncstate = ContactManager.createMapableBundle(ContactManager.createBundleFromEntry(lastSyncState));
-        // TODO Bundle vergleichen
+      // Check if ldap has new Data
+      if (lastSyncState != null) {
+        Bundle lastsyncstate = ContactManager
+            .createMapableBundle(ContactManager
+                .createBundleFromEntry(lastSyncState));
+        Map<String, String> updateMap = new HashMap<String, String>();
+        Set<String> insertKeys = new LinkedHashSet<String>();
+        Set<String> deleteKeys = new LinkedHashSet<String>();
+        for (String oldkey : lastsyncstate.keySet()) {
+          if(actualremotestate.containsKey(oldkey)){
+            String oldobj = (String) lastsyncstate.get(oldkey);
+            String newobj = (String) actualremotestate.get(oldkey);
+            if(!(oldobj!=null && oldobj.equals(newobj))){
+              updateMap.put(oldkey,newobj);
+            }
+          }else{
+            deleteKeys.add(oldkey);
+          }
+        }
+        for (String newkey : actualremotestate.keySet()){
+          if(!lastsyncstate.containsKey(newkey)){
+            insertKeys.add(newkey);
+          }
+        }
+        if(insertKeys.size()!=0 || deleteKeys.size()!=0 || updateMap.size()!=0){
+          ContactUtils.createUpdateBatch(insertKeys, deleteKeys, updateMap, batch, actualremotestate, lastsyncstate, getDataAsSyncAdapter(), id);
+        }
       }
     } else if (status == SyncStatus.LOCALLY_MODIFIED) {
       // TODO Check if ldap has new Data and merge is possible
     } else if (status == SyncStatus.CONFLICT) {
       // TODO try to solve conflict
     }
+  }
+
+  private boolean diffOfBundles(Bundle o, Bundle n) {
+    Set<String> insertKeys = o.keySet();
+    Set<String> deleteKeys = n.keySet();
+    Map<String, String> updateMap = new HashMap<String, String>();
+    String value;
+    String key;
+    for (Object k : o.keySet().toArray()) {
+      key = (String) k;
+      value = o.getString(key);
+      if (value == null) {
+        insertKeys.remove(key);
+      } else {
+        if (insertKeys.contains(key)) {
+          // Kann Update sein, oder keine Änderung und key muss gelöscht werden
+          if (!value.equals(n.getString(key))) {
+            updateMap.put(key, n.getString(key));
+          }
+          insertKeys.remove(key);
+        }
+      }
+    }
+    for (Object k : n.keySet().toArray()) {
+      key = (String) k;
+      value = n.getString(key);
+      if (value == null) {
+        deleteKeys.remove(key);
+      } else {
+        if (deleteKeys.contains(key)) {
+          // Kann Update sein, oder keine Änderung und key muss gelöscht werden
+          if (!value.equals(o.getString(key))) {
+            updateMap.put(key, value);
+          }
+          deleteKeys.remove(key);
+        }
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -261,4 +330,10 @@ public class LDAPSyncService extends Service {
     return null;
   }
 
+  private static Uri getDataAsSyncAdapter() {
+    Uri data = Data.CONTENT_URI.buildUpon()
+        .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
+        .build();
+    return data;
+  }
 }
