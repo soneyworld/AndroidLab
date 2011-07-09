@@ -219,18 +219,7 @@ public class ContactManager {
     if (dn == null) {
       dn = serverInstance.getBaseDN();
     }
-    Entry ldapentry = new Entry(dn);
-    contact.remove(AttributeMapper.DN);
-    contact.remove(LDAP_SYNC_STATUS_KEY);
-    contact.remove(LDAP_ERROR_MESSAGE_KEY);
-    contact.remove(LDAP_LDIF_DETAILS_KEY);
-    for (String attr : contact.keySet()) {
-      ldapentry.addAttribute(attr, contact.getString(attr));
-    }
-    ldapentry.addAttribute("objectClass", "inetOrgPerson");
-    ldapentry.addAttribute("objectClass", "organizationalPerson");
-    ldapentry.addAttribute("objectClass", "person");
-    ldapentry.addAttribute("objectClass", "top");
+    Entry ldapentry = createLDAPEntryFromBundle(contact, dn);
     // String ldif = ldapentry.toLDIFString();
     LDAPConnection connection = null;
     try {
@@ -277,6 +266,21 @@ public class ContactManager {
       }
     }
 
+  }
+
+  private static Entry createLDAPEntryFromBundle(Bundle contact, String dn) {
+    Entry ldapentry = new Entry(dn);
+    for (String attr : contact.keySet()) {
+      String value = contact.getString(attr);
+      if (value != null && AttributeMapper.isContactAttr(attr)) {
+        ldapentry.addAttribute(attr, value);
+      }
+    }
+    ldapentry.addAttribute("objectClass", "inetOrgPerson");
+    ldapentry.addAttribute("objectClass", "organizationalPerson");
+    ldapentry.addAttribute("objectClass", "person");
+    ldapentry.addAttribute("objectClass", "top");
+    return ldapentry;
   }
 
   /**
@@ -332,12 +336,20 @@ public class ContactManager {
       rawContactUri = RawContacts.CONTENT_URI;
       dataUri = Data.CONTENT_URI;
     }
+    String uid = b.getString(AttributeMapper.UID);
+    String cn = b.getString(AttributeMapper.FULL_NAME);
+    String dn = b.getString(AttributeMapper.DN);
+    if (uid != null && uid.length() > 0) {
+      dn = AttributeMapper.UID + "=" + uid + "," + dn;
+      b.remove(AttributeMapper.DN);
+      b.putString(AttributeMapper.DN, dn);
+    } else if (cn != null && cn.length() > 0) {
+      dn = AttributeMapper.FULL_NAME + "='" + cn + "'," + dn;
+      b.remove(AttributeMapper.DN);
+      b.putString(AttributeMapper.DN, dn);
+    }
     // Prepare contact creation request
     ContactUtils.createFullContact(account, b, batch, rawContactUri, dataUri,
-        rawContactInsertIndex);
-    // Adding non mapped rows
-    ContactUtils.createLDAPRow(AttributeMapper.UID,
-        b.getString(AttributeMapper.ATTR_UID), batch, dataUri,
         rawContactInsertIndex);
     if (executeDirectly) {
       // Ask the Contact provider to create a new contact
@@ -510,7 +522,8 @@ public class ContactManager {
       contact.putString(LDAP_SOURCE_ID_KEY, "");
     }
     if (!c.isNull(dirty)) {
-      contact.putString(LOCAL_ACCOUNT_DIRTY_KEY, String.valueOf(c.getInt(dirty)));
+      contact.putString(LOCAL_ACCOUNT_DIRTY_KEY,
+          String.valueOf(c.getInt(dirty)));
     }
   }
 

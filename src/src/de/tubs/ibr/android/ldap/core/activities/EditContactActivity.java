@@ -31,6 +31,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.AdapterView.OnItemSelectedListener;
 import java.util.ArrayList;
 import de.tubs.ibr.android.ldap.R;
@@ -103,7 +104,7 @@ public class EditContactActivity extends Activity implements
   private CheckBox mSyncCheckBox;
   private Button mContactActionButton;
   private Button mContactRevertButton;
-  
+
   private TextView mAdditionalNameInfoTextView;
   private LinearLayout mAdditionalNameInfoLinearLayout;
   private TextView mAdditionalContactInfoTextView;
@@ -168,7 +169,7 @@ public class EditContactActivity extends Activity implements
     mSyncCheckBox = (CheckBox) findViewById(R.id.syncCheckBox);
     mContactActionButton = (Button) findViewById(R.id.btn_action);
     mContactRevertButton = (Button) findViewById(R.id.btn_revert);
-    
+
     mAdditionalNameInfoTextView = (TextView) findViewById(R.id.additionalNameInfoTextView);
     mAdditionalNameInfoLinearLayout = (LinearLayout) findViewById(R.id.additionalNameInfoLinearLayout);
     mAdditionalContactInfoTextView = (TextView) findViewById(R.id.additionalContactInfoTextView);
@@ -216,15 +217,14 @@ public class EditContactActivity extends Activity implements
         onRevertButtonClicked(mRawContactId);
       }
     });
-    
+
     mAdditionalNameInfoTextView.setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {
         if (mAdditionalNameInfoLinearLayout.getVisibility() == LinearLayout.VISIBLE) {
           mAdditionalNameInfoLinearLayout.setVisibility(LinearLayout.GONE);
           mAdditionalNameInfoTextView.setText("Show additional name info");
-        }
-        else {
+        } else {
           mAdditionalNameInfoLinearLayout.setVisibility(LinearLayout.VISIBLE);
           mAdditionalNameInfoTextView.setText("Hide additional name info");
         }
@@ -235,11 +235,13 @@ public class EditContactActivity extends Activity implements
       public void onClick(View v) {
         if (mAdditionalContactInfoLinearLayout.getVisibility() == LinearLayout.VISIBLE) {
           mAdditionalContactInfoLinearLayout.setVisibility(LinearLayout.GONE);
-          mAdditionalContactInfoTextView.setText("Show additional contact info");
-        }
-        else {
-          mAdditionalContactInfoLinearLayout.setVisibility(LinearLayout.VISIBLE);
-          mAdditionalContactInfoTextView.setText("Hide additional contact info");
+          mAdditionalContactInfoTextView
+              .setText("Show additional contact info");
+        } else {
+          mAdditionalContactInfoLinearLayout
+              .setVisibility(LinearLayout.VISIBLE);
+          mAdditionalContactInfoTextView
+              .setText("Hide additional contact info");
         }
       }
     });
@@ -248,11 +250,13 @@ public class EditContactActivity extends Activity implements
       public void onClick(View v) {
         if (mAdditionalAddressInfoLinearLayout.getVisibility() == LinearLayout.VISIBLE) {
           mAdditionalAddressInfoLinearLayout.setVisibility(LinearLayout.GONE);
-          mAdditionalAddressInfoTextView.setText("Show additional address info");
-        }
-        else {
-          mAdditionalAddressInfoLinearLayout.setVisibility(LinearLayout.VISIBLE);
-          mAdditionalAddressInfoTextView.setText("Hide additional address info");
+          mAdditionalAddressInfoTextView
+              .setText("Show additional address info");
+        } else {
+          mAdditionalAddressInfoLinearLayout
+              .setVisibility(LinearLayout.VISIBLE);
+          mAdditionalAddressInfoTextView
+              .setText("Hide additional address info");
         }
       }
     });
@@ -262,8 +266,7 @@ public class EditContactActivity extends Activity implements
         if (mAdditionalInfoLinearLayout.getVisibility() == LinearLayout.VISIBLE) {
           mAdditionalInfoLinearLayout.setVisibility(LinearLayout.GONE);
           mAdditionalInfoTextView.setText("Show additional info");
-        }
-        else {
+        } else {
           mAdditionalInfoLinearLayout.setVisibility(LinearLayout.VISIBLE);
           mAdditionalInfoTextView.setText("Hide additional info");
         }
@@ -317,12 +320,12 @@ public class EditContactActivity extends Activity implements
     Log.v(TAG, "Save button clicked");
     if (mStatus == STATUS_INSERT) {
       Log.v(TAG, "mStatus = STATUS_INSERT");
-      createContactEntry();
-      finish();
+      if (createContactEntry())
+        finish();
     } else {
       Log.v(TAG, "mStatus = STATUS_EDIT");
-      updateContactEntry();
-      finish();
+      if (updateContactEntry())
+        finish();
     }
   }
 
@@ -330,10 +333,13 @@ public class EditContactActivity extends Activity implements
    * Creates a contact entry from the current UI values in the account named by
    * mSelectedAccount.
    */
-  protected void createContactEntry() {
+  protected boolean createContactEntry() {
     // Get values from UI
     Bundle contactData = new Bundle();
     boolean syncCheckBoxValue = getValuesFromUI(contactData);
+    if (!checkLDAPRequirements(contactData)) {
+      return false;
+    }
     Account account = getSelectedAccount();
     if (account != null) {
       if (syncCheckBoxValue) {
@@ -343,7 +349,32 @@ public class EditContactActivity extends Activity implements
         ContactManager.saveNewLocallyAddedContactAndDoNotSync(contactData,
             account, mContext);
       }
+    } else {
+      // Should never happen!
+      Toast.makeText(mContext,
+          "There is no LDAP Account, where this contact could be added",
+          Toast.LENGTH_LONG);
+      return false;
     }
+    return true;
+  }
+
+  private boolean checkLDAPRequirements(Bundle contactData) {
+    String cn = contactData.getString(AttributeMapper.FULL_NAME);
+    String sn = contactData.getString(AttributeMapper.LAST_NAME);
+    if (!(cn != null && cn.length() > 0)) {
+      if (!(sn != null && sn.length() > 0)) {
+        Toast.makeText(mContext, "Please fill in the displayname and the lastname", Toast.LENGTH_SHORT);
+      }else{
+        Toast.makeText(mContext, "Please fill in the displayname", Toast.LENGTH_SHORT);  
+      }
+      return false;
+    }
+    if (!(sn != null && sn.length() > 0)) {
+      Toast.makeText(mContext, "Please fill in the lastname", Toast.LENGTH_SHORT);
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -412,7 +443,7 @@ public class EditContactActivity extends Activity implements
     for (Object k : b.keySet().toArray()) {
       key = (String) k;
       String value = b.getString(key);
-      if (value == null || value.length()==0) {
+      if (value == null || value.length() == 0) {
         b.remove(key);
       }
     }
@@ -458,25 +489,28 @@ public class EditContactActivity extends Activity implements
 
   }
 
-  protected void updateContactEntry() {
+  protected boolean updateContactEntry() {
     Bundle contact = new Bundle();
     getValuesFromUI(contact);
+    if(!checkLDAPRequirements(contact)){
+      return false;
+    }
     Account account = getSelectedAccount();
     if (account != null) {
       ContactManager.saveLocallyEditedContact(mRawContactId, contact, account,
           this);
     }
+    return true;
   }
-  
+
   protected void onRevertButtonClicked(int id) {
     if (mStatus == STATUS_INSERT) {
       revertChanges();
-    }
-    else {
+    } else {
       loadContactEntry(id);
     }
   }
-  
+
   protected void revertChanges() {
     mContactNameEditText.setText("");
     mCommonNameEditText.setText("");
@@ -499,10 +533,8 @@ public class EditContactActivity extends Activity implements
     mPostalAddressEditText.setText("");
     mHomePostalAddressEditText.setText("");
     mOrganizationEditText.setText("");
-    mBusinessCategoryEditText
-        .setText("");
-    mDepartmentNumberEditText
-        .setText("");
+    mBusinessCategoryEditText.setText("");
+    mDepartmentNumberEditText.setText("");
     mRoomNumberEditText.setText("");
     mUserIdEditText.setText("");
     mStateEditText.setText("");
