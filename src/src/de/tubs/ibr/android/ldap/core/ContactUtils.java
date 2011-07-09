@@ -894,7 +894,7 @@ public class ContactUtils {
    * @param dn
    * @return
    */
-  static ContentProviderOperation updateRawContactStatus(
+  public static ContentProviderOperation updateRawContactStatus(
       final int rawContactId, final String status, final Uri rawContactUri,
       final String ldif, final String message, final String uuid,
       final boolean dirty, final String dn) {

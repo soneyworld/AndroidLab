@@ -28,7 +28,9 @@ import android.accounts.AccountManager;
 import android.accounts.OperationCanceledException;
 import android.app.Service;
 import android.content.ContentProviderClient;
+import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SyncResult;
@@ -115,23 +117,33 @@ public class LDAPSyncService extends Service {
         Set<String> insertKeys = new LinkedHashSet<String>();
         Set<String> deleteKeys = new LinkedHashSet<String>();
         for (String oldkey : lastsyncstate.keySet()) {
-          if(actualremotestate.containsKey(oldkey)){
+          if (actualremotestate.containsKey(oldkey)) {
             String oldobj = (String) lastsyncstate.get(oldkey);
             String newobj = (String) actualremotestate.get(oldkey);
-            if(!(oldobj!=null && oldobj.equals(newobj))){
-              updateMap.put(oldkey,newobj);
+            if (!(oldobj != null && oldobj.equals(newobj))) {
+              updateMap.put(oldkey, newobj);
             }
-          }else{
+          } else {
             deleteKeys.add(oldkey);
           }
         }
-        for (String newkey : actualremotestate.keySet()){
-          if(!lastsyncstate.containsKey(newkey)){
+        for (String newkey : actualremotestate.keySet()) {
+          if (!lastsyncstate.containsKey(newkey)) {
             insertKeys.add(newkey);
           }
         }
-        if(insertKeys.size()!=0 || deleteKeys.size()!=0 || updateMap.size()!=0){
-          ContactUtils.createUpdateBatch(insertKeys, deleteKeys, updateMap, batch, actualremotestate, lastsyncstate, getDataAsSyncAdapter(), id);
+        if (insertKeys.size() != 0 || deleteKeys.size() != 0
+            || updateMap.size() != 0) {
+          ContactUtils.createUpdateBatch(insertKeys, deleteKeys, updateMap,
+              batch, actualremotestate, lastsyncstate, getDataAsSyncAdapter(),
+              id);
+          batch.add(ContentProviderOperation
+              .newUpdate(
+                  ContentUris.withAppendedId(getRawContactAsSyncAdapter(), id))
+              .withValue(RawContacts.SYNC1, ContactManager.SYNC_STATUS_IN_SYNC)
+              .withValue(RawContacts.SYNC2, "")
+              .withValue(RawContacts.SYNC4, entry.toLDIFString())
+              .withValue(RawContacts.DIRTY, "0").build());
         }
       }
     } else if (status == SyncStatus.LOCALLY_MODIFIED) {
@@ -332,6 +344,13 @@ public class LDAPSyncService extends Service {
 
   private static Uri getDataAsSyncAdapter() {
     Uri data = Data.CONTENT_URI.buildUpon()
+        .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
+        .build();
+    return data;
+  }
+
+  private static Uri getRawContactAsSyncAdapter() {
+    Uri data = RawContacts.CONTENT_URI.buildUpon()
         .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
         .build();
     return data;
