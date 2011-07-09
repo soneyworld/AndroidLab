@@ -1,0 +1,153 @@
+% Copyright 2010 by Jens Brandt <brandt@ibr.cs.tu-bs.de>
+%
+% This theme can be redistributed and/or modified under the terms
+% of the GNU Public License, version 2.
+
+
+\newif\ifbeamer@theme@section
+\newif\ifbeamer@theme@relax
+\newif\ifbeamer@theme@instlogo
+
+\DeclareOptionBeamer{section}[true]{\csname beamer@theme@section#1\endcsname}
+\DeclareOptionBeamer{relax}[true]{\csname beamer@theme@relax#1\endcsname}
+
+\ProcessOptionsBeamer
+
+
+\definecolor{dark-blue}{rgb}{0.12,0.23,0.62}
+\definecolor{tu-red}{HTML}{BE1E3C}
+\definecolor{tu-grey}{HTML}{DDDDDD}
+\definecolor{tu-yellow}{HTML}{FFF0B2}
+
+\definecolor{255.205.0}{HTML}{FFCD00}
+\definecolor{250.110.0}{HTML}{FA6E00}
+\definecolor{176.0.70}{HTML}{B00046}
+\definecolor{124.205.230}{HTML}{7CCDE6}
+\definecolor{0.128.180}{HTML}{0080B4}
+\definecolor{0.83.116}{HTML}{005374}
+
+\setbeamercolor{frametitle}{fg=black,bg=tu-grey}
+\setbeamerfont{section in head/foot}{size=\tiny}
+\setbeamerfont{title}{size=\large,series=\bfseries}
+\setbeamerfont{subtitle}{size=\scriptsize}
+\setbeamerfont{author}{size=\small,series=\bfseries}
+\setbeamerfont{date}{size=\scriptsize,series=\normalfont}
+
+\setbeamercolor{section in head/foot}{parent=frametitle}
+\setbeamercolor{title}{fg=black, bg=tu-yellow}
+\setbeamercolor{structure}{fg=tu-red}
+\setbeamercolor{tu-red}{fg=white,bg=tu-red}
+\setbeamercolor{white}{fg=white,bg=white}
+
+
+\titlegraphic{altbau.jpg}
+
+\newcommand\instlogo[1]{%
+	\pgfdeclareimage[interpolate=true,height=1.081cm]{inst-logo-title}{#1}%
+	\pgfdeclareimage[interpolate=true,height=0.8cm]{inst-logo}{#1}%
+	\beamer@theme@instlogotrue%
+}
+
+\pgfdeclareimage[interpolate=true,height=0.93cm]{tu-logo}{tu-logo-new}
+\pgfdeclareimage[interpolate=true,height=1.34cm]{tu-logo-title}{tu-logo-new}
+
+\setbeamertemplate{navigation symbols}{}
+
+\mode<presentation>
+
+\setlength\leftmargini{19pt}
+\setlength\leftmarginii{14pt}
+\setlength\leftmarginiii{14pt}
+
+\defbeamertemplate{itemize item}{tusquare}{\color{black}\raisebox{1.5pt}{\vrule width 3.5pt height 3.5pt}}
+\defbeamertemplate{itemize subitem}{tusquare}{\color{black}\raisebox{1.5pt}{\vrule width 3pt height 3pt}}
+\defbeamertemplate{itemize subsubitem}{tusquare}{\color{black}\raisebox{1.5pt}{\vrule width 3pt height 3pt}}
+
+\setbeamertemplate{itemize items}[tusquare]
+
+\setbeamertemplate{enumerate item}{\insertenumlabel.}
+\setbeamertemplate{enumerate subitem}{\small\insertenumlabel.}
+\setbeamertemplate{enumerate subsubitem}{\scriptsize\insertenumlabel.}
+
+%suppress navigation symbols and extra logo insertion
+\defbeamertemplate*{sidebar right}{tubs}{}
+
+\defbeamertemplate*{title page}{tubs}[1][]{
+    \vbox{}%
+    \vfill%
+    \begin{centering}%
+        \begin{beamercolorbox}[wd=12.03cm,ht=1.48cm]{white}\end{beamercolorbox}
+        \begin{beamercolorbox}[wd=12.03cm,ht=3.737cm]{title}%
+            \begin{pgfpicture}{0cm}{0cm}{0cm}{0cm}%
+                \pgfputat{\pgfxy(0.0,0)}{\pgfbox[left,base]{\pgfimage[interpolate=true,width=12.03cm,height=3.737cm]{\inserttitlegraphic}}}%
+                \pgfputat{\pgfxy(-0.38,3.399)}{\pgfuseimage{tu-logo-title}}%
+                \ifbeamer@theme@instlogo%
+                   \pgfputat{\pgfxy(12.03,4.2)}{\pgfbox[right,base]{\pgfuseimage{inst-logo-title}}}%
+                \fi%
+            \end{pgfpicture}%
+        \end{beamercolorbox}%
+        \vspace*{-0.35mm}%
+        \begin{beamercolorbox}[wd=12.03cm,ht=2.97cm,leftskip=0.7cm,dp=1mm]{title}%
+            {%
+            \usebeamerfont{title}\inserttitle\par}%
+            \ifx\insertsubtitle\@empty%
+            \else%
+                \vskip0.2em%
+                {\usebeamerfont{subtitle}\insertsubtitle\par}%
+            \fi%
+            \vskip5.3mm%
+            {\usebeamerfont{author}\insertauthor\par}%
+            \vskip0.0mm%
+            {\usebeamerfont{date}\insertdate}%
+                    \vspace*{2.6mm}
+        \end{beamercolorbox}%
+        \vspace*{-0.4mm}%
+        \begin{beamercolorbox}[wd=12.03cm,ht=0.403cm]{tu-red}\end{beamercolorbox}%
+    \end{centering}%
+}
+
+\defbeamertemplate*{footline}{tubs}{%
+    \hspace*{2.47cm}{\color{tu-red}\hrule height 0.378pt}
+    \begin{beamercolorbox}[ht=0.3cm,dp=1.125ex, leftskip=2.7cm,rightskip=0.3cm plus1fil]{bg=white}%
+        \leavevmode{\usebeamerfont{author in head/foot}\insertshortauthor \, \textbar \, \insertshorttitle \, \textbar \, \insertframenumber}%
+    \end{beamercolorbox}%
+    \begin{pgfpicture}{0pt}{0pt}{0pt}{0pt}%
+        \pgfputat{\pgfxy(0,0.07)}{\pgfuseimage{tu-logo}}%
+    \end{pgfpicture}%
+    \begin{beamercolorbox}[ht=0.334cm]{bg=white}\end{beamercolorbox}
+    \begin{beamercolorbox}[ht=0.2cm]{bg=white}\end{beamercolorbox}
+    \ifbeamer@theme@instlogo%
+        \begin{pgfpicture}{0cm}{0cm}{0cm}{0cm}%
+        \ifbeamer@theme@relax%
+    		\pgfputat{\pgfxy(12.6,0.0)}{\pgfbox[right,base]{\pgfuseimage{inst-logo}}}%
+    	\else%
+         		\pgfputat{\pgfxy(12.6,0.1)}{\pgfbox[right,base]{\pgfuseimage{inst-logo}}}%
+	\fi%
+        \end{pgfpicture}%
+    \fi%
+    \ifbeamer@theme@relax%
+    
+    \else%
+        \begin{beamercolorbox}[ht=0.11cm]{bg=white}%
+        \end{beamercolorbox}%
+    \fi%
+} 
+
+\defbeamertemplate*{frametitle}{tubs}{%
+    \vspace{-3.2mm}%
+    \begin{beamercolorbox}[ht=0.4cm,wd=\paperwidth]{frametitle}%
+        \ifbeamer@theme@section%
+            \vspace*{-0.0mm}%
+            \insertnavigation{\paperwidth}\vskip1pt%
+        \fi%
+    \end{beamercolorbox}%
+    \vspace{-0.45mm}%
+    \begin{beamercolorbox}[leftskip=0.50cm,ht=0.71cm,wd=\paperwidth,dp=0.2cm]{frametitle}%
+        \insertframetitle%
+    \end{beamercolorbox}%
+}
+
+\setbeamersize{text margin left=0.61cm,text margin right=0.61cm}
+
+\mode<all>
+
