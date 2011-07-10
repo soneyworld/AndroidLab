@@ -99,7 +99,9 @@ public class ContactUtils {
                 b.getString(ContactManager.LDAP_ERROR_MESSAGE_KEY))
             .withValue(RawContacts.SYNC3, b.getString(AttributeMapper.DN))
             .withValue(RawContacts.SYNC4,
-                b.getString(ContactManager.LDAP_LDIF_DETAILS_KEY)).build());
+                b.getString(ContactManager.LDAP_LDIF_DETAILS_KEY))
+            .withValue(RawContacts.AGGREGATION_MODE,
+                RawContacts.AGGREGATION_MODE_DISABLED).build());
   }
 
   static void createFullContact(final Account account, Bundle b,
@@ -122,9 +124,10 @@ public class ContactUtils {
         dataUri, rawContactIndex);
   }
 
-//  static void createDescription(Bundle b, BatchOperation batch, Uri dataUri) {
-//    createDescription(b, batch, dataUri, 0);
-//  }
+  // static void createDescription(Bundle b, BatchOperation batch, Uri dataUri)
+  // {
+  // createDescription(b, batch, dataUri, 0);
+  // }
 
   static void createDescription(Bundle b, BatchOperation batch, Uri dataUri,
       int rawContactIndex) {
@@ -209,9 +212,10 @@ public class ContactUtils {
     }
   }
 
-//  public static void createSeeAlso(Bundle b, BatchOperation batch, Uri dataUri) {
-//    createSeeAlso(b, batch, dataUri, 0);
-//  }
+  // public static void createSeeAlso(Bundle b, BatchOperation batch, Uri
+  // dataUri) {
+  // createSeeAlso(b, batch, dataUri, 0);
+  // }
 
   public static void createSeeAlso(Bundle b, BatchOperation batch, Uri dataUri,
       int rawContactInsertIndex) {
@@ -226,10 +230,10 @@ public class ContactUtils {
     }
   }
 
-//  public static void createOrganization(Bundle b, BatchOperation batch,
-//      Uri dataUri) {
-//    createOrganization(b, batch, dataUri, 0);
-//  }
+  // public static void createOrganization(Bundle b, BatchOperation batch,
+  // Uri dataUri) {
+  // createOrganization(b, batch, dataUri, 0);
+  // }
 
   public static void createOrganization(Bundle b, BatchOperation batch,
       Uri dataUri, int rawContactInsertIndex) {
@@ -512,7 +516,6 @@ public class ContactUtils {
 
   private static void updatePostalAdresses(Bundle action, BatchOperation batch,
       Uri dataUri, int rawcontactId) {
-    // TODO Auto-generated method stub
     boolean updatehome = false;
     boolean updatework = false;
     Builder home = ContentProviderOperation.newUpdate(dataUri).withSelection(

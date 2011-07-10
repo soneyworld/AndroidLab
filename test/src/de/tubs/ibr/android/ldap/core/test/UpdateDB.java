@@ -5,12 +5,8 @@ import java.util.Map.Entry;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.ContactsContract.Data;
-import de.tubs.ibr.android.ldap.core.BatchOperation;
 import de.tubs.ibr.android.ldap.core.ContactManager;
-import de.tubs.ibr.android.ldap.core.ContactUtils;
 import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 
 public class UpdateDB extends android.test.AndroidTestCase {
@@ -47,16 +43,15 @@ public class UpdateDB extends android.test.AndroidTestCase {
 
 	private int localInsert(Bundle b, Account account) {
 		String searchForName = b.getString(AttributeMapper.FULL_NAME);
-		ContactManager.saveNewLocallyAddedContactAndSync(b,
-				account, getContext());
+		ContactManager.saveNewLocallyAddedContactAndSync(b, account,
+				getContext());
 		LinkedHashMap<Integer, Bundle> contacts = ContactManager
 				.loadContactList(getContext());
 		int id = -1;
 		boolean inserted_found = false;
 		for (Entry<Integer, Bundle> entry : contacts.entrySet()) {
 			String name = entry.getValue().getString(AttributeMapper.FULL_NAME);
-			if (name != null
-					&& name.equalsIgnoreCase(searchForName)) {
+			if (name != null && name.equalsIgnoreCase(searchForName)) {
 				if (inserted_found) {
 					fail("Multiple Entries found!");
 				} else {
@@ -79,23 +74,49 @@ public class UpdateDB extends android.test.AndroidTestCase {
 			Bundle insertedContact = ContactManager.loadContact(rawid,
 					getContext());
 			checkContactAttributes(insertContact, insertedContact);
-			for (String key : AttributeMapper.getContactAttrs()) {
+			for (String key : AttributeMapper.getDescAttrs()) {
+				if (!key.equalsIgnoreCase(AttributeMapper.DISPLAYNAME)) {
+					insertedContact.remove(key);
+					insertedContact.putString(key, key + "2");
+				}
+				checkUpdatedContact(account, rawid, insertedContact);
+			}
+			for (String key : AttributeMapper.getNameSubAttrs()) {
 				if (!key.equalsIgnoreCase(AttributeMapper.DISPLAYNAME)) {
 					insertedContact.remove(key);
 					insertedContact.putString(key, key + "2");
 				}
 			}
-			ContactManager.saveLocallyEditedContact(rawid, insertedContact,
-					account, getContext());
-			Bundle updatedcontact = ContactManager.loadContact(rawid,
-					getContext());
-			checkContactAttributes(insertedContact, updatedcontact);
+			checkUpdatedContact(account, rawid, insertedContact);
+			for (String key : AttributeMapper.getPostalHomeAddressAttrs()) {
+				if (!key.equalsIgnoreCase(AttributeMapper.DISPLAYNAME)) {
+					insertedContact.remove(key);
+					insertedContact.putString(key, key + "2");
+				}
+			}
+			checkUpdatedContact(account, rawid, insertedContact);
+			for (String key : AttributeMapper.getPostalWorkAddressAttrs()) {
+				if (!key.equalsIgnoreCase(AttributeMapper.DISPLAYNAME)) {
+					insertedContact.remove(key);
+					insertedContact.putString(key, key + "2");
+				}
+			}
+			checkUpdatedContact(account, rawid, insertedContact);
+
 			ContactManager.deleteLocalContact(rawid, getContext()
 					.getContentResolver());
 			cleanUpDatabase();
 		}
 	}
-	
+
+	private void checkUpdatedContact(Account account, int rawid,
+			Bundle insertedContact) {
+		ContactManager.saveLocallyEditedContact(rawid, insertedContact,
+				account, getContext());
+		Bundle updatedcontact = ContactManager.loadContact(rawid, getContext());
+		checkContactAttributes(insertedContact, updatedcontact);
+	}
+
 	public void testCreateSingleUpdateDeleteContact() {
 		cleanUpDatabase();
 		Account[] accounts = AccountManager.get(getContext()).getAccounts();
@@ -105,17 +126,10 @@ public class UpdateDB extends android.test.AndroidTestCase {
 			Bundle insertedContact = ContactManager.loadContact(rawid,
 					getContext());
 			checkContactAttributes(insertContact, insertedContact);
-			String initials = " Test ! ";
-			insertedContact.remove(AttributeMapper.INITIALS);
-			insertedContact.putString(AttributeMapper.INITIALS, initials);
-			Uri dataUri = Data.CONTENT_URI;
-			BatchOperation batch = new BatchOperation(getContext(),
-					getContext().getContentResolver());
-			ContactUtils.updateInitials(insertedContact, batch, dataUri, rawid);
-			batch.execute();
-			Bundle updatedcontact = ContactManager.loadContact(rawid,
-					getContext());
-			checkContactAttributes(insertedContact, updatedcontact);
+			String updatedvalue = " name ";
+			insertedContact.remove(AttributeMapper.STREET);
+			insertedContact.putString(AttributeMapper.STREET, updatedvalue);
+			checkUpdatedContact(account, rawid, insertedContact);
 			ContactManager.deleteLocalContact(rawid, getContext()
 					.getContentResolver());
 			cleanUpDatabase();
@@ -129,15 +143,10 @@ public class UpdateDB extends android.test.AndroidTestCase {
 			if (!key.equalsIgnoreCase(AttributeMapper.DISPLAYNAME)) {
 				String o = insertContact.getString(key);
 				String n = insertedContact.getString(key);
-				if(!o.equalsIgnoreCase(n)){
-					int test = 0;
-					assertEquals(o, n);	
-				}
-				
+				assertEquals(o, n);
 			}
 		}
 	}
-
 
 	public void testLocalInsertContact() {
 		cleanUpDatabase();

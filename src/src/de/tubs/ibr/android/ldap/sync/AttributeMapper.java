@@ -394,7 +394,7 @@ public final class AttributeMapper {
     hiddenAttrs = Collections.unmodifiableSet(hSet);
     postalAddressAttrs = Collections.unmodifiableSet(aSet);
     postalWorkAddressAttrs = Collections.unmodifiableSet(waSet);
-    postalHomeAddressAttrs = Collections.unmodifiableSet(waSet);
+    postalHomeAddressAttrs = Collections.unmodifiableSet(haSet);
     phoneNumberAttrs = Collections.unmodifiableSet(tSet);
     webAttrs = Collections.unmodifiableSet(wSet);
     orgaAttrs = Collections.unmodifiableSet(oSet);

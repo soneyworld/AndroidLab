@@ -507,18 +507,18 @@ public class LDAPSyncService extends Service {
     return data;
   }
   
-  private static Entry createLDAPEntryFromBundle(Bundle contact, String dn) {
-    Entry ldapentry = new Entry(dn);
-    for (String attr : contact.keySet()) {
-      String value = contact.getString(attr);
-      if (value != null && AttributeMapper.isContactAttr(attr)) {
-        ldapentry.addAttribute(attr, value);
-      }
-    }
-    ldapentry.addAttribute("objectClass", "inetOrgPerson");
-    ldapentry.addAttribute("objectClass", "organizationalPerson");
-    ldapentry.addAttribute("objectClass", "person");
-    ldapentry.addAttribute("objectClass", "top");
-    return ldapentry;
-  }
+//  private static Entry createLDAPEntryFromBundle(Bundle contact, String dn) {
+//    Entry ldapentry = new Entry(dn);
+//    for (String attr : contact.keySet()) {
+//      String value = contact.getString(attr);
+//      if (value != null && AttributeMapper.isContactAttr(attr)) {
+//        ldapentry.addAttribute(attr, value);
+//      }
+//    }
+//    ldapentry.addAttribute("objectClass", "inetOrgPerson");
+//    ldapentry.addAttribute("objectClass", "organizationalPerson");
+//    ldapentry.addAttribute("objectClass", "person");
+//    ldapentry.addAttribute("objectClass", "top");
+//    return ldapentry;
+//  }
 }

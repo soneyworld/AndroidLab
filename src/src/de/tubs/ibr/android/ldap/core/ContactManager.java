@@ -3,6 +3,7 @@ package de.tubs.ibr.android.ldap.core;
 import static com.unboundid.util.StaticUtils.EOL;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import android.accounts.Account;
@@ -315,7 +316,7 @@ public class ContactManager {
     if (batch == null) {
       batch = new BatchOperation(context, context.getContentResolver());
       executeDirectly = true;
-    } 
+    }
     Uri rawContactUri = null;
     Uri dataUri = null;
     if (onlyImportNotSync) {
@@ -549,44 +550,64 @@ public class ContactManager {
 
   private static void saveContact(int rawcontactId, Bundle contactupdate,
       final Account account, final Context context, BatchOperation batch) {
-    Bundle localcontact = createMapableBundle(loadContact(rawcontactId, context));
-    Set<String> insertKeys = createMapableBundle(contactupdate).keySet();
-    Set<String> deleteKeys = createMapableBundle(localcontact).keySet();
+    Bundle oldcontact = createMapableBundle(loadContact(rawcontactId, context));
+    Bundle newcontact = createMapableBundle(contactupdate);
+    Set<String> insertKeys = new LinkedHashSet<String>();
+    Set<String> deleteKeys = new LinkedHashSet<String>();
+    Set<String> keySet = new LinkedHashSet<String>();
+    keySet.addAll(oldcontact.keySet());
+    keySet.addAll(newcontact.keySet());
     Map<String, String> updateMap = new HashMap<String, String>();
-    String value;
-    String key;
-    for (Object k : localcontact.keySet().toArray()) {
-      key = (String) k;
-      value = localcontact.getString(key);
-      if (value == null) {
-        insertKeys.remove(key);
-      } else {
-        if (insertKeys.contains(key)) {
-          // Kann Update sein, oder keine Änderung und key muss gelöscht werden
-          if (!value.equals(contactupdate.getString(key))) {
-            updateMap.put(key, contactupdate.getString(key));
-          }
-          insertKeys.remove(key);
-        }
+    String oldvalue;
+    String newvalue;
+    for (String key : keySet) {
+      oldvalue = oldcontact.getString(key);
+      newvalue = contactupdate.getString(key);
+      if (oldvalue != null && newvalue != null) {
+        if (!oldvalue.equals(newvalue))
+          updateMap.put(key, newvalue);
+      } else if (newvalue != null) {
+        insertKeys.add(key);
+      } else if (oldvalue != null) {
+        deleteKeys.add(key);
       }
     }
-    for (Object k : contactupdate.keySet().toArray()) {
-      key = (String) k;
-      value = contactupdate.getString(key);
-      if (value == null) {
-        deleteKeys.remove(key);
-      } else {
-        if (deleteKeys.contains(key)) {
-          // Kann Update sein, oder keine Änderung und key muss gelöscht werden
-          if (!value.equals(localcontact.getString(key))) {
-            updateMap.put(key, value);
-          }
-          deleteKeys.remove(key);
+    // DATABASE FIX
+    for (String string : AttributeMapper.getNameSubAttrs()) {
+      if (updateMap.containsKey(string)) {
+        for (String s : AttributeMapper.getNameSubAttrs()) {
+          updateMap.put(s, newcontact.getString(s));
         }
+        break;
       }
     }
+    for (String string : AttributeMapper.getPostalHomeAddressAttrs()) {
+      if (updateMap.containsKey(string)) {
+        for (String s : AttributeMapper.getPostalHomeAddressAttrs()) {
+          updateMap.put(s, newcontact.getString(s));
+        }
+        break;
+      }
+    }
+    for (String string : AttributeMapper.getPostalWorkAddressAttrs()) {
+      if (updateMap.containsKey(string)) {
+        for (String s : AttributeMapper.getPostalWorkAddressAttrs()) {
+          updateMap.put(s, newcontact.getString(s));
+        }
+        break;
+      }
+    }
+    for (String string : AttributeMapper.getOrganizationSubAttrs()) {
+      if (updateMap.containsKey(string)) {
+        for (String s : AttributeMapper.getOrganizationSubAttrs()) {
+          updateMap.put(s, newcontact.getString(s));
+        }
+        break;
+      }
+    }
+    // END DATABASE FIX
     ContactUtils.createUpdateBatch(insertKeys, deleteKeys, updateMap, batch,
-        contactupdate, localcontact, Data.CONTENT_URI, rawcontactId);
+        contactupdate, oldcontact, Data.CONTENT_URI, rawcontactId);
   }
 
   public static void markContactToBeDeleted() {
