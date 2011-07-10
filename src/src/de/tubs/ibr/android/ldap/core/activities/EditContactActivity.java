@@ -548,7 +548,7 @@ public class EditContactActivity extends Activity implements
    */
   private Account getSelectedAccount() {
     Account[] accounts = AccountManager.get(this).getAccountsByType(
-        ACCOUNT_TYPE);
+        getString(R.string.ldap_provider_authority));
     for (Account a : accounts) {
       if (a.name.equals(((AccountData) mAccountSpinner.getSelectedItem())
           .getName())) {
