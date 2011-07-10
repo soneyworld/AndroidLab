@@ -103,7 +103,8 @@ public class ContactUtils {
   }
 
   static void createFullContact(final Account account, Bundle b,
-      BatchOperation batch, Uri rawContactUri, Uri dataUri, int rawContactIndex) {
+      BatchOperation batch, Uri rawContactUri, Uri dataUri) {
+    int rawContactIndex = batch.size();
     createRawContact(account, b, batch, rawContactUri);
     insertDataForContact(b, batch, dataUri, rawContactIndex);
   }
@@ -121,14 +122,9 @@ public class ContactUtils {
         dataUri, rawContactIndex);
   }
 
-  static void createFullContact(final Account account, Bundle b,
-      BatchOperation batch, Uri rawContactUri, Uri dataUri) {
-    createFullContact(account, b, batch, rawContactUri, dataUri, 0);
-  }
-
-  static void createDescription(Bundle b, BatchOperation batch, Uri dataUri) {
-    createDescription(b, batch, dataUri, 0);
-  }
+//  static void createDescription(Bundle b, BatchOperation batch, Uri dataUri) {
+//    createDescription(b, batch, dataUri, 0);
+//  }
 
   static void createDescription(Bundle b, BatchOperation batch, Uri dataUri,
       int rawContactIndex) {
@@ -213,9 +209,9 @@ public class ContactUtils {
     }
   }
 
-  public static void createSeeAlso(Bundle b, BatchOperation batch, Uri dataUri) {
-    createSeeAlso(b, batch, dataUri, 0);
-  }
+//  public static void createSeeAlso(Bundle b, BatchOperation batch, Uri dataUri) {
+//    createSeeAlso(b, batch, dataUri, 0);
+//  }
 
   public static void createSeeAlso(Bundle b, BatchOperation batch, Uri dataUri,
       int rawContactInsertIndex) {
@@ -230,10 +226,10 @@ public class ContactUtils {
     }
   }
 
-  public static void createOrganization(Bundle b, BatchOperation batch,
-      Uri dataUri) {
-    createOrganization(b, batch, dataUri, 0);
-  }
+//  public static void createOrganization(Bundle b, BatchOperation batch,
+//      Uri dataUri) {
+//    createOrganization(b, batch, dataUri, 0);
+//  }
 
   public static void createOrganization(Bundle b, BatchOperation batch,
       Uri dataUri, int rawContactInsertIndex) {
@@ -306,27 +302,29 @@ public class ContactUtils {
           .withValue(StructuredPostal.REGION, st).build());
     }
     ContactUtils.createLDAPRow(AttributeMapper.DESTINATION_INDICATOR,
-        destinationIndicator, batch, dataUri);
+        destinationIndicator, batch, dataUri, rawContactInsertIndex);
     ContactUtils.createLDAPRow(AttributeMapper.REGISTERED_ADDRESS,
-        registeredAddress, batch, dataUri);
+        registeredAddress, batch, dataUri, rawContactInsertIndex);
     ContactUtils.createLDAPRow(AttributeMapper.PREFERRED_DELIVERY_METHOD,
-        preferredDeliveryMethod, batch, dataUri);
+        preferredDeliveryMethod, batch, dataUri, rawContactInsertIndex);
   }
 
-  public static void createPhoneNumbers(Bundle b, BatchOperation batch,
-      Uri dataUri) {
-    createPhoneNumbers(b, batch, dataUri, 0);
-  }
+  //
+  // public static void createPhoneNumbers(Bundle b, BatchOperation batch,
+  // Uri dataUri) {
+  // createPhoneNumbers(b, batch, dataUri, 0);
+  // }
 
-  public static void createAddresses(Bundle b, BatchOperation batch, Uri dataUri) {
-    createAddresses(b, batch, dataUri, 0);
+  // public static void createAddresses(Bundle b, BatchOperation batch, Uri
+  // dataUri) {
+  // createAddresses(b, batch, dataUri, 0);
+  //
+  // }
 
-  }
-
-  public static void createLDAPRow(String key, String value,
-      BatchOperation batch, Uri dataUri) {
-    createLDAPRow(key, value, batch, dataUri, 0);
-  }
+  // public static void createLDAPRow(String key, String value,
+  // BatchOperation batch, Uri dataUri) {
+  // createLDAPRow(key, value, batch, dataUri, 0);
+  // }
 
   public static void createLDAPRow(String key, String value,
       BatchOperation batch, Uri dataUri, int rawContactInsertIndex) {
@@ -681,7 +679,6 @@ public class ContactUtils {
             .withValue(Phone.NUMBER, number).build());
       }
     }
-
   }
 
   private static void updateLDAPRows(Bundle action, BatchOperation batch,

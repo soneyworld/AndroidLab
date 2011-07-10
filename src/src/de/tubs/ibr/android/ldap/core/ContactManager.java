@@ -75,7 +75,6 @@ public class ContactManager {
 
   public static void addLDAPContactToAccount(Entry entry, Account account,
       BatchOperation batch) {
-    int rawContactInsertIndex = batch.size();
     Bundle contact = createBundleFromEntry(entry);
     // Check if the Entry is a Person and can be synchronized
     boolean isSyncable = false;
@@ -102,7 +101,7 @@ public class ContactManager {
     addSyncFieldsToBundle(contact, sourceId, SYNC_STATUS_IN_SYNC, "",
         entry.getDN() + objectClass, entry.toLDIFString());
     ContactUtils.createFullContact(account, contact, batch,
-        contentAsSyncAdapter, dataAsSyncAdapter, rawContactInsertIndex);
+        contentAsSyncAdapter, dataAsSyncAdapter);
   }
 
   private static void addSyncFieldsToBundle(Bundle b, String sourceId,
@@ -130,7 +129,6 @@ public class ContactManager {
    */
   public static void importLDAPContact(Entry entry, Account account,
       BatchOperation batch) {
-    int rawContactInsertIndex = batch.size();
     Bundle contact = createBundleFromEntry(entry);
     // List all LDAP ObjectClasses
     Uri contentAsSyncAdapter = RawContacts.CONTENT_URI.buildUpon()
@@ -140,7 +138,7 @@ public class ContactManager {
         .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
         .build();
     ContactUtils.createFullContact(account, contact, batch,
-        contentAsSyncAdapter, dataAsSyncAdapter, rawContactInsertIndex);
+        contentAsSyncAdapter, dataAsSyncAdapter);
 
   }
 
@@ -313,14 +311,11 @@ public class ContactManager {
   private static void saveNewLocallyAddedContact(Bundle b,
       final Context context, final Account account, BatchOperation batch,
       boolean onlyImportNotSync) {
-    int rawContactInsertIndex = 0;
     boolean executeDirectly = false;
     if (batch == null) {
       batch = new BatchOperation(context, context.getContentResolver());
       executeDirectly = true;
-    } else {
-      rawContactInsertIndex = batch.size();
-    }
+    } 
     Uri rawContactUri = null;
     Uri dataUri = null;
     if (onlyImportNotSync) {
@@ -349,8 +344,7 @@ public class ContactManager {
       b.putString(AttributeMapper.DN, dn);
     }
     // Prepare contact creation request
-    ContactUtils.createFullContact(account, b, batch, rawContactUri, dataUri,
-        rawContactInsertIndex);
+    ContactUtils.createFullContact(account, b, batch, rawContactUri, dataUri);
     if (executeDirectly) {
       // Ask the Contact provider to create a new contact
       try {
