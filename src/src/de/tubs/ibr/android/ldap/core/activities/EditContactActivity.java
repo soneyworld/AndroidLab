@@ -47,7 +47,6 @@ public class EditContactActivity extends Activity implements
   /* Data structures */
   public static final String TAG = "ContactsAdder";
   public static final String ACCOUNT_NAME = "LDAP";
-  public static final String ACCOUNT_TYPE = "de.tubs.ibr.ldap";
   private static final int STATUS_EDIT = 0;
   private static final int STATUS_INSERT = 1;
   private static final String KEY_EDIT_STATE = "state";
