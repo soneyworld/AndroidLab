@@ -13,8 +13,13 @@ import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.LDAPResult;
 import com.unboundid.ldap.sdk.LDAPSearchException;
+import com.unboundid.ldap.sdk.Modification;
+import com.unboundid.ldap.sdk.ModificationType;
+import com.unboundid.ldap.sdk.ResultCode;
 import com.unboundid.ldap.sdk.SearchRequest;
+import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import com.unboundid.ldif.LDIFException;
@@ -66,7 +71,7 @@ public class LDAPSyncService extends Service {
   }
 
   private static void updateLDAPContact(int id, Context context,
-      Account account, Entry entry, BatchOperation batch) {
+      Account account, Entry entry, BatchOperation batch, ServerInstance instance) {
     if (entry.getAttribute(AttributeMapper.ATTR_UID) == null) {
       return;
     }
@@ -116,38 +121,8 @@ public class LDAPSyncService extends Service {
     }
     if (status == SyncStatus.IN_SYNC) {
       // Check if ldap has new Data
-      Map<String, String> updateMap = new HashMap<String, String>();
-      Set<String> insertKeys = new LinkedHashSet<String>();
-      Set<String> deleteKeys = new LinkedHashSet<String>();
-      for (String oldkey : lastsyncstate.keySet()) {
-        if (actualremotestate.containsKey(oldkey)) {
-          String oldobj = (String) lastsyncstate.get(oldkey);
-          String newobj = (String) actualremotestate.get(oldkey);
-          if (!(oldobj != null && oldobj.equals(newobj))) {
-            updateMap.put(oldkey, newobj);
-          }
-        } else {
-          deleteKeys.add(oldkey);
-        }
-      }
-      for (String newkey : actualremotestate.keySet()) {
-        if (!lastsyncstate.containsKey(newkey)) {
-          insertKeys.add(newkey);
-        }
-      }
-      if (insertKeys.size() != 0 || deleteKeys.size() != 0
-          || updateMap.size() != 0) {
-        ContactUtils
-            .createUpdateBatch(insertKeys, deleteKeys, updateMap, batch,
-                actualremotestate, lastsyncstate, getDataAsSyncAdapter(), id);
-        batch.add(ContentProviderOperation
-            .newUpdate(
-                ContentUris.withAppendedId(getRawContactAsSyncAdapter(), id))
-            .withValue(RawContacts.SYNC1, ContactManager.SYNC_STATUS_IN_SYNC)
-            .withValue(RawContacts.SYNC2, "")
-            .withValue(RawContacts.SYNC4, entry.toLDIFString())
-            .withValue(RawContacts.DIRTY, "0").build());
-      }
+      saveLocalUpdate(id, entry.toLDIFString(), batch, actualremotestate,
+          lastsyncstate);
     } else if (status == SyncStatus.LOCALLY_MODIFIED) {
       // TODO Check if ldap has new Data and merge is possible
       Bundle actuallocalstate = ContactManager
@@ -155,7 +130,20 @@ public class LDAPSyncService extends Service {
       Bundle mergedstate = new Bundle();
       if (createMerge(actuallocalstate, actualremotestate, lastsyncstate,
           mergedstate)) {
-        // TODO Merged update to server and local state
+        // Save merge state to server
+        try{
+          Entry updatedEntry = updateLDAPServerEntry(entry, mergedstate,instance);
+          // Save merged state to local
+          saveLocalUpdate(id, updatedEntry.toLDIFString(), batch, mergedstate, lastsyncstate);
+        }catch (Exception e) {
+          batch.add(ContentProviderOperation
+              .newUpdate(
+                  ContentUris.withAppendedId(getRawContactAsSyncAdapter(), id))
+              .withValue(RawContacts.SYNC2, e.getMessage())
+              .build());
+          // TODO save exception to Contact
+        }
+
       } else {
         // Save as conflict
         batch.add(ContentProviderOperation
@@ -171,15 +159,101 @@ public class LDAPSyncService extends Service {
       Bundle mergedstate = new Bundle();
       if (createMerge(actuallocalstate, actualremotestate, lastsyncstate,
           mergedstate)) {
-        // TODO Merged update to server and local state
-        batch.add(ContentProviderOperation
-            .newUpdate(
-                ContentUris.withAppendedId(getRawContactAsSyncAdapter(), id))
-            .withValue(RawContacts.SYNC1, ContactManager.SYNC_STATUS_IN_SYNC)
-            .withValue(RawContacts.SYNC2, "")
-            .withValue(RawContacts.SYNC4, entry.toLDIFString())
-            .withValue(RawContacts.DIRTY, "0").build());
+        // Merged update to server
+        try{
+          Entry updatedEntry = updateLDAPServerEntry(entry, mergedstate,instance);
+          // Save merged state to local
+          saveLocalUpdate(id, updatedEntry.toLDIFString(), batch, mergedstate, lastsyncstate);
+        }catch (Exception e) {
+          // Saving excption to local contact
+          batch.add(ContentProviderOperation
+              .newUpdate(
+                  ContentUris.withAppendedId(getRawContactAsSyncAdapter(), id))
+              .withValue(RawContacts.SYNC2, e.getMessage())
+              .build());
+        }
       }
+    }
+  }
+
+  private static Entry updateLDAPServerEntry(Entry oldstate, Bundle mergedstate, ServerInstance serverInstance) throws Exception {
+    LDAPConnection connection = null;
+    String dn = oldstate.getDN();
+    Entry resultState = null;
+    Bundle oldcontact = ContactManager.createMapableBundle(ContactManager.createBundleFromEntry(oldstate));
+    try {
+      connection = serverInstance.getConnection();
+      List<Modification> modlist = new LinkedList<Modification>();
+      Set<String> keyset = new LinkedHashSet<String>();
+      keyset.addAll(oldcontact.keySet());
+      keyset.addAll(mergedstate.keySet());
+      for (String key : keyset) {
+        String old = oldcontact.getString(key);
+        String merged = mergedstate.getString(key);
+        if(old!=null && merged!=null){
+          if(!old.equals(merged))
+            modlist.add(new Modification(ModificationType.REPLACE, key,merged));
+        }else if( merged != null){
+          modlist.add(new Modification(ModificationType.ADD, key,merged));
+        }else if( old != null){
+          modlist.add(new Modification(ModificationType.DELETE, key));
+        }
+      }
+      LDAPResult result = connection.modify(dn, modlist);
+      String errormessage = result.getResultCode().toString();
+      if (result.getResultCode().intValue() == ResultCode.SUCCESS_INT_VALUE) {
+        SearchRequest request = new SearchRequest(dn, SearchScope.BASE,
+            Filter.create("(cn=*)"), SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
+            SearchRequest.ALL_USER_ATTRIBUTES);
+        SearchResult searchResults = connection.search(request);
+        if (searchResults.getSearchEntries().size() >= 1) {
+          resultState = searchResults.getSearchEntries().get(0);
+        }else{
+          throw new Exception("Error on updating LDAP entry \""+dn+"\": Couldn't find resulting entry!");
+        }
+      } else if (!ResultCode.isClientSideResultCode(result.getResultCode())) {
+        // TODO Notifiy the User about Server Problem
+        throw new Exception(errormessage);
+      }
+    } finally {
+      if (connection != null) {
+        connection.close();
+      }
+    }
+    return resultState;
+  }
+
+  private static void saveLocalUpdate(int id, String ldif,
+      BatchOperation batch, Bundle actualremotestate, Bundle lastsyncstate) {
+    Map<String, String> updateMap = new HashMap<String, String>();
+    Set<String> insertKeys = new LinkedHashSet<String>();
+    Set<String> deleteKeys = new LinkedHashSet<String>();
+    for (String oldkey : lastsyncstate.keySet()) {
+      if (actualremotestate.containsKey(oldkey)) {
+        String oldobj = (String) lastsyncstate.get(oldkey);
+        String newobj = (String) actualremotestate.get(oldkey);
+        if (!(oldobj != null && oldobj.equals(newobj))) {
+          updateMap.put(oldkey, newobj);
+        }
+      } else {
+        deleteKeys.add(oldkey);
+      }
+    }
+    for (String newkey : actualremotestate.keySet()) {
+      if (!lastsyncstate.containsKey(newkey)) {
+        insertKeys.add(newkey);
+      }
+    }
+    if (insertKeys.size() != 0 || deleteKeys.size() != 0
+        || updateMap.size() != 0) {
+      ContactUtils.createUpdateBatch(insertKeys, deleteKeys, updateMap, batch,
+          actualremotestate, lastsyncstate, getDataAsSyncAdapter(), id);
+      batch.add(ContentProviderOperation
+          .newUpdate(
+              ContentUris.withAppendedId(getRawContactAsSyncAdapter(), id))
+          .withValue(RawContacts.SYNC1, ContactManager.SYNC_STATUS_IN_SYNC)
+          .withValue(RawContacts.SYNC2, "").withValue(RawContacts.SYNC4, ldif)
+          .withValue(RawContacts.DIRTY, "0").build());
     }
   }
 
@@ -221,48 +295,48 @@ public class LDAPSyncService extends Service {
         }
       }
     }
-    return false;
+    return true;
   }
 
-  private boolean diffOfBundles(Bundle o, Bundle n) {
-    Set<String> insertKeys = o.keySet();
-    Set<String> deleteKeys = n.keySet();
-    Map<String, String> updateMap = new HashMap<String, String>();
-    String value;
-    String key;
-    for (Object k : o.keySet().toArray()) {
-      key = (String) k;
-      value = o.getString(key);
-      if (value == null) {
-        insertKeys.remove(key);
-      } else {
-        if (insertKeys.contains(key)) {
-          // Kann Update sein, oder keine Änderung und key muss gelöscht werden
-          if (!value.equals(n.getString(key))) {
-            updateMap.put(key, n.getString(key));
-          }
-          insertKeys.remove(key);
-        }
-      }
-    }
-    for (Object k : n.keySet().toArray()) {
-      key = (String) k;
-      value = n.getString(key);
-      if (value == null) {
-        deleteKeys.remove(key);
-      } else {
-        if (deleteKeys.contains(key)) {
-          // Kann Update sein, oder keine Änderung und key muss gelöscht werden
-          if (!value.equals(o.getString(key))) {
-            updateMap.put(key, value);
-          }
-          deleteKeys.remove(key);
-        }
-      }
-    }
-
-    return false;
-  }
+//  private boolean diffOfBundles(Bundle o, Bundle n) {
+//    Set<String> insertKeys = o.keySet();
+//    Set<String> deleteKeys = n.keySet();
+//    Map<String, String> updateMap = new HashMap<String, String>();
+//    String value;
+//    String key;
+//    for (Object k : o.keySet().toArray()) {
+//      key = (String) k;
+//      value = o.getString(key);
+//      if (value == null) {
+//        insertKeys.remove(key);
+//      } else {
+//        if (insertKeys.contains(key)) {
+//          // Kann Update sein, oder keine Änderung und key muss gelöscht werden
+//          if (!value.equals(n.getString(key))) {
+//            updateMap.put(key, n.getString(key));
+//          }
+//          insertKeys.remove(key);
+//        }
+//      }
+//    }
+//    for (Object k : n.keySet().toArray()) {
+//      key = (String) k;
+//      value = n.getString(key);
+//      if (value == null) {
+//        deleteKeys.remove(key);
+//      } else {
+//        if (deleteKeys.contains(key)) {
+//          // Kann Update sein, oder keine Änderung und key muss gelöscht werden
+//          if (!value.equals(o.getString(key))) {
+//            updateMap.put(key, value);
+//          }
+//          deleteKeys.remove(key);
+//        }
+//      }
+//    }
+//
+//    return false;
+//  }
 
   /**
    * Performs a sync on the Contacts saved on the local Phone comparing the
@@ -372,7 +446,7 @@ public class LDAPSyncService extends Service {
         rawContactId = localContacts.get(ldapuid);
         // update contact
         LDAPSyncService.updateLDAPContact(rawContactId, context, account, user,
-            batchOperation);
+            batchOperation, instance);
         localContacts.remove(ldapuid);
       } else {
         // add remote contact to local
@@ -425,5 +499,20 @@ public class LDAPSyncService extends Service {
         .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
         .build();
     return data;
+  }
+  
+  private static Entry createLDAPEntryFromBundle(Bundle contact, String dn) {
+    Entry ldapentry = new Entry(dn);
+    for (String attr : contact.keySet()) {
+      String value = contact.getString(attr);
+      if (value != null && AttributeMapper.isContactAttr(attr)) {
+        ldapentry.addAttribute(attr, value);
+      }
+    }
+    ldapentry.addAttribute("objectClass", "inetOrgPerson");
+    ldapentry.addAttribute("objectClass", "organizationalPerson");
+    ldapentry.addAttribute("objectClass", "person");
+    ldapentry.addAttribute("objectClass", "top");
+    return ldapentry;
   }
 }
