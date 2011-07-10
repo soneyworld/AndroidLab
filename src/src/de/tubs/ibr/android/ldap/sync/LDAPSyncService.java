@@ -107,50 +107,121 @@ public class LDAPSyncService extends Service {
     }
     Bundle actualremotestate = ContactManager
         .createMapableBundle(ContactManager.createBundleFromEntry(entry));
+    Bundle lastsyncstate = null;
+    if (lastSyncState != null) {
+      lastsyncstate = ContactManager.createMapableBundle(ContactManager
+          .createBundleFromEntry(lastSyncState));
+    } else {
+      lastsyncstate = new Bundle();
+    }
     if (status == SyncStatus.IN_SYNC) {
       // Check if ldap has new Data
-      if (lastSyncState != null) {
-        Bundle lastsyncstate = ContactManager
-            .createMapableBundle(ContactManager
-                .createBundleFromEntry(lastSyncState));
-        Map<String, String> updateMap = new HashMap<String, String>();
-        Set<String> insertKeys = new LinkedHashSet<String>();
-        Set<String> deleteKeys = new LinkedHashSet<String>();
-        for (String oldkey : lastsyncstate.keySet()) {
-          if (actualremotestate.containsKey(oldkey)) {
-            String oldobj = (String) lastsyncstate.get(oldkey);
-            String newobj = (String) actualremotestate.get(oldkey);
-            if (!(oldobj != null && oldobj.equals(newobj))) {
-              updateMap.put(oldkey, newobj);
-            }
-          } else {
-            deleteKeys.add(oldkey);
+      Map<String, String> updateMap = new HashMap<String, String>();
+      Set<String> insertKeys = new LinkedHashSet<String>();
+      Set<String> deleteKeys = new LinkedHashSet<String>();
+      for (String oldkey : lastsyncstate.keySet()) {
+        if (actualremotestate.containsKey(oldkey)) {
+          String oldobj = (String) lastsyncstate.get(oldkey);
+          String newobj = (String) actualremotestate.get(oldkey);
+          if (!(oldobj != null && oldobj.equals(newobj))) {
+            updateMap.put(oldkey, newobj);
           }
+        } else {
+          deleteKeys.add(oldkey);
         }
-        for (String newkey : actualremotestate.keySet()) {
-          if (!lastsyncstate.containsKey(newkey)) {
-            insertKeys.add(newkey);
-          }
+      }
+      for (String newkey : actualremotestate.keySet()) {
+        if (!lastsyncstate.containsKey(newkey)) {
+          insertKeys.add(newkey);
         }
-        if (insertKeys.size() != 0 || deleteKeys.size() != 0
-            || updateMap.size() != 0) {
-          ContactUtils.createUpdateBatch(insertKeys, deleteKeys, updateMap,
-              batch, actualremotestate, lastsyncstate, getDataAsSyncAdapter(),
-              id);
-          batch.add(ContentProviderOperation
-              .newUpdate(
-                  ContentUris.withAppendedId(getRawContactAsSyncAdapter(), id))
-              .withValue(RawContacts.SYNC1, ContactManager.SYNC_STATUS_IN_SYNC)
-              .withValue(RawContacts.SYNC2, "")
-              .withValue(RawContacts.SYNC4, entry.toLDIFString())
-              .withValue(RawContacts.DIRTY, "0").build());
-        }
+      }
+      if (insertKeys.size() != 0 || deleteKeys.size() != 0
+          || updateMap.size() != 0) {
+        ContactUtils
+            .createUpdateBatch(insertKeys, deleteKeys, updateMap, batch,
+                actualremotestate, lastsyncstate, getDataAsSyncAdapter(), id);
+        batch.add(ContentProviderOperation
+            .newUpdate(
+                ContentUris.withAppendedId(getRawContactAsSyncAdapter(), id))
+            .withValue(RawContacts.SYNC1, ContactManager.SYNC_STATUS_IN_SYNC)
+            .withValue(RawContacts.SYNC2, "")
+            .withValue(RawContacts.SYNC4, entry.toLDIFString())
+            .withValue(RawContacts.DIRTY, "0").build());
       }
     } else if (status == SyncStatus.LOCALLY_MODIFIED) {
       // TODO Check if ldap has new Data and merge is possible
+      Bundle actuallocalstate = ContactManager
+          .createMapableBundle(localcontact);
+      Bundle mergedstate = new Bundle();
+      if (createMerge(actuallocalstate, actualremotestate, lastsyncstate,
+          mergedstate)) {
+        // TODO Merged update to server and local state
+      } else {
+        // Save as conflict
+        batch.add(ContentProviderOperation
+            .newUpdate(
+                ContentUris.withAppendedId(getRawContactAsSyncAdapter(), id))
+            .withValue(RawContacts.SYNC1, ContactManager.SYNC_STATUS_CONFLICT)
+            .build());
+      }
     } else if (status == SyncStatus.CONFLICT) {
       // TODO try to solve conflict
+      Bundle actuallocalstate = ContactManager
+          .createMapableBundle(localcontact);
+      Bundle mergedstate = new Bundle();
+      if (createMerge(actuallocalstate, actualremotestate, lastsyncstate,
+          mergedstate)) {
+        // TODO Merged update to server and local state
+        batch.add(ContentProviderOperation
+            .newUpdate(
+                ContentUris.withAppendedId(getRawContactAsSyncAdapter(), id))
+            .withValue(RawContacts.SYNC1, ContactManager.SYNC_STATUS_IN_SYNC)
+            .withValue(RawContacts.SYNC2, "")
+            .withValue(RawContacts.SYNC4, entry.toLDIFString())
+            .withValue(RawContacts.DIRTY, "0").build());
+      }
     }
+  }
+
+  private static boolean createMerge(final Bundle actuallocalstate,
+      final Bundle actualremotestate, final Bundle oldstate, Bundle mergestate) {
+    Set<String> keyset = new LinkedHashSet<String>();
+    keyset.addAll(actuallocalstate.keySet());
+    keyset.addAll(actualremotestate.keySet());
+    for (String key : keyset) {
+      String local = actuallocalstate.getString(key);
+      String remote = actualremotestate.getString(key);
+      String old = oldstate.getString(key);
+      if (local != null && remote != null) {
+        // Are the values of the keys equal?
+        if (local.equals(remote)) {
+          mergestate.putString(key, local);
+        } else {
+          // Possible Conflict
+          if (local.equals(old)) {
+            mergestate.putString(key, remote);
+          } else if (remote.equals(old)) {
+            mergestate.putString(key, local);
+          } else {
+            // CONFLICT!!!
+            return false;
+          }
+        }
+      } else if (remote == null) {
+        // Possible new local entry
+        // If entry wasn't local before
+        if (old == null) {
+          mergestate.putString(key, local);
+        }
+      } else if (local == null) {
+        // Possible new remote entry
+        // If entry wasn't remote before
+        if (old == null) {
+          mergestate.putString(key, remote);
+        }
+      }
+    }
+    return false;
   }
 
   private boolean diffOfBundles(Bundle o, Bundle n) {
