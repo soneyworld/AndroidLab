@@ -547,7 +547,7 @@ public class EditContactActivity extends Activity implements
    */
   private Account getSelectedAccount() {
     Account[] accounts = AccountManager.get(this).getAccountsByType(
-        getString(R.string.ldap_provider_authority));
+        getString(R.string.ACCOUNT_TYPE));
     for (Account a : accounts) {
       if (a.name.equals(((AccountData) mAccountSpinner.getSelectedItem())
           .getName())) {
@@ -577,8 +577,7 @@ public class EditContactActivity extends Activity implements
     mAccounts.clear();
 
     // Get account data from system
-    AuthenticatorDescription[] accountTypes = AccountManager.get(this)
-        .getAuthenticatorTypes();
+    AuthenticatorDescription[] accountTypes = AccountManager.get(this).getAuthenticatorTypes();
 
     // Populate tables
     for (int i = 0; i < a.length; i++) {
@@ -586,10 +585,12 @@ public class EditContactActivity extends Activity implements
       // construct a
       // meaningful display name for each.
       String systemAccountType = a[i].type;
+      if (systemAccountType.equalsIgnoreCase(getString(R.string.ACCOUNT_TYPE))) {
       AuthenticatorDescription ad = getAuthenticatorDescription(
           systemAccountType, accountTypes);
       AccountData data = new AccountData(a[i].name, ad);
       mAccounts.add(data);
+      }
     }
     if (mSelectedAccount == null) {
       mSelectedAccount = (AccountData) mAccountSpinner.getItemAtPosition(0);
