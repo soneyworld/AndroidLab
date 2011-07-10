@@ -773,7 +773,7 @@ public class EditContactActivity extends Activity implements
       mBinder = (LDAPService.LDAPBinder) service;
       mBinder.setActivityCallBackHandler(messageHandler);
       mBinder.setRunnable(new ShowDirResultsRunnable(mContext));
-      for (Account acc : AccountManager.get(mContext).getAccounts()) {
+      for (Account acc : AccountManager.get(mContext).getAccountsByType(getString(R.string.ldap_provider_authority))) {
         if (acc.name.equals(mSelectedAccount.getName())
             && acc.type.equals(mSelectedAccount.getType())) {
           instance = new ServerInstance(AccountManager.get(mContext), acc);
