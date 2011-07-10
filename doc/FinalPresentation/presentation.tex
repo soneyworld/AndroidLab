@@ -119,32 +119,23 @@
 
 \frame{
  \frametitle{Wichtige Komponenten} 
+ \begin{block}{RawContacts}
+    \begin{itemize}
+        \item Kontaktdaten werden pro Account gespeichert
+	\item Sichtbarkeit im Kontaktbuch je nach Wunsch 
+    \end{itemize}
+ \end{block}
 \begin{block}{ContactManager}
  \begin{itemize}
    \item ...
    \item ...
  \end{itemize}
  \end{block}
-}
-
-\frame{
- \frametitle{Wichtige Komponenten} 
-\begin{block}{RawContacts}
-    \begin{itemize}
-        \item Kontaktdaten werden pro Account gespeichert
-	\item Sichtbarkeit im Kontaktbuch je nach Wunsch 
-    \end{itemize}
- \end{block}
- \begin{block}{SyncAdapter}
-    \begin{itemize}
-        \item Schnittstelle für Android zur Synchronisation
-    \end{itemize}
- \end{block}
-
-   \begin{block}{ContentProvider}
-    \begin{itemize}
-        \item Ersetzt durch LDAPSyncService
-    \end{itemize}
+ \begin{block}{ContactUtils}
+ \begin{itemize}
+   \item ...
+   \item ...
+ \end{itemize}
  \end{block}
 }
 
@@ -154,6 +145,22 @@
     \center\includegraphics[width=0.8\textwidth]{contacts-2.png}\\
     \tiny{Quelle: http://developer.android.com/resources/articles/contacts.html}
   \end{block}
+}
+
+\frame{
+ \frametitle{Wichtige Komponenten} 
+
+ \begin{block}{SyncAdapter}
+    \begin{itemize}
+        \item Schnittstelle für Android zur Synchronisation
+    \end{itemize}
+ \end{block}
+
+   \begin{block}{LDAPSyncService}
+    \begin{itemize}
+        \item Ersetz den ContentProvider
+    \end{itemize}
+ \end{block}
 }
 
 
@@ -190,8 +197,8 @@
  	  \begin{block}{Tatsaechliche Probleme}
    	      \begin{itemize}
                   \item OpenLDAP Bibliothek veraltet
-                  \item Vollstaendige Integration in die vorhandene Kontakte Anwendung nicht moeglich
-		  \item Content Provider Probleme
+                  \item Nahtlose Integration in die vorhandene Kontakte Anwendung nicht moeglich
+		  \item Probleme beim Mapping zwischen statischen und dynamischen Feldern
 		  \item ...
 		  \item ...
                   \item ...
@@ -246,10 +253,9 @@
 
 \frame{
  \frametitle{Ausblick} 
- \begin{block}{To Do}
+ \begin{block}{In Zukunft}
  \begin{itemize}
-    \item Merge, Conflict und Sync Prozesse verbessern
-    \item Testen
+    \item Funktionalitaet und Design verbessern
     \item Lizenz? Veroeffentlichung?
  \end{itemize}
  \end{block}

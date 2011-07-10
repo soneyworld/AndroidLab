@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.11 (TeX Live 2010) (format=pdflatex 2011.5.13)  10 JUL 2011 15:32
+This is pdfTeX, Version 3.1415926-1.40.11 (TeX Live 2010) (format=pdflatex 2011.5.13)  10 JUL 2011 21:28
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -978,15 +978,15 @@ File: projektplan.png Graphic file (type png)
 
 ] [8
 
-] [9
-
 ]
-<contacts-2.png, id=160, 354.57469pt x 191.9672pt>
+<contacts-2.png, id=148, 354.57469pt x 191.9672pt>
 File: contacts-2.png Graphic file (type png)
  <use contacts-2.png>
-[10
+[9
 
- <./contacts-2.png>] [11
+ <./contacts-2.png>] [10
+
+] [11
 
 ] [12
 
@@ -1016,10 +1016,10 @@ File: status.png Graphic file (type png)
 \tf@snm=\write8
 \openout8 = `presentation.snm'.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 272.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 272.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 278.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 278.
  (./presentation.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 272.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 278.
 Package rerunfilecheck Info: File `presentation.out' has not changed.
 (rerunfilecheck)             Checksum: D9DB6367F0B28299820974E7D934FF63;277.
 
@@ -1038,13 +1038,13 @@ Here is how much of TeX's memory you used:
  17252 multiletter control sequences out of 15000+200000
  7789 words of font info for 28 fonts, out of 3000000 for 9000
  714 hyphenation exceptions out of 8191
- 48i,13n,51p,320b,545s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 48i,13n,51p,320b,544s stack positions out of 5000i,500n,10000p,200000b,50000s
 </usr/local/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmss10.pfb
 ></usr/local/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmss12.pfb>
 </usr/local/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmss8.pfb></
 usr/local/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmssbx10.pfb><
 /usr/local/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb>
-Output written on presentation.pdf (17 pages, 333313 bytes).
+Output written on presentation.pdf (17 pages, 333639 bytes).
 PDF statistics:
  291 PDF objects out of 1000 (max. 8388607)
  249 compressed objects within 3 object streams
