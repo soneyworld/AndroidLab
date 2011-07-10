@@ -41,31 +41,35 @@
 \section{Projektziel}
 
 \frame{
- \frametitle{Grundsaetzliche Idee} 
- \begin{block}{Idee}
+ \frametitle{Motivation \& Ziel} 
+ \begin{block}{Motivation}
  \begin{itemize}
-    \item Anwendung zur Synchronisation von LDAP Verzeichnissen
-    \item Moeglichst gute Integration in die vorhandenen Systemanwendungen
-    \item ...
-    \item ....
-    \item ...
+    \item Kontaktsynchronisation mit vorhandenen Kontaktdatenbanken sehr wichtig
+    \item LDAP Verzeichnisse sehr verbreitet
+    \item Von Haus aus keine Moeglichkeit auf LDAP Verzeichnisse zuzugreifen
+
+ \end{itemize}
+ \end{block}
+  \begin{block}{Ziel}
+ \begin{itemize}
+    \item Integration in das interne Kontaktbuch und Synchronisation von Kontakten aus LDAP Verzeichnissen
 
  \end{itemize}
  \end{block}
  
- \
 }
 
+\section{Anforderungen}
 
 \frame{
  \frametitle{Synchronisation mit LDAP Kontakten} 
  \begin{block}{Funktionale Anforderungen}
  \begin{itemize}
-    \item Verbindung zu Server herstellen
+    \item Verbindung zu LDAP Server herstellen
     \item Kontakte des LDAP Servers durchsuchen
-    \item Kontakte importieren
-    \item Importierte Kontakte mit vorhandenen Kontakten zusammenführen
-    \item Änderungen synchronisieren
+    \item Kontakte in das Kontaktbuch des Mobiltelefons importieren
+    \item Importierte Kontakte ggfls. mit vorhandenen Kontakten zusammenführen
+    \item Bei Änderungen eines Kontakts, Server und Telefon synchronisieren
 
  \end{itemize}
  \end{block}
@@ -78,53 +82,51 @@
  \begin{block}{Nicht-funktionale Anforderungen}
  \begin{itemize}
     \item Intuitive Bedienung
-    \item So wenig GUI wie noetig
+    \item So wenig GUI wie moeglich
+    \item Hohe Integration in die vorhandenen Systemstrukturen
+    \item Geringe Akkubelastung
 
  \end{itemize}
  \end{block}
 }
 
-\section{Stand der Dinge}
-\frame{
-	\frametitle{Probleme}
-	
- 	  \begin{block}{Probleme}
-   	      \begin{itemize}
-                  \item Kontakte Anwendung von Google
-                    \begin{itemize}
-                      \item Nur Eingabe von Name moeglich
-                    \end{itemize}
-                  \item Importieren funktioniert
-		  \item neue Kontakte im LDAP werden automatisch im Kontaktbuch erstellt
-		  \item Kontakte löschen ist implementiert
-		  \item Exportieren/Synchronisieren in Arbeit
-                  \item Grafischen Oberfläche erstellt
-                  \item LDAP Server läuft
-                \end{itemize}
-           \end{block}
-}
+\section{Projektplan}
 
 \frame{
-	\frametitle{Loesungen}
-	
- 	  \begin{block}{Loesungen}
-   	      \begin{itemize}
-                  \item Eigener Kontakteditor
-                    \begin{itemize}
-                      \item Aufgerufen durch Intent aus der Kontakte Anwendung
-                    \end{itemize}
-                  \item Importieren funktioniert
-		  \item neue Kontakte im LDAP werden automatisch im Kontaktbuch erstellt
-		  \item Kontakte löschen ist implementiert
-		  \item Exportieren/Synchronisieren in Arbeit
-                  \item Grafischen Oberfläche erstellt
-                  \item LDAP Server läuft
-                \end{itemize}
-           \end{block}
+\frametitle{Projektplan}
+  \begin{block}{Zeitplan}
+    \center\includegraphics[width=0.9\textwidth]{projektplan.png}\\
+  \end{block}
 }
-
 
 \section{Grundlagen}
+\frame{
+ \frametitle{Wichtige Komponenten} 
+\begin{block}{AccountManager}
+ \begin{itemize}
+   \item Speichert alle LDAP Accounts, mit denen synchronisiert werden soll
+   \item Android übernimmt die Speicherung
+ \end{itemize}
+ \end{block}
+    \begin{block}{AccountAuthenticator}
+    \begin{itemize}
+      \item Schnittstelle um einen Account hinzuzufügen 
+      \item Ruft die AddServer Activity aus den Einstellungen auf
+      \item Speichert die Eingaben als Account ab
+    \end{itemize}
+ \end{block}
+}
+
+\frame{
+ \frametitle{Wichtige Komponenten} 
+\begin{block}{ContactManager}
+ \begin{itemize}
+   \item ...
+   \item ...
+ \end{itemize}
+ \end{block}
+}
+
 \frame{
  \frametitle{Wichtige Komponenten} 
 \begin{block}{RawContacts}
@@ -149,9 +151,73 @@
 \frame{
 \frametitle{Contact Database}
   \begin{block}{Datenstruktur der Kontakte}
-    \includegraphics[width=0.8\textwidth]{contacts-2.png}\\
+    \center\includegraphics[width=0.8\textwidth]{contacts-2.png}\\
     \tiny{Quelle: http://developer.android.com/resources/articles/contacts.html}
   \end{block}
+}
+
+
+\section{Probleme}
+
+\frame{
+ \frametitle{Synchronisation mit LDAP Kontakten} 
+ \begin{block}{Potenzielle Hindernisse}
+ \begin{itemize}
+    \item Integrationsprobleme in die Standard Kontakte des Android Betriebssystems
+    \begin{itemize}
+    \item Integration eigener Views in die App
+ \end{itemize}
+    \item Stromverbrauch zu hoch
+    \begin{itemize}
+    \item Anpassung des Synchronisationsverhaltens an die Akkuleistung
+ \end{itemize}
+    \item Aenderungen im LDAP Verzeichnis koennen nicht erkannt werden
+    \begin{itemize}
+    \item Push Server (nicht Teil dieses Projektes)
+ \end{itemize}
+    \item Inkompatibilitaet der OpenLDAP Bibliothek
+    \begin{itemize}
+    \item Recherche und Verwendung anderer Bibliotheken
+ \end{itemize}
+
+ \end{itemize}
+ \end{block}
+}
+
+\frame{
+	\frametitle{Tatsaechliche Probleme}
+	
+ 	  \begin{block}{Tatsaechliche Probleme}
+   	      \begin{itemize}
+                  \item OpenLDAP Bibliothek veraltet
+                  \item Vollstaendige Integration in die vorhandene Kontakte Anwendung nicht moeglich
+		  \item Content Provider Probleme
+		  \item ...
+		  \item ...
+                  \item ...
+                  \item ...
+                \end{itemize}
+           \end{block}
+}
+
+\frame{
+	\frametitle{Loesungen}
+	
+ 	  \begin{block}{Loesungen}
+   	      \begin{itemize}
+	      \item Einsatz des LDAP SDK von UnboundID
+                  \item Eigener Kontakteditor
+                    \begin{itemize}
+                      \item Aufgerufen durch Intent aus der Kontakte Anwendung
+                    \end{itemize}
+                  
+		  \item Umsetzung als Service
+		  \item ...
+		  \item ...
+                  \item ...
+                  \item ...
+                \end{itemize}
+           \end{block}
 }
 
 \frame{
@@ -182,10 +248,9 @@
  \frametitle{Ausblick} 
  \begin{block}{To Do}
  \begin{itemize}
-    \item Merge und Sync Prozesse
+    \item Merge, Conflict und Sync Prozesse verbessern
     \item Testen
-    \item SyncTab implementieren
-    \item Kontakteditor vervollständigen
+    \item Lizenz? Veroeffentlichung?
  \end{itemize}
  \end{block}
 }
