@@ -124,7 +124,7 @@ public class LDAPSyncService extends Service {
       saveLocalUpdate(id, entry.toLDIFString(), batch, actualremotestate,
           lastsyncstate);
     } else if (status == SyncStatus.LOCALLY_MODIFIED) {
-      // TODO Check if ldap has new Data and merge is possible
+      // Check if ldap has new Data and merge is possible
       Bundle actuallocalstate = ContactManager
           .createMapableBundle(localcontact);
       Bundle mergedstate = new Bundle();
@@ -141,7 +141,6 @@ public class LDAPSyncService extends Service {
                   ContentUris.withAppendedId(getRawContactAsSyncAdapter(), id))
               .withValue(RawContacts.SYNC2, e.getMessage())
               .build());
-          // TODO save exception to Contact
         }
 
       } else {
@@ -153,7 +152,7 @@ public class LDAPSyncService extends Service {
             .build());
       }
     } else if (status == SyncStatus.CONFLICT) {
-      // TODO try to solve conflict
+      // try to solve conflict
       Bundle actuallocalstate = ContactManager
           .createMapableBundle(localcontact);
       Bundle mergedstate = new Bundle();
@@ -223,6 +222,13 @@ public class LDAPSyncService extends Service {
     return resultState;
   }
 
+  /**
+   * @param id is the rawcontact id
+   * @param ldif is the ldif of the actual synced state
+   * @param batch 
+   * @param actualremotestate 
+   * @param lastsyncstate
+   */
   private static void saveLocalUpdate(int id, String ldif,
       BatchOperation batch, Bundle actualremotestate, Bundle lastsyncstate) {
     Map<String, String> updateMap = new HashMap<String, String>();
@@ -350,7 +356,7 @@ public class LDAPSyncService extends Service {
    * @param syncResult
    * @throws OperationCanceledException
    */
-  protected static void performSync(Context context, Account account,
+  public static void performSync(Context context, Account account,
       Bundle extras, String authority, ContentProviderClient provider,
       SyncResult syncResult) throws OperationCanceledException {
     // Contacts which has been deleted by the user are only marked as deleted,
