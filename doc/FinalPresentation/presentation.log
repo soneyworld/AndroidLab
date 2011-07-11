@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.11 (TeX Live 2010) (format=pdflatex 2011.5.13)  10 JUL 2011 21:28
+This is pdfTeX, Version 3.1415926-1.40.11 (TeX Live 2010) (format=pdflatex 2011.5.13)  11 JUL 2011 14:02
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -995,16 +995,20 @@ File: contacts-2.png Graphic file (type png)
 ] [14
 
 ]
-<git.png, id=223, 820.06375pt x 156.585pt>
+<git.png, id=223, 827.09pt x 169.63374pt>
 File: git.png Graphic file (type png)
- <use git.png>
-<status.png, id=224, 651.43375pt x 78.2925pt>
+ <use git.png> [15
+
+ <./git.png (PNG copy)>] <status2.png, id=236, 652.4375pt x 190.7125pt>
+File: status2.png Graphic file (type png)
+ <use status2.png>
+<status.png, id=237, 654.445pt x 72.27pt>
 File: status.png Graphic file (type png)
- <use status.png> [15
+ <use status.png> [16
 
- <./git.png (PNG copy)> <./status.png (PNG copy)>] [16
+ <./status2.png (PNG copy)> <./status.png (PNG copy)>] [17
 
-] [17
+] [18
 
 ]
 \tf@nav=\write6
@@ -1016,10 +1020,10 @@ File: status.png Graphic file (type png)
 \tf@snm=\write8
 \openout8 = `presentation.snm'.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 278.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 278.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 285.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 285.
  (./presentation.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 278.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 285.
 Package rerunfilecheck Info: File `presentation.out' has not changed.
 (rerunfilecheck)             Checksum: D9DB6367F0B28299820974E7D934FF63;277.
 
@@ -1032,10 +1036,10 @@ LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
  ) 
 Here is how much of TeX's memory you used:
- 14420 strings out of 493747
- 259819 string characters out of 3143546
+ 14429 strings out of 493747
+ 259928 string characters out of 3143546
  349370 words of memory out of 3000000
- 17252 multiletter control sequences out of 15000+200000
+ 17258 multiletter control sequences out of 15000+200000
  7789 words of font info for 28 fonts, out of 3000000 for 9000
  714 hyphenation exceptions out of 8191
  48i,13n,51p,320b,544s stack positions out of 5000i,500n,10000p,200000b,50000s
@@ -1044,10 +1048,10 @@ Here is how much of TeX's memory you used:
 </usr/local/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmss8.pfb></
 usr/local/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmssbx10.pfb><
 /usr/local/texlive/2010/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb>
-Output written on presentation.pdf (17 pages, 333639 bytes).
+Output written on presentation.pdf (18 pages, 366623 bytes).
 PDF statistics:
- 291 PDF objects out of 1000 (max. 8388607)
- 249 compressed objects within 3 object streams
- 40 named destinations out of 1000 (max. 500000)
- 126 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 304 PDF objects out of 1000 (max. 8388607)
+ 260 compressed objects within 3 object streams
+ 42 named destinations out of 1000 (max. 500000)
+ 131 words of extra memory for PDF output out of 10000 (max. 10000000)
 

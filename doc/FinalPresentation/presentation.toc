@@ -4,4 +4,4 @@
 \beamer@sectionintoc {3}{Projektplan}{6}{0}{3}
 \beamer@sectionintoc {4}{Grundlagen}{7}{0}{4}
 \beamer@sectionintoc {5}{Probleme}{11}{0}{5}
-\beamer@sectionintoc {6}{Ausblick}{16}{0}{6}
+\beamer@sectionintoc {6}{Ausblick}{17}{0}{6}
