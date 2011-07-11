@@ -1,7 +1,0 @@
-\beamer@endinputifotherversion {3.10pt}
-\beamer@sectionintoc {1}{Projektziel}{3}{0}{1}
-\beamer@sectionintoc {2}{Anforderungen}{4}{0}{2}
-\beamer@sectionintoc {3}{Projektplan}{6}{0}{3}
-\beamer@sectionintoc {4}{Grundlagen}{7}{0}{4}
-\beamer@sectionintoc {5}{Probleme}{11}{0}{5}
-\beamer@sectionintoc {6}{Ausblick}{17}{0}{6}
