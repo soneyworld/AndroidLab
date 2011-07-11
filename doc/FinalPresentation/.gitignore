@@ -1,1 +1,7 @@
 *.tex~
+*.backup
+presentation.aux
+presentation.log
+presentation.nav
+presentation.out
+presentation.toc

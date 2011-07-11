@@ -117,36 +117,38 @@
  \end{block}
 }
 
+
+
 \frame{
- \frametitle{Wichtige Komponenten} 
+\frametitle{Android Kontaktdatenbank}
+  \begin{block}{Datenstruktur der Kontakte}
+    \center\includegraphics[width=0.5\textwidth]{contacts-2.png}\\
+    \tiny{Quelle: http://developer.android.com/resources/articles/contacts.html}
+  \end{block}
  \begin{block}{RawContacts}
     \begin{itemize}
         \item Kontaktdaten werden pro Account gespeichert
-	\item Sichtbarkeit im Kontaktbuch je nach Wunsch 
+  \item Sichtbarkeit im Kontaktbuch je nach Wunsch 
     \end{itemize}
  \end{block}
+
+}
+\frame{
+ \frametitle{Wichtige Komponenten} 
 \begin{block}{ContactManager}
  \begin{itemize}
-   \item ...
-   \item ...
+    \item Kontakte werden als Bundle repräsentiert
+   \item Laden und Speichern von Kontakten
+   \item Generieren von Kontakten aus LDAP Einträgen
  \end{itemize}
  \end{block}
  \begin{block}{ContactUtils}
  \begin{itemize}
-   \item ...
-   \item ...
+   \item SQLite Batch Befehle
+   \item Mapping von LDAP auf Android
  \end{itemize}
  \end{block}
 }
-
-\frame{
-\frametitle{Contact Database}
-  \begin{block}{Datenstruktur der Kontakte}
-    \center\includegraphics[width=0.8\textwidth]{contacts-2.png}\\
-    \tiny{Quelle: http://developer.android.com/resources/articles/contacts.html}
-  \end{block}
-}
-
 \frame{
  \frametitle{Wichtige Komponenten} 
 
@@ -155,10 +157,16 @@
         \item Schnittstelle für Android zur Synchronisation
     \end{itemize}
  \end{block}
-
-   \begin{block}{LDAPSyncService}
+\begin{block}{LDAPSyncService}
     \begin{itemize}
-        \item Ersetz den ContentProvider
+        \item Organisiert die Synchronisation
+    \end{itemize}
+ \end{block}
+
+   \begin{block}{LDAPService}
+    \begin{itemize}
+        \item Asynchrone LDAP Anfragen
+        \item Ersetzt den ursprünglichen geplanten ContentProvider 
     \end{itemize}
  \end{block}
 }
@@ -199,10 +207,8 @@
                   \item OpenLDAP Bibliothek veraltet
                   \item Nahtlose Integration in die vorhandene Kontakte Anwendung nicht möglich
 		  \item Probleme beim Mapping zwischen statischen und dynamischen Feldern
-		  \item ...
-		  \item ...
-                  \item ...
-                  \item ...
+		  \item Android SQLite Statements
+		  \item Android SQLite Trigger
                 \end{itemize}
            \end{block}
 }
@@ -219,10 +225,9 @@
                     \end{itemize}
                   
 		  \item Umsetzung als Service
-		  \item ...
-		  \item ...
-                  \item ...
-                  \item ...
+		  \item DIRTY Database Hacks
+%                   \item ...
+%                   \item ...
                 \end{itemize}
            \end{block}
 }
