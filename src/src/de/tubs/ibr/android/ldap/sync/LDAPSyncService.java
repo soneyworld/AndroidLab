@@ -75,11 +75,12 @@ public class LDAPSyncService extends Service {
     return sSyncAdapter.getSyncAdapterBinder();
   }
 
-  private static void updateLDAPContact(int id, Context context,
+  private static boolean updateLDAPContact(int id, Context context,
       Account account, Entry entry, BatchOperation batch,
       ServerInstance instance) {
+    boolean isConflictFree = true;
     if (entry.getAttribute(AttributeMapper.ATTR_UID) == null) {
-      return;
+      return isConflictFree;
     }
     Bundle localcontact = ContactManager.loadContact(id, context);
     SyncStatus status = SyncStatus.IN_SYNC;
@@ -101,7 +102,7 @@ public class LDAPSyncService extends Service {
             .startsWith(ContactManager.SYNC_STATUS_MARKED_AS_SOLVED)) {
           status = SyncStatus.MARK_AS_SOLVED;
         } else {
-          return;
+          return isConflictFree;
         }
       }
     }
@@ -161,19 +162,7 @@ public class LDAPSyncService extends Service {
             .withValue(RawContacts.SYNC1, ContactManager.SYNC_STATUS_CONFLICT)
             .build());
         // Notify user
-        final NotificationManager nm = (NotificationManager) context
-            .getSystemService(Context.NOTIFICATION_SERVICE);
-        String text = "Conflict happend on sync";
-        Notification notification = new Notification(
-            R.drawable.stat_notify_error, text, System.currentTimeMillis());
-        final Intent notifyIntent = new Intent(context, ConflictActivity.class);
-        notifyIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        notifyIntent.putExtra("id", id);
-        final PendingIntent startIntent = PendingIntent.getActivity(context, 0,
-            notifyIntent, 0);
-        notification.setLatestEventInfo(context, "Sync conflict",
-            "solve conflict of "+id, startIntent);
-        nm.notify(id, notification);
+        isConflictFree = false;
       }
     } else if (status == SyncStatus.CONFLICT) {
       // try to solve conflict
@@ -187,12 +176,11 @@ public class LDAPSyncService extends Service {
           Entry updatedEntry = updateLDAPServerEntry(entry, mergedstate,
               instance);
           // Save merged state to local
+          if(updatedEntry!=null)
           saveLocalUpdate(id, updatedEntry.toLDIFString(), batch, mergedstate,
               lastsyncstate);
           // Notifications should be deleted
-          final NotificationManager nm = (NotificationManager) context
-              .getSystemService(Context.NOTIFICATION_SERVICE);
-          nm.cancel(id);
+          isConflictFree = true;
         } catch (Exception e) {
           // Saving excption to local contact
           batch.add(ContentProviderOperation
@@ -201,23 +189,12 @@ public class LDAPSyncService extends Service {
               .withValue(RawContacts.SYNC2, e.getMessage()).build());
         }
       } else {
-        final NotificationManager nm = (NotificationManager) context
-            .getSystemService(Context.NOTIFICATION_SERVICE);
-        String text = "Conflict happend on sync";
-        Notification notification = new Notification(
-            R.drawable.stat_notify_error, text, System.currentTimeMillis());
-        final Intent notifyIntent = new Intent(context, ConflictActivity.class);
-        notifyIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        notifyIntent.putExtra("id", id);
-        final PendingIntent startIntent = PendingIntent.getActivity(context, 0,
-            notifyIntent, 0);
-        notification.setLatestEventInfo(context, "Sync conflict",
-            "solve conflict of "+id, startIntent);
-        nm.notify(id, notification);
+        isConflictFree = false;
       }
     } else if (status == SyncStatus.MARK_AS_SOLVED) {
       // TODO Handle this
     }
+    return isConflictFree;
   }
 
   private static Entry updateLDAPServerEntry(Entry oldstate,
@@ -264,6 +241,18 @@ public class LDAPSyncService extends Service {
         } else if (!ResultCode.isClientSideResultCode(result.getResultCode())) {
           // TODO Notifiy the User about Server Problem
           throw new Exception(errormessage);
+        }
+      }else{
+        SearchRequest request = new SearchRequest(dn, SearchScope.BASE,
+            Filter.create("(cn=*)"),
+            SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
+            SearchRequest.ALL_USER_ATTRIBUTES);
+        SearchResult searchResults = connection.search(request);
+        if (searchResults.getSearchEntries().size() >= 1) {
+          resultState = searchResults.getSearchEntries().get(0);
+        } else {
+          throw new Exception("Error on updating LDAP entry \"" + dn
+              + "\": Couldn't find resulting entry!");
         }
       }
     } finally {
@@ -460,6 +449,7 @@ public class LDAPSyncService extends Service {
     AccountManager accountManager = AccountManager.get(context);
     ServerInstance instance = new ServerInstance(accountManager, account);
     List<SearchResultEntry> ldapresult = null;
+    int conflictCount = 0;
     try {
       conn = instance.getConnection();
       // If a filter was saved for this account, respect him, otherwise use
@@ -505,8 +495,10 @@ public class LDAPSyncService extends Service {
       if (localContacts.containsKey(ldapuid)) {
         rawContactId = localContacts.get(ldapuid);
         // update contact
-        LDAPSyncService.updateLDAPContact(rawContactId, context, account, user,
-            batchOperation, instance);
+        if (!LDAPSyncService.updateLDAPContact(rawContactId, context, account,
+            user, batchOperation, instance)) {
+          conflictCount++;
+        }
         localContacts.remove(ldapuid);
       } else {
         // add remote contact to local
@@ -538,7 +530,29 @@ public class LDAPSyncService extends Service {
     // A sync adapter should batch operations on multiple contacts,
     // because it will make a dramatic performance difference.
     batchOperation.execute();
-
+    if (conflictCount>0) {
+      final NotificationManager nm = (NotificationManager) context
+          .getSystemService(Context.NOTIFICATION_SERVICE);
+      String text = "Conflict happend on sync";
+      Notification notification = new Notification(
+          R.drawable.stat_notify_error, text, System.currentTimeMillis());
+      final Intent notifyIntent = new Intent(context, ConflictActivity.class);
+      notifyIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+      final PendingIntent startIntent = PendingIntent.getActivity(context, 0,
+          notifyIntent, 0);
+      if(conflictCount>1){
+        notification.setLatestEventInfo(context, "Sync conflicts",
+          "solve "+ conflictCount+ " conflicts", startIntent);
+      }else{
+        notification.setLatestEventInfo(context, "Sync conflict",
+            "solve conflict", startIntent);
+      }
+      nm.notify(ConflictActivity.CONFLICT_LIST, notification);
+    } else {
+      final NotificationManager nm = (NotificationManager) context
+          .getSystemService(Context.NOTIFICATION_SERVICE);
+      nm.cancel(ConflictActivity.CONFLICT_LIST);
+    }
   }
 
   private static List<SearchResultEntry> scanImportedContacts()
