@@ -627,6 +627,14 @@ public class EditContactActivity extends Activity implements
   private void updateAccountSelection() {
     // Read current account selection
     mSelectedAccount = (AccountData) mAccountSpinner.getSelectedItem();
+    for (Account acc : AccountManager.get(mContext).getAccounts()) {
+      if (acc.name.equals(mSelectedAccount.getName())
+          && acc.type.equals(mSelectedAccount.getType())) {
+        instance = new ServerInstance(AccountManager.get(mContext), acc);
+        break;
+      }
+    }
+    mBinder.searchDirs(instance);
   }
 
   /**
@@ -774,7 +782,7 @@ public class EditContactActivity extends Activity implements
       mBinder = (LDAPService.LDAPBinder) service;
       mBinder.setActivityCallBackHandler(messageHandler);
       mBinder.setRunnable(new ShowDirResultsRunnable(mContext));
-      for (Account acc : AccountManager.get(mContext).getAccountsByType(getString(R.string.ldap_provider_authority))) {
+      for (Account acc : AccountManager.get(mContext).getAccounts()) {
         if (acc.name.equals(mSelectedAccount.getName())
             && acc.type.equals(mSelectedAccount.getType())) {
           instance = new ServerInstance(AccountManager.get(mContext), acc);
