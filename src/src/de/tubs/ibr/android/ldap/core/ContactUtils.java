@@ -23,16 +23,24 @@ import android.provider.ContactsContract.RawContacts;
 
 public class ContactUtils {
 
-  static void createStructuredName(Bundle b, BatchOperation batch, Uri dataUri) {
-    createStructuredName(b, batch, dataUri, 0);
-  }
+  // static void createStructuredName(Bundle b, BatchOperation batch, Uri
+  // dataUri) {
+  // createStructuredName(b, batch, dataUri, 0);
+  // }
 
   static void createStructuredName(Bundle b, BatchOperation batch, Uri dataUri,
-      int rawContactIndex) {
+      int rawContactIndex, boolean withBackReference) {
     boolean insert = false;
-    Builder contact = ContentProviderOperation.newInsert(dataUri)
-        .withValueBackReference(Data.RAW_CONTACT_ID, rawContactIndex)
-        .withValue(Data.MIMETYPE, StructuredName.CONTENT_ITEM_TYPE);
+    Builder contact;
+    if (withBackReference) {
+      contact = ContentProviderOperation.newInsert(dataUri)
+          .withValueBackReference(Data.RAW_CONTACT_ID, rawContactIndex)
+          .withValue(Data.MIMETYPE, StructuredName.CONTENT_ITEM_TYPE);
+    } else {
+      contact = ContentProviderOperation.newInsert(dataUri)
+          .withValue(Data.RAW_CONTACT_ID, rawContactIndex)
+          .withValue(Data.MIMETYPE, StructuredName.CONTENT_ITEM_TYPE);
+    }
     String s = b.getString(AttributeMapper.FULL_NAME);
     if (s != null) {
       contact = contact.withValue(StructuredName.DISPLAY_NAME, s);
@@ -59,28 +67,44 @@ public class ContactUtils {
     createInitials(b, batch, dataUri, rawContactIndex);
   }
 
-  static void createMail(Bundle b, BatchOperation batch, Uri dataUri) {
-    createMail(b, batch, dataUri, 0);
-  }
+  // static void createMail(Bundle b, BatchOperation batch, Uri dataUri) {
+  // createMail(b, batch, dataUri, 0);
+  // }
 
   static void createMail(Bundle b, BatchOperation batch, Uri dataUri,
-      int rawContactIndex) {
+      int rawContactIndex, boolean withBackReference) {
     String mail = b.getString(AttributeMapper.PRIMARY_MAIL);
     @SuppressWarnings("deprecation")
     String alternateMail = b.getString(AttributeMapper.ALTERNATE_MAIL);
     if (mail != null && mail.length() > 0) {
-      batch.add(ContentProviderOperation.newInsert(dataUri)
-          .withValueBackReference(Data.RAW_CONTACT_ID, rawContactIndex)
-          .withValue(Data.MIMETYPE, Email.CONTENT_ITEM_TYPE)
-          .withValue(Email.DATA, mail).withValue(Email.TYPE, Email.TYPE_WORK)
-          .build());
+      if (withBackReference) {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValueBackReference(Data.RAW_CONTACT_ID, rawContactIndex)
+            .withValue(Data.MIMETYPE, Email.CONTENT_ITEM_TYPE)
+            .withValue(Email.DATA, mail).withValue(Email.TYPE, Email.TYPE_WORK)
+            .build());
+      } else {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValue(Data.RAW_CONTACT_ID, rawContactIndex)
+            .withValue(Data.MIMETYPE, Email.CONTENT_ITEM_TYPE)
+            .withValue(Email.DATA, mail).withValue(Email.TYPE, Email.TYPE_WORK)
+            .build());
+      }
     }
     if (alternateMail != null && alternateMail.length() > 0) {
-      batch.add(ContentProviderOperation.newInsert(dataUri)
-          .withValueBackReference(Data.RAW_CONTACT_ID, rawContactIndex)
-          .withValue(Data.MIMETYPE, Email.CONTENT_ITEM_TYPE)
-          .withValue(Email.DATA, alternateMail)
-          .withValue(Email.TYPE, Email.TYPE_HOME).build());
+      if (withBackReference) {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValueBackReference(Data.RAW_CONTACT_ID, rawContactIndex)
+            .withValue(Data.MIMETYPE, Email.CONTENT_ITEM_TYPE)
+            .withValue(Email.DATA, alternateMail)
+            .withValue(Email.TYPE, Email.TYPE_HOME).build());
+      } else {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValue(Data.RAW_CONTACT_ID, rawContactIndex)
+            .withValue(Data.MIMETYPE, Email.CONTENT_ITEM_TYPE)
+            .withValue(Email.DATA, alternateMail)
+            .withValue(Email.TYPE, Email.TYPE_HOME).build());
+      }
     }
   }
 
@@ -108,20 +132,20 @@ public class ContactUtils {
       BatchOperation batch, Uri rawContactUri, Uri dataUri) {
     int rawContactIndex = batch.size();
     createRawContact(account, b, batch, rawContactUri);
-    insertDataForContact(b, batch, dataUri, rawContactIndex);
+    insertDataForContact(b, batch, dataUri, rawContactIndex, true);
   }
 
   static void insertDataForContact(Bundle b, BatchOperation batch, Uri dataUri,
-      int rawContactIndex) {
-    createStructuredName(b, batch, dataUri, rawContactIndex);
-    createDescription(b, batch, dataUri, rawContactIndex);
-    createPhoneNumbers(b, batch, dataUri, rawContactIndex);
-    createMail(b, batch, dataUri, rawContactIndex);
-    createAddresses(b, batch, dataUri, rawContactIndex);
-    createSeeAlso(b, batch, dataUri, rawContactIndex);
-    createOrganization(b, batch, dataUri, rawContactIndex);
+      int rawContactIndex, boolean withBackReference) {
+    createStructuredName(b, batch, dataUri, rawContactIndex, withBackReference);
+    createDescription(b, batch, dataUri, rawContactIndex, withBackReference);
+    createPhoneNumbers(b, batch, dataUri, rawContactIndex, withBackReference);
+    createMail(b, batch, dataUri, rawContactIndex, withBackReference);
+    createAddresses(b, batch, dataUri, rawContactIndex, withBackReference);
+    createSeeAlso(b, batch, dataUri, rawContactIndex, withBackReference);
+    createOrganization(b, batch, dataUri, rawContactIndex, withBackReference);
     createLDAPRow(AttributeMapper.UID, b.getString(AttributeMapper.UID), batch,
-        dataUri, rawContactIndex);
+        dataUri, rawContactIndex, withBackReference);
   }
 
   // static void createDescription(Bundle b, BatchOperation batch, Uri dataUri)
@@ -130,13 +154,20 @@ public class ContactUtils {
   // }
 
   static void createDescription(Bundle b, BatchOperation batch, Uri dataUri,
-      int rawContactIndex) {
+      int rawContactIndex, boolean withBackReference) {
     String description = b.getString(AttributeMapper.DESCRIPTION);
     if (description != null && description.length() > 0) {
-      batch.add(ContentProviderOperation.newInsert(dataUri)
-          .withValueBackReference(Data.RAW_CONTACT_ID, 0)
-          .withValue(Data.MIMETYPE, Note.CONTENT_ITEM_TYPE)
-          .withValue(Note.NOTE, description).build());
+      if (withBackReference) {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValueBackReference(Data.RAW_CONTACT_ID, 0)
+            .withValue(Data.MIMETYPE, Note.CONTENT_ITEM_TYPE)
+            .withValue(Note.NOTE, description).build());
+      } else {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValue(Data.RAW_CONTACT_ID, 0)
+            .withValue(Data.MIMETYPE, Note.CONTENT_ITEM_TYPE)
+            .withValue(Note.NOTE, description).build());
+      }
     }
   }
 
@@ -153,62 +184,118 @@ public class ContactUtils {
   }
 
   static void createPhoneNumbers(Bundle b, BatchOperation batch, Uri dataUri,
-      int rawContactInsertIndex) {
+      int rawContactInsertIndex, boolean withBackReference) {
     String telephoneNumber = b.getString(AttributeMapper.PRIMARY_PHONE);
     if (telephoneNumber != null && telephoneNumber.length() > 0) {
-      batch.add(ContentProviderOperation.newInsert(dataUri)
-          .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-          .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
-          .withValue(Phone.NUMBER, telephoneNumber)
-          .withValue(Phone.TYPE, Phone.TYPE_MAIN).build());
+      if (withBackReference) {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
+            .withValue(Phone.NUMBER, telephoneNumber)
+            .withValue(Phone.TYPE, Phone.TYPE_MAIN).build());
+      } else {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValue(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
+            .withValue(Phone.NUMBER, telephoneNumber)
+            .withValue(Phone.TYPE, Phone.TYPE_MAIN).build());
+      }
     }
     String homePhone = b.getString(AttributeMapper.HOME_PHONE);
     if (homePhone != null && homePhone.length() > 0) {
-      batch.add(ContentProviderOperation.newInsert(dataUri)
-          .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-          .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
-          .withValue(Phone.NUMBER, homePhone)
-          .withValue(Phone.TYPE, Phone.TYPE_HOME).build());
+      if (withBackReference) {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
+            .withValue(Phone.NUMBER, homePhone)
+            .withValue(Phone.TYPE, Phone.TYPE_HOME).build());
+      } else {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValue(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
+            .withValue(Phone.NUMBER, homePhone)
+            .withValue(Phone.TYPE, Phone.TYPE_HOME).build());
+      }
     }
     String mobileNumber = b.getString(AttributeMapper.MOBILE_PHONE);
     if (mobileNumber != null && mobileNumber.length() > 0) {
-      batch.add(ContentProviderOperation.newInsert(dataUri)
-          .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-          .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
-          .withValue(Phone.NUMBER, mobileNumber)
-          .withValue(Phone.TYPE, Phone.TYPE_MOBILE).build());
+      if (withBackReference) {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
+            .withValue(Phone.NUMBER, mobileNumber)
+            .withValue(Phone.TYPE, Phone.TYPE_MOBILE).build());
+      } else {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValue(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
+            .withValue(Phone.NUMBER, mobileNumber)
+            .withValue(Phone.TYPE, Phone.TYPE_MOBILE).build());
+      }
     }
     String faxNumber = b.getString(AttributeMapper.FAX);
     if (faxNumber != null && faxNumber.length() > 0) {
-      batch.add(ContentProviderOperation.newInsert(dataUri)
-          .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-          .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
-          .withValue(Phone.NUMBER, faxNumber)
-          .withValue(Phone.TYPE, Phone.TYPE_FAX_WORK).build());
+      if (withBackReference) {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
+            .withValue(Phone.NUMBER, faxNumber)
+            .withValue(Phone.TYPE, Phone.TYPE_FAX_WORK).build());
+      } else {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValue(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
+            .withValue(Phone.NUMBER, faxNumber)
+            .withValue(Phone.TYPE, Phone.TYPE_FAX_WORK).build());
+      }
     }
     String pagerNumber = b.getString(AttributeMapper.PAGER);
     if (pagerNumber != null && pagerNumber.length() > 0) {
-      batch.add(ContentProviderOperation.newInsert(dataUri)
-          .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-          .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
-          .withValue(Phone.NUMBER, pagerNumber)
-          .withValue(Phone.TYPE, Phone.TYPE_PAGER).build());
+      if (withBackReference) {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
+            .withValue(Phone.NUMBER, pagerNumber)
+            .withValue(Phone.TYPE, Phone.TYPE_PAGER).build());
+      } else {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValue(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
+            .withValue(Phone.NUMBER, pagerNumber)
+            .withValue(Phone.TYPE, Phone.TYPE_PAGER).build());
+      }
     }
     String telexNumber = b.getString(AttributeMapper.TELEX);
     if (telexNumber != null && telexNumber.length() > 0) {
-      batch.add(ContentProviderOperation.newInsert(dataUri)
-          .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-          .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
-          .withValue(Phone.NUMBER, telexNumber)
-          .withValue(Phone.TYPE, Phone.TYPE_TELEX).build());
+      if (withBackReference) {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
+            .withValue(Phone.NUMBER, telexNumber)
+            .withValue(Phone.TYPE, Phone.TYPE_TELEX).build());
+      } else {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValue(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
+            .withValue(Phone.NUMBER, telexNumber)
+            .withValue(Phone.TYPE, Phone.TYPE_TELEX).build());
+      }
     }
     String isdnNumber = b.getString(AttributeMapper.ISDN);
     if (isdnNumber != null && isdnNumber.length() > 0) {
-      batch.add(ContentProviderOperation.newInsert(dataUri)
-          .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-          .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
-          .withValue(Phone.NUMBER, isdnNumber)
-          .withValue(Phone.TYPE, Phone.TYPE_ISDN).build());
+      if (withBackReference) {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
+            .withValue(Phone.NUMBER, isdnNumber)
+            .withValue(Phone.TYPE, Phone.TYPE_ISDN).build());
+      } else {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValue(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
+            .withValue(Phone.NUMBER, isdnNumber)
+            .withValue(Phone.TYPE, Phone.TYPE_ISDN).build());
+      }
     }
   }
 
@@ -218,15 +305,24 @@ public class ContactUtils {
   // }
 
   public static void createSeeAlso(Bundle b, BatchOperation batch, Uri dataUri,
-      int rawContactInsertIndex) {
+      int rawContactInsertIndex, boolean withBackReference) {
     String seeAlso = b.getString(AttributeMapper.SEE_ALSO);
     if (seeAlso != null && seeAlso.length() > 0) {
-      batch.add(ContentProviderOperation.newInsert(dataUri)
-          .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-          .withValue(Data.MIMETYPE, Website.CONTENT_ITEM_TYPE)
-          .withValue(Website.URL, seeAlso)
-          .withValue(Website.TYPE, Website.TYPE_CUSTOM)
-          .withValue(Website.LABEL, AttributeMapper.SEE_ALSO).build());
+      if (withBackReference) {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, Website.CONTENT_ITEM_TYPE)
+            .withValue(Website.URL, seeAlso)
+            .withValue(Website.TYPE, Website.TYPE_CUSTOM)
+            .withValue(Website.LABEL, AttributeMapper.SEE_ALSO).build());
+      } else {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValue(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, Website.CONTENT_ITEM_TYPE)
+            .withValue(Website.URL, seeAlso)
+            .withValue(Website.TYPE, Website.TYPE_CUSTOM)
+            .withValue(Website.LABEL, AttributeMapper.SEE_ALSO).build());
+      }
     }
   }
 
@@ -236,7 +332,7 @@ public class ContactUtils {
   // }
 
   public static void createOrganization(Bundle b, BatchOperation batch,
-      Uri dataUri, int rawContactInsertIndex) {
+      Uri dataUri, int rawContactInsertIndex, boolean withBackReference) {
     String o = b.getString(AttributeMapper.ORGANIZATION);
     String ou = b.getString(AttributeMapper.ORGANIZATION_UNIT);
     String departmentNumber = b.getString(AttributeMapper.DEPARTMENT_NUMBER);
@@ -249,27 +345,41 @@ public class ContactUtils {
     if ((o != null && o.length() > 0) || (ou != null && ou.length() > 0)
         || (l != null && l.length() > 0)
         || (businessCategory != null && businessCategory.length() > 0)) {
-      batch.add(ContentProviderOperation.newInsert(dataUri)
-          .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-          .withValue(Data.MIMETYPE, Organization.CONTENT_ITEM_TYPE)
-          .withValue(Organization.COMPANY, o)
-          .withValue(Organization.TYPE, Organization.TYPE_WORK)
-          .withValue(Organization.DEPARTMENT, ou)
-          .withValue(Organization.OFFICE_LOCATION, l)
-          .withValue(Organization.JOB_DESCRIPTION, businessCategory).build());
+      if (withBackReference) {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, Organization.CONTENT_ITEM_TYPE)
+            .withValue(Organization.COMPANY, o)
+            .withValue(Organization.TYPE, Organization.TYPE_WORK)
+            .withValue(Organization.DEPARTMENT, ou)
+            .withValue(Organization.OFFICE_LOCATION, l)
+            .withValue(Organization.JOB_DESCRIPTION, businessCategory).build());
+      } else {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValue(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, Organization.CONTENT_ITEM_TYPE)
+            .withValue(Organization.COMPANY, o)
+            .withValue(Organization.TYPE, Organization.TYPE_WORK)
+            .withValue(Organization.DEPARTMENT, ou)
+            .withValue(Organization.OFFICE_LOCATION, l)
+            .withValue(Organization.JOB_DESCRIPTION, businessCategory).build());
+      }
     }
     ContactUtils.createLDAPRow(AttributeMapper.DEPARTMENT_NUMBER,
-        departmentNumber, batch, dataUri, rawContactInsertIndex);
+        departmentNumber, batch, dataUri, rawContactInsertIndex,
+        withBackReference);
     ContactUtils.createLDAPRow(AttributeMapper.ROOM_NUMBER, roomNumber, batch,
-        dataUri, rawContactInsertIndex);
+        dataUri, rawContactInsertIndex, withBackReference);
     ContactUtils.createLDAPRow(AttributeMapper.PREFERRED_LANGUAGE,
-        preferredLanguage, batch, dataUri, rawContactInsertIndex);
+        preferredLanguage, batch, dataUri, rawContactInsertIndex,
+        withBackReference);
     ContactUtils.createLDAPRow(AttributeMapper.PHYSICAL_DELIVERY_OFFICE_NAME,
-        physicalDeliveryOfficeName, batch, dataUri, rawContactInsertIndex);
+        physicalDeliveryOfficeName, batch, dataUri, rawContactInsertIndex,
+        withBackReference);
   }
 
   public static void createAddresses(Bundle b, BatchOperation batch,
-      Uri dataUri, int rawContactInsertIndex) {
+      Uri dataUri, int rawContactInsertIndex, boolean withBackReference) {
     // Create Home Address
     String destinationIndicator = b
         .getString(AttributeMapper.DESTINATION_INDICATOR);
@@ -284,33 +394,56 @@ public class ContactUtils {
     String st = b.getString(AttributeMapper.STATE);
     if ((homePostalAddress != null && homePostalAddress.length() > 0)
         || (street != null && street.length() > 0)) {
-      batch.add(ContentProviderOperation.newInsert(dataUri)
-          .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-          .withValue(Data.MIMETYPE, StructuredPostal.CONTENT_ITEM_TYPE)
-          .withValue(StructuredPostal.TYPE, StructuredPostal.TYPE_HOME)
-          .withValue(StructuredPostal.FORMATTED_ADDRESS, homePostalAddress)
-          .withValue(StructuredPostal.STREET, street).build());
+      if (withBackReference) {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, StructuredPostal.CONTENT_ITEM_TYPE)
+            .withValue(StructuredPostal.TYPE, StructuredPostal.TYPE_HOME)
+            .withValue(StructuredPostal.FORMATTED_ADDRESS, homePostalAddress)
+            .withValue(StructuredPostal.STREET, street).build());
+      } else {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValue(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, StructuredPostal.CONTENT_ITEM_TYPE)
+            .withValue(StructuredPostal.TYPE, StructuredPostal.TYPE_HOME)
+            .withValue(StructuredPostal.FORMATTED_ADDRESS, homePostalAddress)
+            .withValue(StructuredPostal.STREET, street).build());
+      }
     }
     // Create Work Address
     if ((st != null && st.length() > 0)
         || (postalAddress != null && postalAddress.length() > 0)
         || (postalCode != null && postalCode.length() > 0)
         || (postOfficeBox != null && postOfficeBox.length() > 0)) {
-      batch.add(ContentProviderOperation.newInsert(dataUri)
-          .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-          .withValue(Data.MIMETYPE, StructuredPostal.CONTENT_ITEM_TYPE)
-          .withValue(StructuredPostal.TYPE, StructuredPostal.TYPE_WORK)
-          .withValue(StructuredPostal.FORMATTED_ADDRESS, postalAddress)
-          .withValue(StructuredPostal.POSTCODE, postalCode)
-          .withValue(StructuredPostal.POBOX, postOfficeBox)
-          .withValue(StructuredPostal.REGION, st).build());
+      if (withBackReference) {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, StructuredPostal.CONTENT_ITEM_TYPE)
+            .withValue(StructuredPostal.TYPE, StructuredPostal.TYPE_WORK)
+            .withValue(StructuredPostal.FORMATTED_ADDRESS, postalAddress)
+            .withValue(StructuredPostal.POSTCODE, postalCode)
+            .withValue(StructuredPostal.POBOX, postOfficeBox)
+            .withValue(StructuredPostal.REGION, st).build());
+      } else {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, StructuredPostal.CONTENT_ITEM_TYPE)
+            .withValue(StructuredPostal.TYPE, StructuredPostal.TYPE_WORK)
+            .withValue(StructuredPostal.FORMATTED_ADDRESS, postalAddress)
+            .withValue(StructuredPostal.POSTCODE, postalCode)
+            .withValue(StructuredPostal.POBOX, postOfficeBox)
+            .withValue(StructuredPostal.REGION, st).build());
+      }
     }
     ContactUtils.createLDAPRow(AttributeMapper.DESTINATION_INDICATOR,
-        destinationIndicator, batch, dataUri, rawContactInsertIndex);
+        destinationIndicator, batch, dataUri, rawContactInsertIndex,
+        withBackReference);
     ContactUtils.createLDAPRow(AttributeMapper.REGISTERED_ADDRESS,
-        registeredAddress, batch, dataUri, rawContactInsertIndex);
+        registeredAddress, batch, dataUri, rawContactInsertIndex,
+        withBackReference);
     ContactUtils.createLDAPRow(AttributeMapper.PREFERRED_DELIVERY_METHOD,
-        preferredDeliveryMethod, batch, dataUri, rawContactInsertIndex);
+        preferredDeliveryMethod, batch, dataUri, rawContactInsertIndex,
+        withBackReference);
   }
 
   //
@@ -331,12 +464,22 @@ public class ContactUtils {
   // }
 
   public static void createLDAPRow(String key, String value,
-      BatchOperation batch, Uri dataUri, int rawContactInsertIndex) {
+      BatchOperation batch, Uri dataUri, int rawContactInsertIndex,
+      boolean withBackReference) {
     if (key != null && key.length() > 0 && value != null && value.length() > 0) {
-      batch.add(ContentProviderOperation.newInsert(dataUri)
-          .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
-          .withValue(Data.MIMETYPE, LDAPRow.CONTENT_ITEM_TYPE)
-          .withValue(LDAPRow.KEY, key).withValue(LDAPRow.VALUE, value).build());
+      if (withBackReference) {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValueBackReference(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, LDAPRow.CONTENT_ITEM_TYPE)
+            .withValue(LDAPRow.KEY, key).withValue(LDAPRow.VALUE, value)
+            .build());
+      } else {
+        batch.add(ContentProviderOperation.newInsert(dataUri)
+            .withValue(Data.RAW_CONTACT_ID, rawContactInsertIndex)
+            .withValue(Data.MIMETYPE, LDAPRow.CONTENT_ITEM_TYPE)
+            .withValue(LDAPRow.KEY, key).withValue(LDAPRow.VALUE, value)
+            .build());
+      }
     }
   }
 
@@ -467,6 +610,40 @@ public class ContactUtils {
       Set<String> deleteKeys, Map<String, String> updateMap,
       BatchOperation batch, Bundle newcontact, Bundle oldcontact, Uri dataUri,
       int rawcontactId) {
+    // DATABASE FIX
+    for (String string : AttributeMapper.getNameSubAttrs()) {
+      if (updateMap.containsKey(string)) {
+        for (String s : AttributeMapper.getNameSubAttrs()) {
+          updateMap.put(s, newcontact.getString(s));
+        }
+        break;
+      }
+    }
+    for (String string : AttributeMapper.getPostalHomeAddressAttrs()) {
+      if (updateMap.containsKey(string)) {
+        for (String s : AttributeMapper.getPostalHomeAddressAttrs()) {
+          updateMap.put(s, newcontact.getString(s));
+        }
+        break;
+      }
+    }
+    for (String string : AttributeMapper.getPostalWorkAddressAttrs()) {
+      if (updateMap.containsKey(string)) {
+        for (String s : AttributeMapper.getPostalWorkAddressAttrs()) {
+          updateMap.put(s, newcontact.getString(s));
+        }
+        break;
+      }
+    }
+    for (String string : AttributeMapper.getOrganizationSubAttrs()) {
+      if (updateMap.containsKey(string)) {
+        for (String s : AttributeMapper.getOrganizationSubAttrs()) {
+          updateMap.put(s, newcontact.getString(s));
+        }
+        break;
+      }
+    }
+    // END DATABASE FIX
     // Cleaning up the insertSet and the deleteSet with dependencies to
     // updateMap
     Set<String> updateSet = updateMap.keySet();
@@ -489,7 +666,7 @@ public class ContactUtils {
     for (String insert : insertKeys) {
       action.putString(insert, newcontact.getString(insert));
     }
-    insertDataForContact(action, batch, dataUri, rawcontactId);
+    insertDataForContact(action, batch, dataUri, rawcontactId, false);
     action.clear();
     for (String delete : deleteKeys) {
       action.putString(delete, oldcontact.getString(delete));

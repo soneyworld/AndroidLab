@@ -74,6 +74,8 @@ public class ContactManager {
 
   public static final String LOCAL_ACCOUNT_DIRTY_KEY = "ANDROID_LOCAL_ACCOUNT_DIRTY";
 
+  public static final String SYNC_STATUS_MARKED_AS_SOLVED = "solved";
+
   public static void addLDAPContactToAccount(Entry entry, Account account,
       BatchOperation batch) {
     Bundle contact = createBundleFromEntry(entry);
@@ -572,40 +574,6 @@ public class ContactManager {
         deleteKeys.add(key);
       }
     }
-    // DATABASE FIX
-    for (String string : AttributeMapper.getNameSubAttrs()) {
-      if (updateMap.containsKey(string)) {
-        for (String s : AttributeMapper.getNameSubAttrs()) {
-          updateMap.put(s, newcontact.getString(s));
-        }
-        break;
-      }
-    }
-    for (String string : AttributeMapper.getPostalHomeAddressAttrs()) {
-      if (updateMap.containsKey(string)) {
-        for (String s : AttributeMapper.getPostalHomeAddressAttrs()) {
-          updateMap.put(s, newcontact.getString(s));
-        }
-        break;
-      }
-    }
-    for (String string : AttributeMapper.getPostalWorkAddressAttrs()) {
-      if (updateMap.containsKey(string)) {
-        for (String s : AttributeMapper.getPostalWorkAddressAttrs()) {
-          updateMap.put(s, newcontact.getString(s));
-        }
-        break;
-      }
-    }
-    for (String string : AttributeMapper.getOrganizationSubAttrs()) {
-      if (updateMap.containsKey(string)) {
-        for (String s : AttributeMapper.getOrganizationSubAttrs()) {
-          updateMap.put(s, newcontact.getString(s));
-        }
-        break;
-      }
-    }
-    // END DATABASE FIX
     ContactUtils.createUpdateBatch(insertKeys, deleteKeys, updateMap, batch,
         contactupdate, oldcontact, Data.CONTENT_URI, rawcontactId);
   }

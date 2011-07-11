@@ -28,9 +28,14 @@ import de.tubs.ibr.android.ldap.auth.ServerInstance;
 import de.tubs.ibr.android.ldap.core.BatchOperation;
 import de.tubs.ibr.android.ldap.core.ContactManager;
 import de.tubs.ibr.android.ldap.core.ContactUtils;
+import de.tubs.ibr.android.ldap.core.activities.ConflictActivity;
+import android.R;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.OperationCanceledException;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ContentProviderClient;
 import android.content.ContentProviderOperation;
@@ -71,7 +76,8 @@ public class LDAPSyncService extends Service {
   }
 
   private static void updateLDAPContact(int id, Context context,
-      Account account, Entry entry, BatchOperation batch, ServerInstance instance) {
+      Account account, Entry entry, BatchOperation batch,
+      ServerInstance instance) {
     if (entry.getAttribute(AttributeMapper.ATTR_UID) == null) {
       return;
     }
@@ -91,7 +97,8 @@ public class LDAPSyncService extends Service {
           } else if (dirty.equalsIgnoreCase("0")) {
             status = SyncStatus.IN_SYNC;
           }
-        } else {
+        } else if(statusmsg.equalsIgnoreCase(ContactManager.SYNC_STATUS_MARKED_AS_SOLVED)){
+        }else{
           return;
         }
       }
@@ -131,16 +138,17 @@ public class LDAPSyncService extends Service {
       if (createMerge(actuallocalstate, actualremotestate, lastsyncstate,
           mergedstate)) {
         // Save merge state to server
-        try{
-          Entry updatedEntry = updateLDAPServerEntry(entry, mergedstate,instance);
+        try {
+          Entry updatedEntry = updateLDAPServerEntry(entry, mergedstate,
+              instance);
           // Save merged state to local
-          saveLocalUpdate(id, updatedEntry.toLDIFString(), batch, mergedstate, lastsyncstate);
-        }catch (Exception e) {
+          saveLocalUpdate(id, updatedEntry.toLDIFString(), batch, mergedstate,
+              lastsyncstate);
+        } catch (Exception e) {
           batch.add(ContentProviderOperation
               .newUpdate(
                   ContentUris.withAppendedId(getRawContactAsSyncAdapter(), id))
-              .withValue(RawContacts.SYNC2, e.getMessage())
-              .build());
+              .withValue(RawContacts.SYNC2, e.getMessage()).build());
         }
 
       } else {
@@ -150,6 +158,20 @@ public class LDAPSyncService extends Service {
                 ContentUris.withAppendedId(getRawContactAsSyncAdapter(), id))
             .withValue(RawContacts.SYNC1, ContactManager.SYNC_STATUS_CONFLICT)
             .build());
+        // Notify user
+        final NotificationManager nm = (NotificationManager) context
+            .getSystemService(Context.NOTIFICATION_SERVICE);
+        String text = "Conflict happend on sync";
+        Notification notification = new Notification(
+            R.drawable.stat_notify_error, text, System.currentTimeMillis());
+        final Intent notifyIntent = new Intent(context, ConflictActivity.class);
+        notifyIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        notifyIntent.putExtra("id", id);
+        final PendingIntent startIntent = PendingIntent.getActivity(context, 0,
+            notifyIntent, 0);
+        notification.setLatestEventInfo(context, "Sync conflict",
+            "solve conflict", startIntent);
+        nm.notify(id, notification);
       }
     } else if (status == SyncStatus.CONFLICT) {
       // try to solve conflict
@@ -159,27 +181,36 @@ public class LDAPSyncService extends Service {
       if (createMerge(actuallocalstate, actualremotestate, lastsyncstate,
           mergedstate)) {
         // Merged update to server
-        try{
-          Entry updatedEntry = updateLDAPServerEntry(entry, mergedstate,instance);
+        try {
+          Entry updatedEntry = updateLDAPServerEntry(entry, mergedstate,
+              instance);
           // Save merged state to local
-          saveLocalUpdate(id, updatedEntry.toLDIFString(), batch, mergedstate, lastsyncstate);
-        }catch (Exception e) {
+          saveLocalUpdate(id, updatedEntry.toLDIFString(), batch, mergedstate,
+              lastsyncstate);
+          // Notifications should be deleted
+          final NotificationManager nm = (NotificationManager) context
+              .getSystemService(Context.NOTIFICATION_SERVICE);
+          nm.cancel(id);
+        } catch (Exception e) {
           // Saving excption to local contact
           batch.add(ContentProviderOperation
               .newUpdate(
                   ContentUris.withAppendedId(getRawContactAsSyncAdapter(), id))
-              .withValue(RawContacts.SYNC2, e.getMessage())
-              .build());
+              .withValue(RawContacts.SYNC2, e.getMessage()).build());
         }
       }
+    } else if (status == SyncStatus.MARK_AS_SOLVED){
+      // TODO Handle this
     }
   }
 
-  private static Entry updateLDAPServerEntry(Entry oldstate, Bundle mergedstate, ServerInstance serverInstance) throws Exception {
+  private static Entry updateLDAPServerEntry(Entry oldstate,
+      Bundle mergedstate, ServerInstance serverInstance) throws Exception {
     LDAPConnection connection = null;
     String dn = oldstate.getDN();
     Entry resultState = null;
-    Bundle oldcontact = ContactManager.createMapableBundle(ContactManager.createBundleFromEntry(oldstate));
+    Bundle oldcontact = ContactManager.createMapableBundle(ContactManager
+        .createBundleFromEntry(oldstate));
     try {
       connection = serverInstance.getConnection();
       List<Modification> modlist = new LinkedList<Modification>();
@@ -189,30 +220,35 @@ public class LDAPSyncService extends Service {
       for (String key : keyset) {
         String old = oldcontact.getString(key);
         String merged = mergedstate.getString(key);
-        if(old!=null && merged!=null){
-          if(!old.equals(merged))
-            modlist.add(new Modification(ModificationType.REPLACE, key,merged));
-        }else if( merged != null){
-          modlist.add(new Modification(ModificationType.ADD, key,merged));
-        }else if( old != null){
+        if (old != null && merged != null) {
+          if (!old.equals(merged))
+            modlist
+                .add(new Modification(ModificationType.REPLACE, key, merged));
+        } else if (merged != null) {
+          modlist.add(new Modification(ModificationType.ADD, key, merged));
+        } else if (old != null) {
           modlist.add(new Modification(ModificationType.DELETE, key));
         }
       }
-      LDAPResult result = connection.modify(dn, modlist);
-      String errormessage = result.getResultCode().toString();
-      if (result.getResultCode().intValue() == ResultCode.SUCCESS_INT_VALUE) {
-        SearchRequest request = new SearchRequest(dn, SearchScope.BASE,
-            Filter.create("(cn=*)"), SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
-            SearchRequest.ALL_USER_ATTRIBUTES);
-        SearchResult searchResults = connection.search(request);
-        if (searchResults.getSearchEntries().size() >= 1) {
-          resultState = searchResults.getSearchEntries().get(0);
-        }else{
-          throw new Exception("Error on updating LDAP entry \""+dn+"\": Couldn't find resulting entry!");
+      if (modlist.size() > 0) {
+        LDAPResult result = connection.modify(dn, modlist);
+        String errormessage = result.getResultCode().toString();
+        if (result.getResultCode().intValue() == ResultCode.SUCCESS_INT_VALUE) {
+          SearchRequest request = new SearchRequest(dn, SearchScope.BASE,
+              Filter.create("(cn=*)"),
+              SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
+              SearchRequest.ALL_USER_ATTRIBUTES);
+          SearchResult searchResults = connection.search(request);
+          if (searchResults.getSearchEntries().size() >= 1) {
+            resultState = searchResults.getSearchEntries().get(0);
+          } else {
+            throw new Exception("Error on updating LDAP entry \"" + dn
+                + "\": Couldn't find resulting entry!");
+          }
+        } else if (!ResultCode.isClientSideResultCode(result.getResultCode())) {
+          // TODO Notifiy the User about Server Problem
+          throw new Exception(errormessage);
         }
-      } else if (!ResultCode.isClientSideResultCode(result.getResultCode())) {
-        // TODO Notifiy the User about Server Problem
-        throw new Exception(errormessage);
       }
     } finally {
       if (connection != null) {
@@ -223,10 +259,12 @@ public class LDAPSyncService extends Service {
   }
 
   /**
-   * @param id is the rawcontact id
-   * @param ldif is the ldif of the actual synced state
-   * @param batch 
-   * @param actualremotestate 
+   * @param id
+   *          is the rawcontact id
+   * @param ldif
+   *          is the ldif of the actual synced state
+   * @param batch
+   * @param actualremotestate
    * @param lastsyncstate
    */
   private static void saveLocalUpdate(int id, String ldif,
@@ -304,45 +342,45 @@ public class LDAPSyncService extends Service {
     return true;
   }
 
-//  private boolean diffOfBundles(Bundle o, Bundle n) {
-//    Set<String> insertKeys = o.keySet();
-//    Set<String> deleteKeys = n.keySet();
-//    Map<String, String> updateMap = new HashMap<String, String>();
-//    String value;
-//    String key;
-//    for (Object k : o.keySet().toArray()) {
-//      key = (String) k;
-//      value = o.getString(key);
-//      if (value == null) {
-//        insertKeys.remove(key);
-//      } else {
-//        if (insertKeys.contains(key)) {
-//          // Kann Update sein, oder keine Änderung und key muss gelöscht werden
-//          if (!value.equals(n.getString(key))) {
-//            updateMap.put(key, n.getString(key));
-//          }
-//          insertKeys.remove(key);
-//        }
-//      }
-//    }
-//    for (Object k : n.keySet().toArray()) {
-//      key = (String) k;
-//      value = n.getString(key);
-//      if (value == null) {
-//        deleteKeys.remove(key);
-//      } else {
-//        if (deleteKeys.contains(key)) {
-//          // Kann Update sein, oder keine Änderung und key muss gelöscht werden
-//          if (!value.equals(o.getString(key))) {
-//            updateMap.put(key, value);
-//          }
-//          deleteKeys.remove(key);
-//        }
-//      }
-//    }
-//
-//    return false;
-//  }
+  // private boolean diffOfBundles(Bundle o, Bundle n) {
+  // Set<String> insertKeys = o.keySet();
+  // Set<String> deleteKeys = n.keySet();
+  // Map<String, String> updateMap = new HashMap<String, String>();
+  // String value;
+  // String key;
+  // for (Object k : o.keySet().toArray()) {
+  // key = (String) k;
+  // value = o.getString(key);
+  // if (value == null) {
+  // insertKeys.remove(key);
+  // } else {
+  // if (insertKeys.contains(key)) {
+  // // Kann Update sein, oder keine Änderung und key muss gelöscht werden
+  // if (!value.equals(n.getString(key))) {
+  // updateMap.put(key, n.getString(key));
+  // }
+  // insertKeys.remove(key);
+  // }
+  // }
+  // }
+  // for (Object k : n.keySet().toArray()) {
+  // key = (String) k;
+  // value = n.getString(key);
+  // if (value == null) {
+  // deleteKeys.remove(key);
+  // } else {
+  // if (deleteKeys.contains(key)) {
+  // // Kann Update sein, oder keine Änderung und key muss gelöscht werden
+  // if (!value.equals(o.getString(key))) {
+  // updateMap.put(key, value);
+  // }
+  // deleteKeys.remove(key);
+  // }
+  // }
+  // }
+  //
+  // return false;
+  // }
 
   /**
    * Performs a sync on the Contacts saved on the local Phone comparing the
@@ -506,19 +544,19 @@ public class LDAPSyncService extends Service {
         .build();
     return data;
   }
-  
-//  private static Entry createLDAPEntryFromBundle(Bundle contact, String dn) {
-//    Entry ldapentry = new Entry(dn);
-//    for (String attr : contact.keySet()) {
-//      String value = contact.getString(attr);
-//      if (value != null && AttributeMapper.isContactAttr(attr)) {
-//        ldapentry.addAttribute(attr, value);
-//      }
-//    }
-//    ldapentry.addAttribute("objectClass", "inetOrgPerson");
-//    ldapentry.addAttribute("objectClass", "organizationalPerson");
-//    ldapentry.addAttribute("objectClass", "person");
-//    ldapentry.addAttribute("objectClass", "top");
-//    return ldapentry;
-//  }
+
+  // private static Entry createLDAPEntryFromBundle(Bundle contact, String dn) {
+  // Entry ldapentry = new Entry(dn);
+  // for (String attr : contact.keySet()) {
+  // String value = contact.getString(attr);
+  // if (value != null && AttributeMapper.isContactAttr(attr)) {
+  // ldapentry.addAttribute(attr, value);
+  // }
+  // }
+  // ldapentry.addAttribute("objectClass", "inetOrgPerson");
+  // ldapentry.addAttribute("objectClass", "organizationalPerson");
+  // ldapentry.addAttribute("objectClass", "person");
+  // ldapentry.addAttribute("objectClass", "top");
+  // return ldapentry;
+  // }
 }
