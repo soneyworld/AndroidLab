@@ -134,7 +134,6 @@ public class TabBrowserActivity extends TabActivity implements
   }
 
   public boolean onOptionsItemSelected(MenuItem item) {
-
     switch (item.getItemId()) {
       case R.id.choose_account_preferences:
         Intent settingsActivity = new Intent(getBaseContext(),
@@ -146,7 +145,8 @@ public class TabBrowserActivity extends TabActivity implements
         startActivity(conflictView);
         break;
       case R.id.add_contact:
-        Intent addContactView = new Intent(getBaseContext(), ContactAdder.class);
+        Intent addContactView = new Intent(getBaseContext(), EditContactActivity.class);
+        addContactView.setAction(Intent.ACTION_INSERT);
         startActivity(addContactView);
         break;
       default:

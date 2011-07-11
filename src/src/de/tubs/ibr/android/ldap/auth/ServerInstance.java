@@ -75,6 +75,9 @@ public final class ServerInstance implements Serializable {
   // The unique identifier assigned to this server.
   private final String id;
 
+  // The filter of this account, which will be used on sync.
+  private String filter;
+
   /**
    * Creates a new server instance with the provided information in the bundle.
    * 
@@ -134,7 +137,8 @@ public final class ServerInstance implements Serializable {
         : accManager.getUserData(account, "bindPW");
     this.baseDN = accManager.getUserData(account, "baseDN") == null ? ""
         : accManager.getUserData(account, "baseDN");
-
+    this.setFilter(accManager.getUserData(account, "filter") == null ? ""
+        : accManager.getUserData(account, "filter"));
   }
 
   /**
@@ -170,6 +174,44 @@ public final class ServerInstance implements Serializable {
   public ServerInstance(final String id, final String host, final int port,
       final boolean useSSL, final boolean useStartTLS, final String bindDN,
       final String bindPW, final String baseDN) {
+    this(id, host, port, useSSL, useStartTLS, bindDN, bindPW, baseDN, null);
+  }
+
+  /**
+   * Creates a new server instance with the provided information.
+   * 
+   * @param id
+   *          The unique identifier assigned to the server, which will
+   *          distinguish it from other servers that have been defined. It must
+   *          not be {@code null}.
+   * @param host
+   *          The address of the server. It must not be {@code null}.
+   * @param port
+   *          The port number for the server. It must be between 1 and 65535.
+   * @param useSSL
+   *          Indicates whether to use SSL when communicating with the server.
+   *          It must not be {@code true} if {@code useStartTLS} is also
+   *          {@code true}.
+   * @param useStartTLS
+   *          Indicates whether to use StartTLS when communicating with the
+   *          server. It must not be {@code true} if {@code useSSL} is also
+   *          {@code true}.
+   * @param bindDN
+   *          The DN to use to bind to the server. It may be {@code null} or
+   *          empty if no authentication should be performed.
+   * @param bindPW
+   *          The password to use to bind to the server. It may be {@code null}
+   *          or empty if no authentication should be performed.
+   * @param baseDN
+   *          The base DN to use when searching the server. It may be
+   *          {@code null} or empty if all searches should be based at the root
+   *          DSE.
+   * @param filter
+   *          The search filter of LDAP Entries, which should be synchronized.
+   */
+  public ServerInstance(final String id, final String host, final int port,
+      final boolean useSSL, final boolean useStartTLS, final String bindDN,
+      final String bindPW, final String baseDN, final String filter) {
 
     this.id = id;
     this.host = host;
@@ -180,6 +222,7 @@ public final class ServerInstance implements Serializable {
     this.bindDN = (bindDN == null) || (bindDN.length() == 0) ? null : bindDN;
     this.bindPW = (bindPW == null) || (bindPW.length() == 0) ? null : bindPW;
     this.baseDN = baseDN == null ? "" : baseDN;
+    this.filter = (filter == null) || (filter.length() == 0) ? null : filter;
   }
 
   /**
@@ -529,5 +572,13 @@ public final class ServerInstance implements Serializable {
     b.putCharSequence("bindPW", this.bindPW);
     b.putCharSequence("baseDN", this.baseDN);
     return b;
+  }
+
+  public void setFilter(String filter) {
+    this.filter = filter;
+  }
+
+  public String getFilter() {
+    return filter;
   }
 }

@@ -148,6 +148,22 @@
                   android:layout_height="fill_parent"
                   android:singleLine="true" />
     </LinearLayout>
+    
+    <!-- The Base DN -->
+    <LinearLayout android:orientation="vertical"
+                  android:layout_width="fill_parent"
+                  android:layout_height="wrap_content"
+                  android:paddingTop="7dp"
+                  android:paddingBottom="7dp">
+      <TextView   android:layout_width="fill_parent"
+                  android:layout_height="wrap_content"
+                  android:textSize="10sp"
+                  android:text="@string/layout_define_server_label_filter" />
+      <EditText   android:id="@+id/layout_define_server_field_filter"
+                  android:layout_width="fill_parent"
+                  android:layout_height="fill_parent"
+                  android:singleLine="true" />
+    </LinearLayout>
 
     <!-- The Test and Save Buttons -->
     <LinearLayout android:orientation="horizontal"

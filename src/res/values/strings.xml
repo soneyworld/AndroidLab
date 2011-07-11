@@ -35,6 +35,10 @@
   <string name="layout_define_server_label_base_dn">
     Base DN (leave empty for entire server)
   </string>
+  
+  <string name="layout_define_server_label_filter">
+    Filter String (leave empty for entire scope)
+  </string>
 
   <string name="layout_define_server_button_label_test">
     Test Settings
@@ -685,10 +689,7 @@
     <string name="undefinedTypeLabel">(Undefined)</string>
     <string name="selectLabel">Select label</string>
     <string name="contactCreationFailure">Contact creation failed, check logs.</string>
-    <array name="accounts">
-    <item>"Account A"</item>
-    <item>"Account B"</item>
-  </array>
+    <string name="contactLoadingFailure">Loading Contact failed, check logs.</string>
     <array name="telefonnrTypeItems">
         <item>Home</item>
         <item>Work</item>
