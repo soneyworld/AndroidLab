@@ -88,7 +88,7 @@ public class LDAPSyncService extends Service {
     String dirty = localcontact
         .getString(ContactManager.LOCAL_ACCOUNT_DIRTY_KEY);
     if (statusmsg != null && statusmsg.length() > 0) {
-      if (statusmsg.equalsIgnoreCase(ContactManager.SYNC_STATUS_CONFLICT)) {
+      if (statusmsg.startsWith(ContactManager.SYNC_STATUS_CONFLICT)) {
         status = SyncStatus.CONFLICT;
       } else if (statusmsg.equalsIgnoreCase(ContactManager.SYNC_STATUS_IN_SYNC)) {
         if (dirty != null) {
@@ -97,8 +97,10 @@ public class LDAPSyncService extends Service {
           } else if (dirty.equalsIgnoreCase("0")) {
             status = SyncStatus.IN_SYNC;
           }
-        } else if(statusmsg.equalsIgnoreCase(ContactManager.SYNC_STATUS_MARKED_AS_SOLVED)){
-        }else{
+        } else if (statusmsg
+            .startsWith(ContactManager.SYNC_STATUS_MARKED_AS_SOLVED)) {
+          status = SyncStatus.MARK_AS_SOLVED;
+        } else {
           return;
         }
       }
@@ -170,7 +172,7 @@ public class LDAPSyncService extends Service {
         final PendingIntent startIntent = PendingIntent.getActivity(context, 0,
             notifyIntent, 0);
         notification.setLatestEventInfo(context, "Sync conflict",
-            "solve conflict", startIntent);
+            "solve conflict of "+id, startIntent);
         nm.notify(id, notification);
       }
     } else if (status == SyncStatus.CONFLICT) {
@@ -198,8 +200,22 @@ public class LDAPSyncService extends Service {
                   ContentUris.withAppendedId(getRawContactAsSyncAdapter(), id))
               .withValue(RawContacts.SYNC2, e.getMessage()).build());
         }
+      } else {
+        final NotificationManager nm = (NotificationManager) context
+            .getSystemService(Context.NOTIFICATION_SERVICE);
+        String text = "Conflict happend on sync";
+        Notification notification = new Notification(
+            R.drawable.stat_notify_error, text, System.currentTimeMillis());
+        final Intent notifyIntent = new Intent(context, ConflictActivity.class);
+        notifyIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        notifyIntent.putExtra("id", id);
+        final PendingIntent startIntent = PendingIntent.getActivity(context, 0,
+            notifyIntent, 0);
+        notification.setLatestEventInfo(context, "Sync conflict",
+            "solve conflict of "+id, startIntent);
+        nm.notify(id, notification);
       }
-    } else if (status == SyncStatus.MARK_AS_SOLVED){
+    } else if (status == SyncStatus.MARK_AS_SOLVED) {
       // TODO Handle this
     }
   }
@@ -527,7 +543,7 @@ public class LDAPSyncService extends Service {
 
   private static List<SearchResultEntry> scanImportedContacts()
       throws LDAPException {
-    // TODO Auto-generated method stub
+    // TODO Scan for imported entries, which are not in the normal list
     return null;
   }
 
