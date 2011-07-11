@@ -123,7 +123,8 @@ public class ConflictActivity extends ListActivity {
       @Override
       public void onItemClick(AdapterView<?> arg0, View arg1, int row, long id) {
         Intent i = new Intent(getBaseContext(), ConflictActivity.class);
-        i.getExtras().putInt("id",((EntityEntry) arg0.getItemAtPosition(row)).getId());
+        int rawContactId = ((EntityEntry) arg0.getItemAtPosition(row)).getId();
+        i.getExtras().putInt("id",rawContactId);
         startActivityForResult(i, 0);
       }
     });
