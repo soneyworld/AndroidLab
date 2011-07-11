@@ -11,9 +11,11 @@ import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.database.Cursor;
 import android.net.Uri;
+import android.preference.Preference;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Nickname;
@@ -635,4 +637,57 @@ public class ContactManager {
     }
     return contacts;
   }
+
+  /**
+   * @param stateA
+   * @param stateB
+   * @param oldstate
+   * @param mergedresult
+   * @param conflictKeys
+   * @return true if merge is possible, false on a conflict
+   */
+  public static boolean mergeBundle(final Bundle stateA,
+      final Bundle stateB, final Bundle oldstate,
+      Bundle mergedresult, Set<String> conflictKeys) {
+    boolean conflict = false;
+    Set<String> keyset = new LinkedHashSet<String>();
+    keyset.addAll(stateA.keySet());
+    keyset.addAll(stateB.keySet());
+    for (String key : keyset) {
+      String local = stateA.getString(key);
+      String remote = stateB.getString(key);
+      String old = oldstate.getString(key);
+      if (local != null && remote != null) {
+        // Are the values of the keys equal?
+        if (local.equals(remote)) {
+          mergedresult.putString(key, local);
+        } else {
+          // Possible Conflict
+          if (local.equals(old)) {
+            mergedresult.putString(key, remote);
+          } else if (remote.equals(old)) {
+            mergedresult.putString(key, local);
+          } else {
+            // CONFLICT!!!
+            conflict = true;
+            if (conflictKeys != null)
+              conflictKeys.add(key);
+          }
+        }
+      } else if (remote == null) {
+        // Possible new local entry
+        // If entry wasn't local before
+        if (old == null) {
+          mergedresult.putString(key, local);
+        }
+      } else if (local == null) {
+        // Possible new remote entry
+        // If entry wasn't remote before
+        if (old == null) {
+          mergedresult.putString(key, remote);
+        }
+      }
+    }
+    return !conflict;
+  } 
 }

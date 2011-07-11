@@ -100,16 +100,12 @@ public final class ViewEntry extends Activity implements StringProvider , OnClic
    */
   private boolean hasContactAttributes(final Entry e) {
     // The entry must have a full name attribute to be considered a user.
-    if (!e.hasAttribute(FULL_NAME)) {
-      return false;
+    for (String string : entry.getAttributeValues("objectClass")) {
+      if (string.equalsIgnoreCase("inetOrgPerson")) {
+        return true;
+      }
     }
-
-    // The user also needs at least one of an e-mail address or phone number.
-    return (e.hasAttribute(PRIMARY_MAIL)
-        || e.hasAttribute(ALTERNATE_MAIL)
-        || e.hasAttribute(PRIMARY_PHONE)
-        || e.hasAttribute(HOME_PHONE) || e.hasAttribute(MOBILE_PHONE)
-        || e.hasAttribute(PAGER) || e.hasAttribute(FAX));
+    return false;
   }
 
   /**
@@ -217,7 +213,7 @@ public final class ViewEntry extends Activity implements StringProvider , OnClic
       l.setGravity(Gravity.CENTER);
 
       final Button addToContactsButton = new Button(this);
-      addToContactsButton.setText("Add to Contacts");
+      addToContactsButton.setText("Import");
       addToContactsButton.setLayoutParams(new LinearLayout.LayoutParams(
           ViewGroup.LayoutParams.WRAP_CONTENT,
           ViewGroup.LayoutParams.WRAP_CONTENT));

@@ -1,21 +1,26 @@
 package de.tubs.ibr.android.ldap.core.activities;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Map.Entry;
+import java.util.Set;
+import com.unboundid.ldif.LDIFException;
+import com.unboundid.ldif.LDIFReader;
 import de.tubs.ibr.android.ldap.R;
 import de.tubs.ibr.android.ldap.core.ContactManager;
 import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 import android.app.ListActivity;
-import android.content.ContentUris;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.provider.ContactsContract.RawContacts;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.SimpleAdapter;
@@ -68,6 +73,7 @@ public class ConflictActivity extends ListActivity {
           HashMap<String, String> listitem = new HashMap<String, String>();
           listitem.put("Value1",
               contact.getValue().getString(AttributeMapper.FULL_NAME));
+          listitem.put("Value2", "" + contact.getKey());
           entryList.add(listitem);
         }
       }
@@ -79,34 +85,68 @@ public class ConflictActivity extends ListActivity {
     }
   }
 
-  private Bundle loadLastSyncedContact() {
-    // TODO Auto-generated method stub
-    return null;
+  private Bundle loadLastSyncedContact(Bundle loadedContact) {
+    String ldif = loadedContact.getString(ContactManager.LDAP_LDIF_DETAILS_KEY);
+    if (ldif == null) {
+      return null;
+    }
+    LDIFReader reader = new LDIFReader(new BufferedReader(
+        new StringReader(ldif)));
+    com.unboundid.ldap.sdk.Entry lastSyncState = null;
+    try {
+      lastSyncState = reader.readEntry();
+    } catch (LDIFException e) {
+      return null;
+    } catch (IOException e) {
+      return null;
+    }
+    return ContactManager.createMapableBundle(ContactManager
+        .createBundleFromEntry(lastSyncState));
   }
 
-  private Bundle loadRemoteContact() {
-    // TODO Auto-generated method stub
-    return null;
+  private Bundle loadRemoteContact(String attributeUUID) {
+    SharedPreferences savedRemoteStates = getSharedPreferences("remoteState",
+        MODE_PRIVATE);
+    String ldif = savedRemoteStates.getString(attributeUUID, null);
+    if (ldif == null) {
+      return null;
+    }
+    LDIFReader reader = new LDIFReader(new BufferedReader(
+        new StringReader(ldif)));
+    com.unboundid.ldap.sdk.Entry lastSyncState = null;
+    try {
+      lastSyncState = reader.readEntry();
+    } catch (LDIFException e) {
+      return null;
+    } catch (IOException e) {
+      return null;
+    }
+    return ContactManager.createMapableBundle(ContactManager
+        .createBundleFromEntry(lastSyncState));
   }
 
   private void showContact(int rawcontactid) {
     setContentView(R.layout.conflict_view);
     Bundle localcontact = ContactManager.loadContact(rawcontactid, this);
+    Bundle remotecontact = loadRemoteContact(localcontact
+        .getString(AttributeMapper.ATTR_UID));
+    Bundle lastSyncedContact = loadLastSyncedContact(localcontact);
+    localcontact = ContactManager.createMapableBundle(localcontact);
     this.setTitle("Conflict of "
         + localcontact.getString(AttributeMapper.FULL_NAME));
-
-    Bundle remotecontact = loadRemoteContact();
-    Bundle lastSyncedContact = loadLastSyncedContact();
+    Set<String> conflictKeys = new LinkedHashSet<String>();
+    Bundle mergeresult = new Bundle();
+    ContactManager.mergeBundle(localcontact, remotecontact, lastSyncedContact,
+        mergeresult, conflictKeys);
     adapter = new SimpleAdapter(this, list, R.layout.conflict_row,
-        new String[] { "Value1", "Value2" }, new int[] { R.id.value1,
-            R.id.value2 }
-
-    );
+        new String[] { "Value1", "Value2", "Key" }, new int[] { R.id.value1,
+            R.id.value2, R.id.key });
 
     setListAdapter(adapter);
-
-    addItem();
-
+    for (String key : conflictKeys) {
+      addConflictItem(key, localcontact.getString(key),
+          remotecontact.getString(key));
+    }
     rb1 = (RadioButton) findViewById(R.id.selector1);
     rb2 = (RadioButton) findViewById(R.id.selector2);
 
@@ -122,21 +162,29 @@ public class ConflictActivity extends ListActivity {
 
       @Override
       public void onItemClick(AdapterView<?> arg0, View arg1, int row, long id) {
-        Intent i = new Intent(getBaseContext(), ConflictActivity.class);
-        int rawContactId = ((EntityEntry) arg0.getItemAtPosition(row)).getId();
-        i.getExtras().putInt("id",rawContactId);
-        startActivityForResult(i, 0);
+        try {
+
+          Intent i = new Intent(getBaseContext(), ConflictActivity.class);
+          HashMap<String, String> listitem = (HashMap<String, String>) arg0
+              .getItemAtPosition(row);
+          if (listitem != null) {
+            int rawContactId = Integer.parseInt(listitem.get("Value2"));
+            i.putExtra("id", rawContactId);
+            startActivityForResult(i, 0);
+          }
+        } catch (Exception e) {
+
+        }
       }
     });
 
   }
 
-  private void addItem() {
-    long ts = System.currentTimeMillis();
-    int lastDigit = (int) (ts % 10);
+  private void addConflictItem(String key, String local, String remote) {
     HashMap<String, String> item = new HashMap<String, String>();
-    item.put("Value1", Long.toString(ts));
-    item.put("Value2", "lastDigit: " + Integer.toString(lastDigit));
+    item.put("Value1", local);
+    item.put("Value2", remote);
+    item.put("Key", key);
     list.add(item);
     adapter.notifyDataSetChanged();
   }

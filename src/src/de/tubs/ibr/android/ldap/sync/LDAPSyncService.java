@@ -43,6 +43,8 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.SyncResult;
 import android.database.Cursor;
 import android.net.Uri;
@@ -138,8 +140,8 @@ public class LDAPSyncService extends Service {
       Bundle actuallocalstate = ContactManager
           .createMapableBundle(localcontact);
       Bundle mergedstate = new Bundle();
-      if (createMerge(actuallocalstate, actualremotestate, lastsyncstate,
-          mergedstate)) {
+      if (ContactManager.mergeBundle(actuallocalstate, actualremotestate,
+          lastsyncstate, mergedstate, null)) {
         // Save merge state to server
         try {
           Entry updatedEntry = updateLDAPServerEntry(entry, mergedstate,
@@ -169,16 +171,16 @@ public class LDAPSyncService extends Service {
       Bundle actuallocalstate = ContactManager
           .createMapableBundle(localcontact);
       Bundle mergedstate = new Bundle();
-      if (createMerge(actuallocalstate, actualremotestate, lastsyncstate,
-          mergedstate)) {
+      if (ContactManager.mergeBundle(actuallocalstate, actualremotestate,
+          lastsyncstate, mergedstate, null)) {
         // Merged update to server
         try {
           Entry updatedEntry = updateLDAPServerEntry(entry, mergedstate,
               instance);
           // Save merged state to local
-          if(updatedEntry!=null)
-          saveLocalUpdate(id, updatedEntry.toLDIFString(), batch, mergedstate,
-              lastsyncstate);
+          if (updatedEntry != null)
+            saveLocalUpdate(id, updatedEntry.toLDIFString(), batch,
+                mergedstate, lastsyncstate);
           // Notifications should be deleted
           isConflictFree = true;
         } catch (Exception e) {
@@ -242,10 +244,9 @@ public class LDAPSyncService extends Service {
           // TODO Notifiy the User about Server Problem
           throw new Exception(errormessage);
         }
-      }else{
+      } else {
         SearchRequest request = new SearchRequest(dn, SearchScope.BASE,
-            Filter.create("(cn=*)"),
-            SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
+            Filter.create("(cn=*)"), SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
             SearchRequest.ALL_USER_ATTRIBUTES);
         SearchResult searchResults = connection.search(request);
         if (searchResults.getSearchEntries().size() >= 1) {
@@ -305,87 +306,6 @@ public class LDAPSyncService extends Service {
           .withValue(RawContacts.DIRTY, "0").build());
     }
   }
-
-  private static boolean createMerge(final Bundle actuallocalstate,
-      final Bundle actualremotestate, final Bundle oldstate, Bundle mergestate) {
-    Set<String> keyset = new LinkedHashSet<String>();
-    keyset.addAll(actuallocalstate.keySet());
-    keyset.addAll(actualremotestate.keySet());
-    for (String key : keyset) {
-      String local = actuallocalstate.getString(key);
-      String remote = actualremotestate.getString(key);
-      String old = oldstate.getString(key);
-      if (local != null && remote != null) {
-        // Are the values of the keys equal?
-        if (local.equals(remote)) {
-          mergestate.putString(key, local);
-        } else {
-          // Possible Conflict
-          if (local.equals(old)) {
-            mergestate.putString(key, remote);
-          } else if (remote.equals(old)) {
-            mergestate.putString(key, local);
-          } else {
-            // CONFLICT!!!
-            return false;
-          }
-        }
-      } else if (remote == null) {
-        // Possible new local entry
-        // If entry wasn't local before
-        if (old == null) {
-          mergestate.putString(key, local);
-        }
-      } else if (local == null) {
-        // Possible new remote entry
-        // If entry wasn't remote before
-        if (old == null) {
-          mergestate.putString(key, remote);
-        }
-      }
-    }
-    return true;
-  }
-
-  // private boolean diffOfBundles(Bundle o, Bundle n) {
-  // Set<String> insertKeys = o.keySet();
-  // Set<String> deleteKeys = n.keySet();
-  // Map<String, String> updateMap = new HashMap<String, String>();
-  // String value;
-  // String key;
-  // for (Object k : o.keySet().toArray()) {
-  // key = (String) k;
-  // value = o.getString(key);
-  // if (value == null) {
-  // insertKeys.remove(key);
-  // } else {
-  // if (insertKeys.contains(key)) {
-  // // Kann Update sein, oder keine Änderung und key muss gelöscht werden
-  // if (!value.equals(n.getString(key))) {
-  // updateMap.put(key, n.getString(key));
-  // }
-  // insertKeys.remove(key);
-  // }
-  // }
-  // }
-  // for (Object k : n.keySet().toArray()) {
-  // key = (String) k;
-  // value = n.getString(key);
-  // if (value == null) {
-  // deleteKeys.remove(key);
-  // } else {
-  // if (deleteKeys.contains(key)) {
-  // // Kann Update sein, oder keine Änderung und key muss gelöscht werden
-  // if (!value.equals(o.getString(key))) {
-  // updateMap.put(key, value);
-  // }
-  // deleteKeys.remove(key);
-  // }
-  // }
-  // }
-  //
-  // return false;
-  // }
 
   /**
    * Performs a sync on the Contacts saved on the local Phone comparing the
@@ -500,10 +420,12 @@ public class LDAPSyncService extends Service {
           conflictCount++;
         }
         localContacts.remove(ldapuid);
+        saveLDIFtoPreferences(ldapuid, user, context);
       } else {
         // add remote contact to local
         ContactManager.addLDAPContactToAccount(user, account, batchOperation);
       }
+      saveLDIFtoPreferences(ldapuid, user, context);
     }
     // Falls es noch lokale Kontakte gibt, die entfernt nicht mehr vorhanden
     // sind, sollen diese aus dem Kontaktbuch gelöscht werden.
@@ -530,7 +452,7 @@ public class LDAPSyncService extends Service {
     // A sync adapter should batch operations on multiple contacts,
     // because it will make a dramatic performance difference.
     batchOperation.execute();
-    if (conflictCount>0) {
+    if (conflictCount > 0) {
       final NotificationManager nm = (NotificationManager) context
           .getSystemService(Context.NOTIFICATION_SERVICE);
       String text = "Conflict happend on sync";
@@ -540,10 +462,10 @@ public class LDAPSyncService extends Service {
       notifyIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
       final PendingIntent startIntent = PendingIntent.getActivity(context, 0,
           notifyIntent, 0);
-      if(conflictCount>1){
-        notification.setLatestEventInfo(context, "Sync conflicts",
-          "solve "+ conflictCount+ " conflicts", startIntent);
-      }else{
+      if (conflictCount > 1) {
+        notification.setLatestEventInfo(context, "Sync conflicts", "solve "
+            + conflictCount + " conflicts", startIntent);
+      } else {
         notification.setLatestEventInfo(context, "Sync conflict",
             "solve conflict", startIntent);
       }
@@ -553,6 +475,15 @@ public class LDAPSyncService extends Service {
           .getSystemService(Context.NOTIFICATION_SERVICE);
       nm.cancel(ConflictActivity.CONFLICT_LIST);
     }
+  }
+
+  private static void saveLDIFtoPreferences(String attributeUUID,
+      SearchResultEntry user, Context c) {
+    SharedPreferences settings = c.getSharedPreferences("remoteState",
+        MODE_PRIVATE);
+    Editor editor = settings.edit();
+    editor.putString(attributeUUID, user.toLDIFString());
+    editor.commit();
   }
 
   private static List<SearchResultEntry> scanImportedContacts()
