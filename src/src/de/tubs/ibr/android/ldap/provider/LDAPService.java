@@ -15,6 +15,8 @@ import com.unboundid.ldap.sdk.SearchScope;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -227,11 +229,16 @@ public class LDAPService extends Service {
                   dirs.add(entry.getDN());
               }
               mRunnable.dirsResult = new String[dirs.size()];
+              SharedPreferences dirPrefs = getSharedPreferences("dirs_"+instance.getID(), MODE_PRIVATE);
+              Editor editor = dirPrefs.edit();
+              editor.clear();
               int i = 0;
               for (String dir : dirs) {
+                editor.putString(""+dir, "");
                 mRunnable.dirsResult[i] = dir;
                 i++;
               }
+              editor.commit();
             } catch (LDAPSearchException lse) {
               mRunnable.exception = lse;
               mRunnable.searchResult = lse.getSearchResult();

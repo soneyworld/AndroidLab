@@ -10,6 +10,8 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -34,6 +36,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.OnItemSelectedListener;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import de.tubs.ibr.android.ldap.R;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
 import de.tubs.ibr.android.ldap.provider.LDAPResultRunnable;
@@ -42,7 +45,7 @@ import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 import de.tubs.ibr.android.ldap.core.ContactManager;
 
 public class EditContactActivity extends Activity implements
-    OnAccountsUpdateListener {
+    OnAccountsUpdateListener, OnSharedPreferenceChangeListener {
 
   /* Data structures */
   public static final String TAG = "ContactsAdder";
@@ -113,6 +116,7 @@ public class EditContactActivity extends Activity implements
   private TextView mAdditionalInfoTextView;
   private LinearLayout mAdditionalInfoLinearLayout;
 
+  private LinkedList<String> directoryList = new LinkedList<String>();
   /**
    * Called when the activity is first created. Responsible for initializing the
    * UI.
@@ -367,16 +371,16 @@ public class EditContactActivity extends Activity implements
       if (!(sn != null && sn.length() > 0)) {
         Toast.makeText(mContext,
             "Please fill in the displayname and the lastname",
-            Toast.LENGTH_SHORT);
+            Toast.LENGTH_SHORT).show();
       } else {
         Toast.makeText(mContext, "Please fill in the displayname",
-            Toast.LENGTH_SHORT);
+            Toast.LENGTH_SHORT).show();
       }
       return false;
     }
     if (!(sn != null && sn.length() > 0)) {
       Toast.makeText(mContext, "Please fill in the lastname",
-          Toast.LENGTH_SHORT);
+          Toast.LENGTH_SHORT).show();
       return false;
     }
     return true;
@@ -648,12 +652,25 @@ public class EditContactActivity extends Activity implements
    * inserting new contacts.
    */
   private void updateAccountSelection() {
+
     // Read current account selection
     mSelectedAccount = (AccountData) mAccountSpinner.getSelectedItem();
     for (Account acc : AccountManager.get(mContext).getAccounts()) {
       if (acc.name.equals(mSelectedAccount.getName())
           && acc.type.equals(mSelectedAccount.getType())) {
+        if (instance != null) {
+          SharedPreferences dirPreferences = getSharedPreferences("dirs_"
+              + instance.getID(), MODE_PRIVATE);
+          dirPreferences.unregisterOnSharedPreferenceChangeListener(this);
+        }
         instance = new ServerInstance(AccountManager.get(mContext), acc);
+        SharedPreferences dirPreferences = getSharedPreferences("dirs_"
+            + instance.getID(), MODE_PRIVATE);
+        for (String key : dirPreferences.getAll().keySet()) {
+          directoryList.add(key);
+          mDirectoryAdapter.add(key); 
+        }
+        dirPreferences.registerOnSharedPreferenceChangeListener(this);
         break;
       }
     }
@@ -780,19 +797,9 @@ public class EditContactActivity extends Activity implements
 
     @Override
     public void run() {
-      final String[] result = dirsResult;
-      if (result != null) {
-        showDirs(result);
-      }
     }
   }
 
-  private void showDirs(final String[] dirs) {
-    mDirectoryAdapter.clear();
-    for (String dir : dirs) {
-      mDirectoryAdapter.add(dir);
-    }
-  }
 
   private ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -815,4 +822,20 @@ public class EditContactActivity extends Activity implements
       mBinder.searchDirs(instance);
     }
   };
+
+  @Override
+  public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
+      String key) {
+    // TODO Auf Änderungen der Ordner hören
+    String deleted = sharedPreferences.getString(key, "deleted");
+    if (deleted.equals("deleted")){
+      directoryList.remove(key);
+      mDirectoryAdapter.remove(key);
+      return;
+    }
+    if(!directoryList.contains(key)){
+      directoryList.add(key);
+      mDirectoryAdapter.add(key);
+    }
+  }
 }
