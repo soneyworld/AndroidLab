@@ -144,7 +144,12 @@ public final class ServerInstance implements Serializable {
         : accManager.getUserData(account, "baseDN");
     this.filter = accManager.getUserData(account, "filter") == null ? ""
         : accManager.getUserData(account, "filter");
-    this.syncAllContacts = (accManager.getUserData(account, "manualSync") == null);
+    try {
+      this.syncAllContacts = Boolean.parseBoolean(accManager.getUserData(
+          account, "manualSync"));
+    } catch (Exception e) {
+      this.syncAllContacts = true;
+    }
   }
 
   /**
@@ -580,6 +585,9 @@ public final class ServerInstance implements Serializable {
     b.putCharSequence("bindDN", this.bindDN);
     b.putCharSequence("bindPW", this.bindPW);
     b.putCharSequence("baseDN", this.baseDN);
+    if (!syncAllContacts) {
+      b.putBoolean("manualSync", true);
+    }
     return b;
   }
 
