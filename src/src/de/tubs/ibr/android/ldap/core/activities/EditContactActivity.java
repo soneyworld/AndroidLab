@@ -10,6 +10,8 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -34,6 +36,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.OnItemSelectedListener;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import de.tubs.ibr.android.ldap.R;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
 import de.tubs.ibr.android.ldap.provider.LDAPResultRunnable;
@@ -42,7 +45,7 @@ import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 import de.tubs.ibr.android.ldap.core.ContactManager;
 
 public class EditContactActivity extends Activity implements
-    OnAccountsUpdateListener {
+    OnAccountsUpdateListener, OnSharedPreferenceChangeListener {
 
   /* Data structures */
   public static final String TAG = "ContactsAdder";
@@ -113,6 +116,9 @@ public class EditContactActivity extends Activity implements
   private TextView mAdditionalInfoTextView;
   private LinearLayout mAdditionalInfoLinearLayout;
 
+  private LinkedList<String> directoryList = new LinkedList<String>();
+  private LinkedList<String> insertdirectoryList = new LinkedList<String>();
+  private LinkedList<String> deletedirectoryList = new LinkedList<String>();
   /**
    * Called when the activity is first created. Responsible for initializing the
    * UI.
@@ -180,7 +186,8 @@ public class EditContactActivity extends Activity implements
 
     final boolean hasIncomingState = savedInstanceState != null
         && savedInstanceState.containsKey(KEY_EDIT_STATE);
-
+    mDirectoryAdapter = new ArrayAdapter<String>(this,
+        android.R.layout.simple_spinner_item);
     if (Intent.ACTION_EDIT.equals(action) && !hasIncomingState) {
       setTitle("Edit Contact");
       mStatus = STATUS_EDIT;
@@ -277,8 +284,6 @@ public class EditContactActivity extends Activity implements
     mAccountAdapter = new AccountAdapter(this, mAccounts);
     mAccountSpinner.setAdapter(mAccountAdapter);
 
-    mDirectoryAdapter = new ArrayAdapter<String>(this,
-        android.R.layout.simple_spinner_item);
     mDirectorySpinner.setAdapter(mDirectoryAdapter);
     mSyncCheckBox.setChecked(true);
     // mContactExportButton.setVisibility(Button.GONE);
@@ -292,7 +297,8 @@ public class EditContactActivity extends Activity implements
     mAccountSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
       public void onItemSelected(AdapterView<?> parent, View view,
           int position, long i) {
-        updateAccountSelection();
+        if (mStatus == STATUS_INSERT)
+          updateAccountSelection();
       }
 
       public void onNothingSelected(AdapterView<?> parent) {
@@ -306,9 +312,11 @@ public class EditContactActivity extends Activity implements
     // onSaveButtonClicked();
     // }
     // });
-    final Intent intent_service = new Intent(this, LDAPService.class);
-    getApplicationContext().bindService(intent_service, mServiceConnection,
-        Context.BIND_AUTO_CREATE);
+    if (mStatus == STATUS_INSERT) {
+      final Intent intent_service = new Intent(this, LDAPService.class);
+      getApplicationContext().bindService(intent_service, mServiceConnection,
+          Context.BIND_AUTO_CREATE);
+    }
   }
 
   /**
@@ -363,14 +371,18 @@ public class EditContactActivity extends Activity implements
     String sn = contactData.getString(AttributeMapper.LAST_NAME);
     if (!(cn != null && cn.length() > 0)) {
       if (!(sn != null && sn.length() > 0)) {
-        Toast.makeText(mContext, "Please fill in the displayname and the lastname", Toast.LENGTH_SHORT);
-      }else{
-        Toast.makeText(mContext, "Please fill in the displayname", Toast.LENGTH_SHORT);  
+        Toast.makeText(mContext,
+            "Please fill in the displayname and the lastname",
+            Toast.LENGTH_SHORT).show();
+      } else {
+        Toast.makeText(mContext, "Please fill in the displayname",
+            Toast.LENGTH_SHORT).show();
       }
       return false;
     }
     if (!(sn != null && sn.length() > 0)) {
-      Toast.makeText(mContext, "Please fill in the lastname", Toast.LENGTH_SHORT);
+      Toast.makeText(mContext, "Please fill in the lastname",
+          Toast.LENGTH_SHORT).show();
       return false;
     }
     return true;
@@ -382,6 +394,7 @@ public class EditContactActivity extends Activity implements
    * @param b
    * @return true if the contact should be synchronized, otherwise false
    */
+  @SuppressWarnings("deprecation")
   private boolean getValuesFromUI(Bundle b) {
     b.putString(AttributeMapper.DN,
         (String) mDirectorySpinner.getSelectedItem());
@@ -452,46 +465,62 @@ public class EditContactActivity extends Activity implements
   protected void loadContactEntry(int id) {
 
     Bundle contactData = ContactManager.loadContact(id, mContext);
-    mContactNameEditText.setText(contactData.getString("sn"));
-    mCommonNameEditText.setText(contactData.getString("cn"));
-    mInitialsEditText.setText(contactData.getString("initials"));
-    mContactFirstnameEditText.setText(contactData.getString("givenName"));
-    mTitleEditText.setText(contactData.getString("title"));
-    mDescriptionEditText.setText(contactData.getString("description"));
-    mContactTelephoneEditText.setText(contactData.getString("telephoneNumber"));
-    mHomePhoneEditText.setText(contactData.getString("homePhone"));
-    mMobileEditText.setText(contactData.getString("mobile"));
-    mPagerEditText.setText(contactData.getString("pager"));
-    mFacsimileEditText.setText(contactData
-        .getString("facsimileTelephoneNumber"));
-    mTelexEditText.setText(contactData.getString("telexNumber"));
-    miSDNEditText.setText(contactData.getString("internationaliSDNNumber"));
-    mContactEmailEditText.setText(contactData.getString("mail"));
-    mRegAddressEditText.setText(contactData.getString("registeredAddress"));
-    mStreetEditText.setText(contactData.getString("street"));
-    mPostOfficeboxEditText.setText(contactData.getString("postOfficeBox"));
-    mPostalCodeEditText.setText(contactData.getString("postalCode"));
-    mPostalAddressEditText.setText(contactData.getString("postalAddress"));
+    mContactNameEditText.setText(contactData
+        .getString(AttributeMapper.LAST_NAME));
+    mCommonNameEditText.setText(contactData
+        .getString(AttributeMapper.FULL_NAME));
+    mInitialsEditText.setText(contactData.getString(AttributeMapper.INITIALS));
+    mContactFirstnameEditText.setText(contactData
+        .getString(AttributeMapper.FIRST_NAME));
+    mTitleEditText.setText(contactData.getString(AttributeMapper.TITLE));
+    mDescriptionEditText.setText(contactData
+        .getString(AttributeMapper.DESCRIPTION));
+    mContactTelephoneEditText.setText(contactData
+        .getString(AttributeMapper.PRIMARY_PHONE));
+    mHomePhoneEditText.setText(contactData
+        .getString(AttributeMapper.HOME_PHONE));
+    mMobileEditText
+        .setText(contactData.getString(AttributeMapper.MOBILE_PHONE));
+    mPagerEditText.setText(contactData.getString(AttributeMapper.PAGER));
+    mFacsimileEditText.setText(contactData.getString(AttributeMapper.FAX));
+    mTelexEditText.setText(contactData.getString(AttributeMapper.TELEX));
+    miSDNEditText.setText(contactData.getString(AttributeMapper.ISDN));
+    mContactEmailEditText.setText(contactData
+        .getString(AttributeMapper.PRIMARY_MAIL));
+    mRegAddressEditText.setText(contactData
+        .getString(AttributeMapper.REGISTERED_ADDRESS));
+    mStreetEditText.setText(contactData.getString(AttributeMapper.STREET));
+    mPostOfficeboxEditText.setText(contactData
+        .getString(AttributeMapper.POST_OFFICE_BOX));
+    mPostalCodeEditText.setText(contactData
+        .getString(AttributeMapper.POSTAL_CODE));
+    mPostalAddressEditText.setText(contactData
+        .getString(AttributeMapper.POSTAL_ADDRESS));
     mHomePostalAddressEditText.setText(contactData
-        .getString("homePostalAddress"));
-    mOrganizationEditText.setText(contactData.getString("o"));
-    mBusinessCategoryEditText
-        .setText(contactData.getString("businessCategory"));
-    mDepartmentNumberEditText
-        .setText(contactData.getString("departmentNumber"));
-    mRoomNumberEditText.setText(contactData.getString("roomNumber"));
-    mUserIdEditText.setText(contactData.getString("uid"));
-    mStateEditText.setText(contactData.getString("st"));
-    mOrganizationalUnitEditText.setText(contactData.getString("ou"));
-    mPrefLanguageEditText.setText(contactData.getString("preferredLanguage"));
-    mWebSiteEditText.setText(contactData.getString("seeAlso"));
-
+        .getString(AttributeMapper.HOME_ADDRESS));
+    mOrganizationEditText.setText(contactData
+        .getString(AttributeMapper.ORGANIZATION));
+    mBusinessCategoryEditText.setText(contactData
+        .getString(AttributeMapper.BUSINESS_CATEGORY));
+    mDepartmentNumberEditText.setText(contactData
+        .getString(AttributeMapper.DEPARTMENT_NUMBER));
+    mRoomNumberEditText.setText(contactData
+        .getString(AttributeMapper.ROOM_NUMBER));
+    mUserIdEditText.setText(contactData.getString(AttributeMapper.UID));
+    mStateEditText.setText(contactData.getString(AttributeMapper.STATE));
+    mOrganizationalUnitEditText.setText(contactData
+        .getString(AttributeMapper.ORGANIZATION_UNIT));
+    mPrefLanguageEditText.setText(contactData
+        .getString(AttributeMapper.PREFERRED_LANGUAGE));
+    mWebSiteEditText.setText(contactData.getString(AttributeMapper.SEE_ALSO));
+    mDirectoryAdapter.clear();
+    mDirectoryAdapter.add(AttributeMapper.DN);
   }
 
   protected boolean updateContactEntry() {
     Bundle contact = new Bundle();
     getValuesFromUI(contact);
-    if(!checkLDAPRequirements(contact)){
+    if (!checkLDAPRequirements(contact)) {
       return false;
     }
     Account account = getSelectedAccount();
@@ -577,7 +606,8 @@ public class EditContactActivity extends Activity implements
     mAccounts.clear();
 
     // Get account data from system
-    AuthenticatorDescription[] accountTypes = AccountManager.get(this).getAuthenticatorTypes();
+    AuthenticatorDescription[] accountTypes = AccountManager.get(this)
+        .getAuthenticatorTypes();
 
     // Populate tables
     for (int i = 0; i < a.length; i++) {
@@ -586,10 +616,10 @@ public class EditContactActivity extends Activity implements
       // meaningful display name for each.
       String systemAccountType = a[i].type;
       if (systemAccountType.equalsIgnoreCase(getString(R.string.ACCOUNT_TYPE))) {
-      AuthenticatorDescription ad = getAuthenticatorDescription(
-          systemAccountType, accountTypes);
-      AccountData data = new AccountData(a[i].name, ad);
-      mAccounts.add(data);
+        AuthenticatorDescription ad = getAuthenticatorDescription(
+            systemAccountType, accountTypes);
+        AccountData data = new AccountData(a[i].name, ad);
+        mAccounts.add(data);
       }
     }
     if (mSelectedAccount == null) {
@@ -625,12 +655,25 @@ public class EditContactActivity extends Activity implements
    * inserting new contacts.
    */
   private void updateAccountSelection() {
+
     // Read current account selection
     mSelectedAccount = (AccountData) mAccountSpinner.getSelectedItem();
     for (Account acc : AccountManager.get(mContext).getAccounts()) {
       if (acc.name.equals(mSelectedAccount.getName())
           && acc.type.equals(mSelectedAccount.getType())) {
+        if (instance != null) {
+          SharedPreferences dirPreferences = getSharedPreferences("dirs_"
+              + instance.getID(), MODE_PRIVATE);
+          dirPreferences.unregisterOnSharedPreferenceChangeListener(this);
+        }
         instance = new ServerInstance(AccountManager.get(mContext), acc);
+        SharedPreferences dirPreferences = getSharedPreferences("dirs_"
+            + instance.getID(), MODE_PRIVATE);
+        for (String key : dirPreferences.getAll().keySet()) {
+          directoryList.add(key);
+          mDirectoryAdapter.add(key); 
+        }
+        dirPreferences.registerOnSharedPreferenceChangeListener(this);
         break;
       }
     }
@@ -757,19 +800,17 @@ public class EditContactActivity extends Activity implements
 
     @Override
     public void run() {
-      final String[] result = dirsResult;
-      if (result != null) {
-        showDirs(result);
+      for (String dir : insertdirectoryList) {
+        mDirectoryAdapter.add(dir);  
       }
+      insertdirectoryList.clear();
+      for (String dir : deletedirectoryList) {
+        mDirectoryAdapter.remove(dir);
+      }
+      deletedirectoryList.clear();
     }
   }
 
-  private void showDirs(final String[] dirs) {
-    mDirectoryAdapter.clear();
-    for (String dir : dirs) {
-      mDirectoryAdapter.add(dir);
-    }
-  }
 
   private ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -792,4 +833,20 @@ public class EditContactActivity extends Activity implements
       mBinder.searchDirs(instance);
     }
   };
+
+  @Override
+  public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
+      String key) {
+    // TODO Auf Änderungen der Ordner hören
+    String deleted = sharedPreferences.getString(key, "deleted");
+    if (deleted.equals("deleted")){
+      directoryList.remove(key);
+      deletedirectoryList.add(key);
+      return;
+    }
+    if(!directoryList.contains(key)){
+      directoryList.add(key);
+      insertdirectoryList.add(key);
+    }
+  }
 }
