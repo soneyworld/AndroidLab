@@ -27,6 +27,7 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.ExtendedResult;
 import com.unboundid.ldap.sdk.LDAPConnection;
@@ -100,7 +101,8 @@ public final class ServerInstance implements Serializable {
     this.bindPW = (b.getString("bindPW") == null)
         || (b.getString("bindPW").length() == 0) ? null : b.getString("bindPW");
     this.baseDN = b.getString("baseDN") == null ? "" : b.getString("baseDN");
-    boolean manual = b.getBoolean("manualSync",false);
+    boolean manual = b.getBoolean("manualSync");
+    Log.i("ServerInstance", "manual Value" + manual);
     if(manual){
       this.syncAllContacts = false;
     }else{

@@ -35,6 +35,7 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
@@ -415,6 +416,7 @@ public final class AddServer extends AccountAuthenticatorActivity implements
     filter = filterField.getText().toString();
     final CheckBox importCheck = (CheckBox) findViewById(R.id.layout_define_server_importManual);
     manualImport = !importCheck.isChecked();
+    Log.i("AddServer Activity", "manualImport Value" + manualImport);
     return new ServerInstance(serverID, host, port, useSSL, useStartTLS,
         bindDN, bindPW, baseDN, filter, manualImport);
   }
