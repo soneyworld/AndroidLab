@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.app.TabActivity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -48,12 +49,14 @@ public class TabBrowserActivity extends TabActivity implements
     TabHost tabHost = (TabHost) findViewById(android.R.id.tabhost);
 
     TabSpec localTabSpec = tabHost.newTabSpec("tid1");
-    localTabSpec.setIndicator(("Local"), getResources().getDrawable(R.drawable.home_icon)); 
+    localTabSpec.setIndicator(("Local"),
+        getResources().getDrawable(R.drawable.home_icon));
     localTabSpec.setContent(new Intent(this, LocalTabActivity.class));
     tabHost.addTab(localTabSpec);
-    
+
     TabSpec syncTabSpec = tabHost.newTabSpec("tid1");
-    syncTabSpec.setIndicator(("Sync"), getResources().getDrawable(android.R.drawable.ic_popup_sync)); 
+    syncTabSpec.setIndicator(("Sync"),
+        getResources().getDrawable(android.R.drawable.ic_popup_sync));
     syncTabSpec.setContent(new Intent(this, SyncTabActivity.class));
     tabHost.addTab(syncTabSpec);
 
@@ -64,6 +67,13 @@ public class TabBrowserActivity extends TabActivity implements
         .getString(R.string.ACCOUNT_TYPE));
     SharedPreferences mPrefs = PreferenceManager
         .getDefaultSharedPreferences(this);
+    if (mPrefs.getString("selectedAccount", "").equalsIgnoreCase("")) {
+      Editor edit = mPrefs.edit();
+      edit.putString(
+          "selectedAccount",
+          accManager.getAccountsByType(this.getString(R.string.ACCOUNT_TYPE))[0].name);
+      edit.commit();
+    }
     String accountname = mPrefs.getString("selectedAccount", "");
     boolean isFoundOnPref = false;
     for (Account a : accounts) {
@@ -103,7 +113,8 @@ public class TabBrowserActivity extends TabActivity implements
     ldapintent.putExtra("bindDN", accManager.getUserData(a, "bindDN"));
     ldapintent.putExtra("bindPW", accManager.getUserData(a, "bindPW"));
     ldapintent.putExtra("baseDN", accManager.getUserData(a, "baseDN"));
-    ldapTabSpec.setIndicator(("LDAP"), getResources().getDrawable(R.drawable.loup_icon)); 
+    ldapTabSpec.setIndicator(("LDAP"),
+        getResources().getDrawable(R.drawable.loup_icon));
     ldapTabSpec.setContent(ldapintent);
     tabHost.addTab(ldapTabSpec);
 
@@ -141,11 +152,13 @@ public class TabBrowserActivity extends TabActivity implements
         startActivity(settingsActivity);
         break;
       case R.id.test_conflict_view:
-        Intent conflictView = new Intent(getBaseContext(), ConflictActivity.class);
+        Intent conflictView = new Intent(getBaseContext(),
+            ConflictActivity.class);
         startActivity(conflictView);
         break;
       case R.id.add_contact:
-        Intent addContactView = new Intent(getBaseContext(), EditContactActivity.class);
+        Intent addContactView = new Intent(getBaseContext(),
+            EditContactActivity.class);
         addContactView.setAction(Intent.ACTION_INSERT);
         startActivity(addContactView);
         break;

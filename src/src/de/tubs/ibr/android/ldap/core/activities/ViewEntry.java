@@ -20,6 +20,7 @@
  */
 package de.tubs.ibr.android.ldap.core.activities;
 
+import java.util.LinkedList;
 import java.util.StringTokenizer;
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -43,6 +44,7 @@ import de.tubs.ibr.android.ldap.R;
 import de.tubs.ibr.android.ldap.core.BatchOperation;
 import de.tubs.ibr.android.ldap.core.ContactManager;
 import de.tubs.ibr.android.ldap.provider.StringProvider;
+import de.tubs.ibr.android.ldap.sync.AttributeMapper;
 import static com.unboundid.util.StaticUtils.*;
 import static de.tubs.ibr.android.ldap.sync.AttributeMapper.*;
 
@@ -50,7 +52,8 @@ import static de.tubs.ibr.android.ldap.sync.AttributeMapper.*;
  * This class provides an Android activity that may be used to view a search
  * result entry and handle the user clicking on various types of attributes.
  */
-public final class ViewEntry extends Activity implements StringProvider , OnClickListener{
+public final class ViewEntry extends Activity implements StringProvider,
+    OnClickListener {
   /**
    * The name of the field used to define the instance to be searched.
    */
@@ -58,6 +61,12 @@ public final class ViewEntry extends Activity implements StringProvider , OnClic
 
   // The entry to display.
   private Entry entry = null;
+
+  private boolean accountfound;
+
+  private Account account;
+
+  private LinkedList<String> alreadyimported = new LinkedList<String>();
 
   /**
    * Performs all necessary processing when this activity is created.
@@ -118,6 +127,25 @@ public final class ViewEntry extends Activity implements StringProvider , OnClic
 
     setTitle("Entry for User " + name);
 
+    AccountManager accManager = AccountManager.get(this);
+    Account[] accounts = accManager
+        .getAccountsByType(getString(R.string.ACCOUNT_TYPE));
+    SharedPreferences mPrefs = PreferenceManager
+        .getDefaultSharedPreferences(this);
+    String accountname = mPrefs.getString("selectedAccount", "");
+    accountfound = false;
+    for (Account a : accounts) {
+      if (a.name.equals(accountname)) {
+        account = a;
+        accountfound = true;
+        break;
+      }
+    }
+
+    for (Bundle contact : ContactManager.loadContactList(this).values()) {
+      alreadyimported.add(contact.getString(AttributeMapper.ATTR_UID));
+    }
+
     final LinearLayout layout = (LinearLayout) findViewById(R.id.layout_view_entry_panel);
 
     // Display the name, and optionally the title and/or organization at the top
@@ -165,11 +193,18 @@ public final class ViewEntry extends Activity implements StringProvider , OnClic
     layout.addView(headerLayout);
 
     // Display the phone numbers, if appropriate.
-    boolean showAddToContacts = false;
+
+    boolean showAddToContacts = true;
+    String newuuid = entry.getAttributeValue(AttributeMapper.ATTR_UID);
+    for (String uuid : alreadyimported) {
+      if (uuid.equalsIgnoreCase(newuuid)) {
+        showAddToContacts = false;
+      }
+    }
+
     for (final String attrName : getPhoneNumberAttrs()) {
       final Attribute a = entry.getAttribute(attrName);
       if (a != null) {
-        showAddToContacts = true;
         for (final String s : a.getValues()) {
           addPhoneNumber(s, getDisplayName(this, attrName), layout);
         }
@@ -180,7 +215,6 @@ public final class ViewEntry extends Activity implements StringProvider , OnClic
     for (final String attrName : getEMailAttrs()) {
       final Attribute a = entry.getAttribute(attrName);
       if (a != null) {
-        showAddToContacts = true;
         for (final String s : a.getValues()) {
           addEMailAddress(s, getDisplayName(this, attrName), layout);
         }
@@ -191,7 +225,6 @@ public final class ViewEntry extends Activity implements StringProvider , OnClic
     for (final String attrName : getPostalAddressAttrs()) {
       final Attribute a = entry.getAttribute(attrName);
       if (a != null) {
-        showAddToContacts = true;
         for (final String s : a.getValues()) {
           addPostalAddress(s, getDisplayName(this, attrName), layout);
         }
@@ -220,6 +253,28 @@ public final class ViewEntry extends Activity implements StringProvider , OnClic
       addToContactsButton.setOnClickListener(this);
       l.addView(addToContactsButton);
 
+      layout.addView(l);
+    }
+
+    boolean showAddAndSyncContact = showAddToContacts;
+    // If we should provide an "Add to Contacts" button, then do so.
+    if (showAddAndSyncContact) {
+      final LinearLayout l = new LinearLayout(this);
+      l.setOrientation(LinearLayout.HORIZONTAL);
+      l.setGravity(Gravity.CENTER);
+
+      final Button addToContactsButton = new Button(this);
+      addToContactsButton.setText("Add and sync");
+      addToContactsButton.setLayoutParams(new LinearLayout.LayoutParams(
+          ViewGroup.LayoutParams.WRAP_CONTENT,
+          ViewGroup.LayoutParams.WRAP_CONTENT));
+      addToContactsButton.setOnClickListener(new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+          addContactToAccountAndSync(account);
+        }
+      });
+      l.addView(addToContactsButton);
       layout.addView(l);
     }
   }
@@ -526,36 +581,39 @@ public final class ViewEntry extends Activity implements StringProvider , OnClic
 
   @Override
   public void onClick(View v) {
-    AccountManager accManager = AccountManager.get(this);
-    Account[] accounts = accManager.getAccountsByType(getString(R.string.ACCOUNT_TYPE));
-    SharedPreferences mPrefs = PreferenceManager
-        .getDefaultSharedPreferences(this);
-    String accountname = mPrefs.getString("selectedAccount", "");
-    boolean accountfound = false;
-    for (Account a : accounts) {
-      if (a.name.equals(accountname)) {
-        addContactToAccount(a);
-        accountfound = true;
-        break;
-      }
-    }
-    if (!accountfound && accounts.length > 0) {
-      addContactToAccount(accounts[0]);
+
+    if (accountfound && account != null) {
+      addContactToAccount(account);
     }
   }
-  
+
   /**
    * @param account
    */
   private void addContactToAccount(Account account) {
-    
     BatchOperation batch = new BatchOperation(this, this.getContentResolver());
     ContactManager.importLDAPContact(entry, account, batch);
     try {
       batch.execute();
       finish();
     } catch (Exception e) {
-      Toast.makeText(this, "Error on saving Contact", Toast.LENGTH_SHORT);
+      Toast.makeText(this, "Error on saving Contact", Toast.LENGTH_SHORT)
+          .show();
+    }
+  }
+
+  /**
+   * @param account
+   */
+  private void addContactToAccountAndSync(Account account) {
+    BatchOperation batch = new BatchOperation(this, this.getContentResolver());
+    ContactManager.addLDAPContactToAccount(entry, account, batch);
+    try {
+      batch.execute();
+      finish();
+    } catch (Exception e) {
+      Toast.makeText(this, "Error on saving Contact", Toast.LENGTH_SHORT)
+          .show();
     }
   }
 }

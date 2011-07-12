@@ -49,7 +49,9 @@ public class SearchService extends Service {
           try {
             conn = instance.getConnection();
             final SearchRequest request = new SearchRequest(
-                instance.getBaseDN(), SearchScope.SUB, filter);
+                instance.getBaseDN(), SearchScope.SUB, filter,
+                SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
+                SearchRequest.ALL_USER_ATTRIBUTES);
             request.setSizeLimit(SIZE_LIMIT);
             request.setTimeLimitSeconds(TIME_LIMIT_SECONDS);
 

@@ -439,17 +439,32 @@ public class LDAPSyncService extends Service {
     if (!localContacts.isEmpty()) {
       for (java.util.Map.Entry<String, Integer> deletelocal : localContacts
           .entrySet()) {
-        ContactManager.deleteLocalContact(deletelocal.getValue(),
-            context.getContentResolver());
-        // If it is also locally marked to be deleted, the above call have done
-        // it, or it is not necessary
-        markedToBeDeleted.remove(deletelocal.getValue());
+        if (instance.isSyncAllContacts()) {
+          ContactManager.deleteLocalContact(deletelocal.getValue(),
+              context.getContentResolver());
+          // If it is also locally marked to be deleted, the above call have
+          // done
+          // it, or it is not necessary
+          markedToBeDeleted.remove(deletelocal.getValue());
+        }
       }
     }
     // Try to deleted marked Entries for local Entries marked to be deleted
     for (Integer i : markedToBeDeleted) {
-      ContactManager.deleteLDAPContact(i, batchOperation, new ServerInstance(
-          accountManager, account), context);
+      if (!instance.isSyncAllContacts()) {
+        Bundle contact = ContactManager.loadContact(i, context);
+        String status = contact.getString(ContactManager.LDAP_SYNC_STATUS_KEY);
+        if (status != null
+            && !status.equalsIgnoreCase(ContactManager.SYNC_STATUS_DO_NOT_SYNC)) {
+          ContactManager.deleteLDAPContact(i, batchOperation,
+              new ServerInstance(accountManager, account), context);
+        } else {
+          ContactManager.deleteLocalContact(i, resolver);
+        }
+      } else {
+        ContactManager.deleteLDAPContact(i, batchOperation, new ServerInstance(
+            accountManager, account), context);
+      }
     }
     // Try to add a local Contact to LDAP
     for (Integer i : shouldBeAdded) {
@@ -499,14 +514,21 @@ public class LDAPSyncService extends Service {
     LinkedHashMap<Integer, Bundle> localcontactoverview = ContactManager
         .loadContactList(context);
     for (Bundle localcontact : localcontactoverview.values()) {
-      String dn = localcontact.getString(AttributeMapper.DN);
-      if (dn != null) {
-        SearchRequest request = new SearchRequest(dn, SearchScope.BASE,
-        Filter.create("(cn=*)"), SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
-            SearchRequest.ALL_USER_ATTRIBUTES);
-        SearchResult searchResults = connection.search(request);
-        if (searchResults.getSearchEntries().size() == 1)
-          result.add(searchResults.getSearchEntries().get(0));
+      String syncstatus = localcontact
+          .getString(ContactManager.LDAP_SYNC_STATUS_KEY);
+      if (syncstatus != null
+          && !syncstatus
+              .equalsIgnoreCase(ContactManager.SYNC_STATUS_DO_NOT_SYNC)) {
+        String dn = localcontact.getString(AttributeMapper.DN);
+        if (dn != null) {
+          SearchRequest request = new SearchRequest(dn, SearchScope.BASE,
+              Filter.create("(cn=*)"),
+              SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
+              SearchRequest.ALL_USER_ATTRIBUTES);
+          SearchResult searchResults = connection.search(request);
+          if (searchResults.getSearchEntries().size() == 1)
+            result.add(searchResults.getSearchEntries().get(0));
+        }
       }
     }
     return result;
