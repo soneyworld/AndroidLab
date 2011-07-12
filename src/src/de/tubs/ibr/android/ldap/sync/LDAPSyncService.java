@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -384,13 +385,19 @@ public class LDAPSyncService extends Service {
           SearchRequest.ALL_USER_ATTRIBUTES);
       request.setSizeLimit(1000000);
       request.setTimeLimitSeconds(300);
-      ldapresult = conn.search(request).getSearchEntries();
+      if (instance.isSyncAllContacts()) {
+        ldapresult = conn.search(request).getSearchEntries();
+      } else {
+        ldapresult = scanImportedContacts(conn, context);
+      }
     } catch (LDAPSearchException lse) {
       // If the
       if (lse.getResultCode().isConnectionUsable()
           && !lse.getResultCode().isClientSideResultCode()) {
         try {
-          ldapresult = scanImportedContacts();
+          if (instance.isSyncAllContacts()) {
+            ldapresult = scanImportedContacts(conn, context);
+          }
         } catch (LDAPException e) {
           error = true;
         }
@@ -486,10 +493,23 @@ public class LDAPSyncService extends Service {
     editor.commit();
   }
 
-  private static List<SearchResultEntry> scanImportedContacts()
-      throws LDAPException {
-    // TODO Scan for imported entries, which are not in the normal list
-    return null;
+  private static List<SearchResultEntry> scanImportedContacts(
+      LDAPConnection connection, Context context) throws LDAPException {
+    List<SearchResultEntry> result = new LinkedList<SearchResultEntry>();
+    LinkedHashMap<Integer, Bundle> localcontactoverview = ContactManager
+        .loadContactList(context);
+    for (Bundle localcontact : localcontactoverview.values()) {
+      String dn = localcontact.getString(AttributeMapper.DN);
+      if (dn != null) {
+        SearchRequest request = new SearchRequest(dn, SearchScope.BASE,
+        Filter.create("(cn=*)"), SearchRequest.ALL_OPERATIONAL_ATTRIBUTES,
+            SearchRequest.ALL_USER_ATTRIBUTES);
+        SearchResult searchResults = connection.search(request);
+        if (searchResults.getSearchEntries().size() == 1)
+          result.add(searchResults.getSearchEntries().get(0));
+      }
+    }
+    return result;
   }
 
   private static Uri getDataAsSyncAdapter() {

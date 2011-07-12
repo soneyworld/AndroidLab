@@ -47,6 +47,10 @@
   <string name="layout_define_server_button_label_save">
     Save Settings
   </string>
+  
+  <string name="layout_define_server_import_manually">
+  	Automatically synchronize with full LDAP
+  </string>
 
 
 

@@ -164,7 +164,7 @@
                   android:layout_height="fill_parent"
                   android:singleLine="true" />
     </LinearLayout>
-
+<CheckBox android:text="@string/layout_define_server_import_manually" android:id="@+id/layout_define_server_importManual" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
     <!-- The Test and Save Buttons -->
     <LinearLayout android:orientation="horizontal"
                   android:layout_width="fill_parent"

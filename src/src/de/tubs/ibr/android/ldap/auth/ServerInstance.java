@@ -78,6 +78,10 @@ public final class ServerInstance implements Serializable {
   // The filter of this account, which will be used on sync.
   private String filter;
 
+  // If all contacts on the LDAP Server should be synchronized, this should be
+  // true
+  private boolean syncAllContacts;
+
   /**
    * Creates a new server instance with the provided information in the bundle.
    * 
@@ -96,6 +100,7 @@ public final class ServerInstance implements Serializable {
     this.bindPW = (b.getString("bindPW") == null)
         || (b.getString("bindPW").length() == 0) ? null : b.getString("bindPW");
     this.baseDN = b.getString("baseDN") == null ? "" : b.getString("baseDN");
+    this.syncAllContacts = (b.getBoolean("manualSync", false) ? false : true);
   }
 
   /**
@@ -137,8 +142,9 @@ public final class ServerInstance implements Serializable {
         : accManager.getUserData(account, "bindPW");
     this.baseDN = accManager.getUserData(account, "baseDN") == null ? ""
         : accManager.getUserData(account, "baseDN");
-    this.setFilter(accManager.getUserData(account, "filter") == null ? ""
-        : accManager.getUserData(account, "filter"));
+    this.filter = accManager.getUserData(account, "filter") == null ? ""
+        : accManager.getUserData(account, "filter");
+    this.syncAllContacts = (accManager.getUserData(account, "manualSync") == null);
   }
 
   /**
@@ -173,8 +179,9 @@ public final class ServerInstance implements Serializable {
    */
   public ServerInstance(final String id, final String host, final int port,
       final boolean useSSL, final boolean useStartTLS, final String bindDN,
-      final String bindPW, final String baseDN) {
-    this(id, host, port, useSSL, useStartTLS, bindDN, bindPW, baseDN, null);
+      final String bindPW, final String baseDN, final boolean syncManually) {
+    this(id, host, port, useSSL, useStartTLS, bindDN, bindPW, baseDN, null,
+        syncManually);
   }
 
   /**
@@ -211,7 +218,8 @@ public final class ServerInstance implements Serializable {
    */
   public ServerInstance(final String id, final String host, final int port,
       final boolean useSSL, final boolean useStartTLS, final String bindDN,
-      final String bindPW, final String baseDN, final String filter) {
+      final String bindPW, final String baseDN, final String filter,
+      final boolean syncManually) {
 
     this.id = id;
     this.host = host;
@@ -223,6 +231,7 @@ public final class ServerInstance implements Serializable {
     this.bindPW = (bindPW == null) || (bindPW.length() == 0) ? null : bindPW;
     this.baseDN = baseDN == null ? "" : baseDN;
     this.filter = (filter == null) || (filter.length() == 0) ? null : filter;
+    this.syncAllContacts = !syncManually;
   }
 
   /**
@@ -574,11 +583,11 @@ public final class ServerInstance implements Serializable {
     return b;
   }
 
-  public void setFilter(String filter) {
-    this.filter = filter;
-  }
-
   public String getFilter() {
     return filter;
+  }
+
+  public boolean isSyncAllContacts() {
+    return syncAllContacts;
   }
 }
