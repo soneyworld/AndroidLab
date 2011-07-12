@@ -117,6 +117,8 @@ public class EditContactActivity extends Activity implements
   private LinearLayout mAdditionalInfoLinearLayout;
 
   private LinkedList<String> directoryList = new LinkedList<String>();
+  private LinkedList<String> insertdirectoryList = new LinkedList<String>();
+  private LinkedList<String> deletedirectoryList = new LinkedList<String>();
   /**
    * Called when the activity is first created. Responsible for initializing the
    * UI.
@@ -392,6 +394,7 @@ public class EditContactActivity extends Activity implements
    * @param b
    * @return true if the contact should be synchronized, otherwise false
    */
+  @SuppressWarnings("deprecation")
   private boolean getValuesFromUI(Bundle b) {
     b.putString(AttributeMapper.DN,
         (String) mDirectorySpinner.getSelectedItem());
@@ -797,6 +800,14 @@ public class EditContactActivity extends Activity implements
 
     @Override
     public void run() {
+      for (String dir : insertdirectoryList) {
+        mDirectoryAdapter.add(dir);  
+      }
+      insertdirectoryList.clear();
+      for (String dir : deletedirectoryList) {
+        mDirectoryAdapter.remove(dir);
+      }
+      deletedirectoryList.clear();
     }
   }
 
@@ -830,12 +841,12 @@ public class EditContactActivity extends Activity implements
     String deleted = sharedPreferences.getString(key, "deleted");
     if (deleted.equals("deleted")){
       directoryList.remove(key);
-      mDirectoryAdapter.remove(key);
+      deletedirectoryList.add(key);
       return;
     }
     if(!directoryList.contains(key)){
       directoryList.add(key);
-      mDirectoryAdapter.add(key);
+      insertdirectoryList.add(key);
     }
   }
 }
