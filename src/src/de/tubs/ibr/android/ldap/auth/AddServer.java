@@ -321,6 +321,7 @@ public final class AddServer extends AccountAuthenticatorActivity implements
       baseDNField.setEnabled(false);
       saveButton.setEnabled(false);
       filterField.setEnabled(false);
+      importCheck.setEnabled(false);
     }
     final Intent intent = new Intent(this, TestServerService.class);
     getApplicationContext().bindService(intent, mServiceConnection,
