@@ -123,9 +123,7 @@ public class ContactUtils {
                 b.getString(ContactManager.LDAP_ERROR_MESSAGE_KEY))
             .withValue(RawContacts.SYNC3, b.getString(AttributeMapper.DN))
             .withValue(RawContacts.SYNC4,
-                b.getString(ContactManager.LDAP_LDIF_DETAILS_KEY))
-            .withValue(RawContacts.AGGREGATION_MODE,
-                RawContacts.AGGREGATION_MODE_DISABLED).build());
+                b.getString(ContactManager.LDAP_LDIF_DETAILS_KEY)).build());
   }
 
   static void createFullContact(final Account account, Bundle b,
