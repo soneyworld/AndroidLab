@@ -229,14 +229,20 @@ public class LDAPService extends Service {
                   dirs.add(entry.getDN());
               }
               mRunnable.dirsResult = new String[dirs.size()];
-              SharedPreferences dirPrefs = getSharedPreferences("dirs_"+instance.getID(), MODE_PRIVATE);
+              SharedPreferences dirPrefs = getSharedPreferences("dirs_"
+                  + instance.getID(), MODE_PRIVATE);
               Editor editor = dirPrefs.edit();
-              editor.clear();
               int i = 0;
               for (String dir : dirs) {
-                editor.putString(""+dir, "");
+                if (!dirPrefs.getAll().containsKey(dir))
+                  editor.putString("" + dir, "");
                 mRunnable.dirsResult[i] = dir;
                 i++;
+              }
+              for (String key : dirPrefs.getAll().keySet()) {
+                if (!dirs.contains(key)) {
+                  editor.remove(key);
+                }
               }
               editor.commit();
             } catch (LDAPSearchException lse) {
