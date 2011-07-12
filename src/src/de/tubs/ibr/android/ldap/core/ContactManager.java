@@ -134,12 +134,20 @@ public class ContactManager {
       BatchOperation batch) {
     Bundle contact = createBundleFromEntry(entry);
     // List all LDAP ObjectClasses
+    String objectClass = "";
+    for (String objectClazz : entry.getAttributeValues("objectClass")) {
+      objectClass = objectClass + EOL + objectClazz;
+    }
     Uri contentAsSyncAdapter = RawContacts.CONTENT_URI.buildUpon()
         .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
         .build();
     Uri dataAsSyncAdapter = Data.CONTENT_URI.buildUpon()
         .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true")
         .build();
+    addSyncFieldsToBundle(contact,
+        entry.getAttributeValue(AttributeMapper.ATTR_UID),
+        SYNC_STATUS_DO_NOT_SYNC, "", entry.getDN() + objectClass,
+        entry.toLDIFString());
     ContactUtils.createFullContact(account, contact, batch,
         contentAsSyncAdapter, dataAsSyncAdapter);
 
@@ -644,9 +652,8 @@ public class ContactManager {
    * @param conflictKeys
    * @return true if merge is possible, false on a conflict
    */
-  public static boolean mergeBundle(final Bundle stateA,
-      final Bundle stateB, final Bundle oldstate,
-      Bundle mergedresult, Set<String> conflictKeys) {
+  public static boolean mergeBundle(final Bundle stateA, final Bundle stateB,
+      final Bundle oldstate, Bundle mergedresult, Set<String> conflictKeys) {
     boolean conflict = false;
     Set<String> keyset = new LinkedHashSet<String>();
     keyset.addAll(stateA.keySet());
@@ -687,5 +694,5 @@ public class ContactManager {
       }
     }
     return !conflict;
-  } 
+  }
 }
