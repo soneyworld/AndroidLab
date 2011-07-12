@@ -80,7 +80,7 @@ public final class ServerInstance implements Serializable {
 
   // If all contacts on the LDAP Server should be synchronized, this should be
   // true
-  private boolean syncAllContacts;
+  private boolean syncAllContacts = true;
 
   /**
    * Creates a new server instance with the provided information in the bundle.
@@ -100,7 +100,12 @@ public final class ServerInstance implements Serializable {
     this.bindPW = (b.getString("bindPW") == null)
         || (b.getString("bindPW").length() == 0) ? null : b.getString("bindPW");
     this.baseDN = b.getString("baseDN") == null ? "" : b.getString("baseDN");
-    this.syncAllContacts = (b.getBoolean("manualSync", false) ? false : true);
+    boolean manual = b.getBoolean("manualSync",false);
+    if(manual){
+      this.syncAllContacts = false;
+    }else{
+      this.syncAllContacts = true;
+    }
   }
 
   /**
@@ -145,7 +150,7 @@ public final class ServerInstance implements Serializable {
     this.filter = accManager.getUserData(account, "filter") == null ? ""
         : accManager.getUserData(account, "filter");
     try {
-      this.syncAllContacts = Boolean.parseBoolean(accManager.getUserData(
+      this.syncAllContacts = !Boolean.parseBoolean(accManager.getUserData(
           account, "manualSync"));
     } catch (Exception e) {
       this.syncAllContacts = true;
