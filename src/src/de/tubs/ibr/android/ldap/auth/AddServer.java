@@ -253,6 +253,13 @@ public final class AddServer extends AccountAuthenticatorActivity implements
           if(filter==null){
             filter = "";
           }
+          String manSync = accManager.getUserData(acc, "manualSync");
+          if(manSync!=null && manSync.equalsIgnoreCase("true")){
+            this.manualImport = true;
+          }else{
+            this.manualImport = false;  
+          }
+           
           this.modifymode = true;
           break;
         }

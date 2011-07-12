@@ -100,10 +100,10 @@ public final class ServerInstance implements Serializable {
     this.bindPW = (b.getString("bindPW") == null)
         || (b.getString("bindPW").length() == 0) ? null : b.getString("bindPW");
     this.baseDN = b.getString("baseDN") == null ? "" : b.getString("baseDN");
-    boolean manual = b.getBoolean("manualSync",false);
-    if(manual){
+    String syncMan = b.getString("manualSync");
+    if (syncMan!=null && syncMan.equalsIgnoreCase("true")) {
       this.syncAllContacts = false;
-    }else{
+    } else {
       this.syncAllContacts = true;
     }
   }
@@ -149,10 +149,11 @@ public final class ServerInstance implements Serializable {
         : accManager.getUserData(account, "baseDN");
     this.filter = accManager.getUserData(account, "filter") == null ? ""
         : accManager.getUserData(account, "filter");
-    try {
-      this.syncAllContacts = !Boolean.parseBoolean(accManager.getUserData(
-          account, "manualSync"));
-    } catch (Exception e) {
+
+    String syncMan = accManager.getUserData(account, "manualSync");
+    if (syncMan != null && syncMan.equalsIgnoreCase("true")) {
+      this.syncAllContacts = false;
+    } else {
       this.syncAllContacts = true;
     }
   }
@@ -236,12 +237,13 @@ public final class ServerInstance implements Serializable {
     this.port = port;
     this.useSSL = useSSL;
     this.useStartTLS = useStartTLS;
-
+    if (syncManually)
+      this.syncAllContacts = false;
     this.bindDN = (bindDN == null) || (bindDN.length() == 0) ? null : bindDN;
     this.bindPW = (bindPW == null) || (bindPW.length() == 0) ? null : bindPW;
     this.baseDN = baseDN == null ? "" : baseDN;
     this.filter = (filter == null) || (filter.length() == 0) ? null : filter;
-    this.syncAllContacts = !syncManually;
+
   }
 
   /**
@@ -578,6 +580,9 @@ public final class ServerInstance implements Serializable {
     buffer.append("\", baseDN=\"");
     buffer.append(baseDN);
     buffer.append("\")");
+    buffer.append(syncAllContacts);
+    buffer.append("\")");
+
   }
 
   public Bundle createBundle() {
@@ -590,8 +595,10 @@ public final class ServerInstance implements Serializable {
     b.putCharSequence("bindDN", this.bindDN);
     b.putCharSequence("bindPW", this.bindPW);
     b.putCharSequence("baseDN", this.baseDN);
-    if (!syncAllContacts) {
-      b.putBoolean("manualSync", true);
+    if (syncAllContacts) {
+      b.putCharSequence("manualSync", "false");
+    } else {
+      b.putCharSequence("manualSync", "true");
     }
     return b;
   }
