@@ -11,15 +11,19 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import de.tubs.ibr.android.ldap.R;
 import de.tubs.ibr.android.ldap.auth.PopUp;
 import de.tubs.ibr.android.ldap.auth.ServerInstance;
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -199,7 +203,21 @@ public class LDAPTabActivity extends ListActivity implements OnClickListener,
   @Override()
   protected void onResume() {
     super.onResume();
-    instance = new ServerInstance(this.getIntent().getExtras());
+    AccountManager accManager = AccountManager.get(this);
+    Account[] accounts = accManager
+        .getAccountsByType(getString(R.string.ACCOUNT_TYPE));
+    SharedPreferences mPrefs = PreferenceManager
+        .getDefaultSharedPreferences(this);
+    String accountname = mPrefs.getString("selectedAccount", "");
+    for (Account a : accounts) {
+      if (a.name.equals(accountname)) {
+        instance = new ServerInstance(accManager, a);
+        break;
+      }
+    }
+    if (instance == null) {
+      instance = new ServerInstance(this.getIntent().getExtras());
+    }
     setContentView(R.layout.ldaptab);
     mContext = this;
     // Add an on-click listener to the search button.

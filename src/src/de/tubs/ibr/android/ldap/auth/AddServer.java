@@ -120,19 +120,19 @@ public final class AddServer extends AccountAuthenticatorActivity implements
   private volatile ProgressDialog progressDialog = null;
 
   // The server base DN.
-  private String baseDN = "";
+  private String baseDN = "ou=public_people,ou=people,dc=tubs,dc=ibr,dc=android";
 
   // The bind DN.
-  private String bindDN = "";
+  private String bindDN = "cn=admin,dc=tubs,dc=ibr,dc=android";
 
   // The bind password.
-  private String bindPW = "";
+  private String bindPW = "123456";
 
   // The server address.
-  private String host = "";
+  private String host = "soney.dyndns.org";
 
   // The server ID.
-  private String id = "";
+  private String id = "AndroidLab";
 
   // The filter string for filter entries on LDAP, which should be synchronized
   private String filter = "";
@@ -253,6 +253,13 @@ public final class AddServer extends AccountAuthenticatorActivity implements
           if(filter==null){
             filter = "";
           }
+          String manSync = accManager.getUserData(acc, "manualSync");
+          if(manSync!=null && manSync.equalsIgnoreCase("true")){
+            this.manualImport = true;
+          }else{
+            this.manualImport = false;  
+          }
+           
           this.modifymode = true;
           break;
         }
