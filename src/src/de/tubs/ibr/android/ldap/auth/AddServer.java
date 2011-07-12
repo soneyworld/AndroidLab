@@ -39,6 +39,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -98,6 +99,8 @@ public final class AddServer extends AccountAuthenticatorActivity implements
 
   public static final int INTENT_REQUEST_NEWACCOUNT = 1;
 
+  private static final String BUNDLE_FIELD_MANUAL_SYNC = "ADD_SERVER_MANUAL_SYNC";
+
   /**
    * If the Activity is started with the MODIFICATION Action, this var should be
    * true, else false
@@ -133,6 +136,9 @@ public final class AddServer extends AccountAuthenticatorActivity implements
 
   // The filter string for filter entries on LDAP, which should be synchronized
   private String filter = "";
+  
+  // Shows, if contacts should be manually added to be synchronized
+  private boolean manualImport = false;
 
   private TestServerService.TestServerBinder mBinder;
 
@@ -293,6 +299,9 @@ public final class AddServer extends AccountAuthenticatorActivity implements
     //Populate the filter string
     final EditText filterField = (EditText) findViewById(R.id.layout_define_server_field_filter);
     filterField.setText(filter);
+    
+    final CheckBox importCheck = (CheckBox) findViewById(R.id.layout_define_server_importManual);
+    importCheck.setChecked(!manualImport);
     // Add an on-click listener to the test and save buttons.
     final Button testButton = (Button) findViewById(R.id.layout_define_server_button_server_test);
     testButton.setOnClickListener(this);
@@ -403,8 +412,10 @@ public final class AddServer extends AccountAuthenticatorActivity implements
     baseDN = baseField.getText().toString();
     final EditText filterField = (EditText) findViewById(R.id.layout_define_server_field_filter);
     filter = filterField.getText().toString();
+    final CheckBox importCheck = (CheckBox) findViewById(R.id.layout_define_server_importManual);
+    manualImport = !importCheck.isChecked();
     return new ServerInstance(serverID, host, port, useSSL, useStartTLS,
-        bindDN, bindPW, baseDN, filter);
+        bindDN, bindPW, baseDN, filter, manualImport);
   }
 
   /**
@@ -551,6 +562,7 @@ public final class AddServer extends AccountAuthenticatorActivity implements
     if (filter == null){
       filter = "";
     }
+    manualImport = (state.get(BUNDLE_FIELD_MANUAL_SYNC)!=null);
   }
 
   /**
@@ -602,6 +614,11 @@ public final class AddServer extends AccountAuthenticatorActivity implements
     final EditText filterField = (EditText) findViewById(R.id.layout_define_server_field_filter);
     filter = filterField.getText().toString();
     state.putString(BUNDLE_FIELD_FILTER, filter);
+    final CheckBox importCheck = (CheckBox) findViewById(R.id.layout_define_server_importManual);
+    manualImport = !importCheck.isChecked();
+    if(manualImport){
+      state.putBoolean(BUNDLE_FIELD_MANUAL_SYNC, true);
+    }
   }
 
   /**
